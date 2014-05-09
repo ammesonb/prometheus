@@ -219,6 +219,39 @@ sub searchTableSort {
     return \@rows;
 }
 
+sub updateTable {
+    # Get parameters
+    my $tableName = shift;
+    my $updateColsRef = shift;
+    my @updateCols = @$updateColsRef;
+    my $updateValuesRef = shift;
+    my @updateValues = @$updateValuesRef;
+    my $filterColsRef = shift;
+    my @filterCols = @$filterColsRef;
+    my $filterOpsRef = shift;
+    my @filterOperators = @$filterOpsRef;
+    my $filterCriteriaRef = shift;
+    my @filterCriteria = @$filterCriteriaRef;
+    my $filterLogicRef = shift;
+    my @filterLogic = @$filterLogicRef;
+
+    # Create query
+    my $query = "UPDATE $tableName SET ";
+    for (my $i = 0; $i < $#updateCols; $i++) {
+        $query .= "$updateCols[$i]=$updateValues[$i], ";
+    }
+    $query .= "$updateCols[$#updateCols]=$updateValues[$#updateValues] WHERE ";
+    for (my $i = 0; $i <= $#filterLogic; $i++) {
+        $query .= "$filterCols[$i] $filterOperators[$i] $filterCriteria[$i] $filterLogic[$i] ";
+    }
+    $query .= "$filterCols[$#filterCols] $filterOperators[$#filterOperators] $filterCriteria[$#filterCriteria]";
+
+    my $dbh = connectToDB();
+    my $rowsChanged = $dbh->do($query);
+    $dbh->disconnect;
+    return $rowsChanged;
+}
+
 sub attempt_login {
     my $username = shift;
     my $pass = shift;
@@ -272,8 +305,6 @@ Various functions used for the backend of the web interface
 
 =head1 METHODS
 
-=cut
-
 =head2 init
 
 =pod 
@@ -291,6 +322,7 @@ and is in acceptable location
 =pod
 
 Takes a CGI session
+
 Returns boolean for user being logged in
 
 =cut
@@ -308,6 +340,7 @@ Returns a handle to the local database, connected as user 'root'
 =pod
 
 Takes a table name, requires the table to have a primary key with name 'id'
+
 Returns a reference to a hash of the table where the first index is the id,
 then the rows are indexed by their column names
 
@@ -331,6 +364,7 @@ Takes a table name, reference to an array of columns to return, reference to an 
 reference to an array of operators to use,
 reference to an array of patterns to search the columns by,
 and reference to an array of logic operators to combine the terms
+
 Returns a reference to a hash of the filtered table
 
 =cut
@@ -344,7 +378,23 @@ reference to an array of operators to use,
 reference to an array of patterns to search the columns by,
 reference to an array of logic operators to combine the terms,
 and a sort string of the format 'column_name[,column2]... [ASC || DESC]
+
 Returns a reference to an array of sorted hash references to rows that matched the filter
+
+=cut
+
+=head2 updateTable
+
+=pod
+
+Takes a table name, reference to an array of columns to update,
+reference to an array of values to update the columns with,
+reference to an array of columns to filter by,
+reference to an array of operators to use,
+reference to an array of patterns to filter the columns with,
+and a reference to an array of logic operators to use to combine the terms
+
+Returns the number of rows updated.
 
 =cut
 
