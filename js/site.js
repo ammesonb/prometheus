@@ -38,6 +38,7 @@ function setText(element, text) {
 
 function addTab(element, tabElement) {
     tabElement.className = 'tab ' + element.id;
+    tabLink = document.createElement('a');
     tabLink.href = '#';
     tabLink.appendChild(tabElement);
     x = document.createElement('img');
@@ -214,8 +215,9 @@ function openNotes() {
     noteTab = document.createElement('div');
     setText(noteTab, 'Notes');
     noteTab.className = 'tab';
+    noteTab.setAttribute('data-id', id);
     noteTab.onclick = function() {
-        switchTab(id);
+        switchTab(this.getAttribute('data-id'));
     };
     addTab(notes, noteTab);
     switchTab(id);
