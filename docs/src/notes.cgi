@@ -65,7 +65,19 @@ if ($mode == 0) {
         exit;
     }
 
-    print 'success';
+    my @updateCols = ('title', 'text');
+    my @updateVals = ($noteTitle, $noteText);
+    my @filterCols = ('id');
+    my @filterOps = ('=');
+    my @filterCriteria = ($noteID);
+    my @filterLogic = ();
+    # Should update exactly one row
+    my $rows = COMMON::updateTable('notes', \@updateCols, \@updateVals,
+               \@filterCols, \@filterOps, \@filterCriteria, \@filterLogic);
+
+    print 'success' if ($rows == 1);
+    print 'none' if ($rows == 0);
+    print 'extra' if ($rows > 1);
 }
 
 exit;
@@ -73,8 +85,6 @@ exit;
 __END__
 
 =head1 NAME
-
-=cut
 
 =pod
 
@@ -84,17 +94,13 @@ notes.cgi - backend for the notes application
 
 =head1 DESCRIPTION
 
-=cut
-
 =pod
 
-Provides the tools to view, create, update, and delete notes based on a variable 'mode' which takes value 0 to 3 respectively
+Provides the tools to view, create/update, and delete notes based on a variable 'mode' which takes value 0 to 2 respectively
 
 =cut
 
 =head1 AUTHOR
-
-=cut
 
 =pod
 

@@ -120,12 +120,12 @@ textarea.note_editor {
     width: 95%;
 }
 
-button.leftAction {
+button.left_action {
     float: left;
     margin-right: 10px;
 }
 
-button.rightAction {
+button.right_action {
     float: left;
 }
 
@@ -157,3 +157,11 @@ p.form_label {
     margin-bottom: 3px;
 }
 
+p.error_text {
+    float: left;
+    margin: 5px;
+    padding-left: 5px;
+    color: red;
+    font-weight: bold;
+    font-size: 75%;
+}

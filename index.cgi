@@ -19,8 +19,6 @@ __END__
 
 =head1 NAME
 
-=cut
-
 =pod
 
 index.cgi - Landing page for web interface
@@ -29,8 +27,6 @@ index.cgi - Landing page for web interface
 
 =head1 DESCRIPTION
 
-=cut
-
 =pod
 
 Provides authentication and tools panel
@@ -38,8 +34,6 @@ Provides authentication and tools panel
 =cut
 
 =head1 AUTHOR
-
-=cut
 
 =pod
 

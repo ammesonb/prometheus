@@ -53,8 +53,6 @@ __END__
 
 =head1 NAME
 
-=cut
-
 =pod
 
 login.cgi - Authentication backend
@@ -62,8 +60,6 @@ login.cgi - Authentication backend
 =cut
 
 =head1 DESCRIPTION
-
-=cut
 
 =pod
 
@@ -74,10 +70,6 @@ Redirects to root if login is successful
 =cut
 
 =head1 AUTHOR
-
-=cut
-
-=cut
 
 =pod
 
