@@ -54,8 +54,8 @@ if ($mode == 0) {
     my $noteID = $q->param('note_id');
     my $noteTitle = $q->param('note_title');
     my $noteText = $q->param('note_text');
-    if (not ($noteID =~ /^[0-9]\+$/)) {
-        print 'baddata';
+    if (not ($noteID =~ /^[0-9]+$/)) {
+        print 'badid';
         exit;
     } elsif (not COMMON::checkPrintable($noteTitle)) {
         print 'baddata';
@@ -66,7 +66,7 @@ if ($mode == 0) {
     }
 
     my @updateCols = ('title', 'text');
-    my @updateVals = ($noteTitle, $noteText);
+    my @updateVals = ("'$noteTitle'", "'$noteText'");
     my @filterCols = ('id');
     my @filterOps = ('=');
     my @filterCriteria = ($noteID);

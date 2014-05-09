@@ -115,22 +115,69 @@ function openNotes() {
     noteText.name = 'text';
 
     saveButton = document.createElement('button');
-    saveButton.className = 'leftAction';
+    saveButton.className = 'left_action';
     saveButton.innerText = 'Save';
     saveButton.onclick = function() {
-        // Save here
+        editPane = this.parentElement;
+        noteID = editPane.getAttribute('data-note_id');
+        noteTitle = '';
+        noteText = '';
+        errorText = 0;
+        c = editPane.children;
+        for (i = 0; i < c.length; i++) {
+            if (c[i].tagName == 'INPUT') {
+                noteTitle = c[i].value;
+            } else if (c[i].tagName == 'TEXTAREA') {
+                noteText = c[i].value;
+            } else if (c[i].className == 'error_text') {
+                errorText = c[i];
+            }
+        }
+
+        if (noteTitle.length == 0) {
+            errorText.innerText = 'You must enter a title';
+            return;
+        } else if (noteText.length == 0) {
+            errorText.innerText = 'You must enter a note';
+            return;
+        }
+
+        saveReq = new XMLHttpRequest();
+
+        saveReq.onreadystatechange = function() {
+            if (saveReq.readyState == 4 && saveReq.status == 200) {
+                status = saveReq.responseText;
+                /* Need to handle the following responses:
+                    success
+                    none - no rows updated
+                    extra - two or more rows updated
+                    expired - session dead
+                    badid
+                    baddata
+                */
+            }
+        }
+
+        saveReq.open('POST', 'notes.cgi', true);
+        saveReq.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+        saveReq.send('mode=1&note_id=' + noteID +
+                     '&note_title=' + encodeURIComponent(noteTitle) + '&note_text=' + encodeURIComponent(noteText));
     }
 
     cancelButton = document.createElement('button');
-    cancelButton.className = 'rightAction';
+    cancelButton.className = 'right_action';
     cancelButton.innerText = 'Cancel';
     cancelButton.onclick = function() {
         this.parentElement.setAttribute('data-note_id', -1);
         c = this.parentElement.children;
         for (i = 0; i < c.length; i++) {
             if (c[i].tagName == 'INPUT' || c[i].tagName == 'TEXTAREA') c[i].value = '';
+            if (c[i].className == 'error_text') c[i].innerText = '';
         }
     };
+
+    errorText = document.createElement('p');
+    errorText.className = 'error_text';
 
     notesEditor.appendChild(titleDesc);
     notesEditor.appendChild(noteTitle);
@@ -139,6 +186,7 @@ function openNotes() {
     notesEditor.appendChild(noteText);
     notesEditor.appendChild(saveButton);
     notesEditor.appendChild(cancelButton);
+    notesEditor.appendChild(errorText);
 
     // Fetch notes
     req = new XMLHttpRequest();
@@ -225,5 +273,6 @@ function editNote(note, row) {
     for (i = 0; i < editElems.length; i++) {
         if (editElems[i].tagName == 'INPUT') editElems[i].value = note.title;
         if (editElems[i].tagName == 'TEXTAREA') editElems[i].value = note.text;
+        if (editElems[i].className == 'error_text') editElems[i].innerText = '';
     }
 }

@@ -146,7 +146,15 @@ function openNotes() {
 
         saveReq.onreadystatechange = function() {
             if (saveReq.readyState == 4 && saveReq.status == 200) {
-                alert(saveReq.responseText);
+                status = saveReq.responseText;
+                /* Need to handle the following responses:
+                    success
+                    none - no rows updated
+                    extra - two or more rows updated
+                    expired - session dead
+                    badid
+                    baddata
+                */
             }
         }
 
