@@ -99,7 +99,9 @@ sub init {
     $html .= $indent . "<script type=\"text/javascript\">
     window.onload = function() {
         document.body.style.backgroundSize = window.innerWidth + \"px \" + window.innerHeight + \"px\";
-        document.getElementById('tabs').style.top = document.getElementById('main').offsetTop - 25 + \"px\";
+        try {
+            document.getElementById('tabs').style.top = document.getElementById('main').offsetTop - 25 + \"px\";
+        } catch(e) {}
     };
     </script>\n";
     $html .= $indent . "<title>$title</title>\n";

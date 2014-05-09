@@ -2,45 +2,52 @@ function login() {
     elems = document.getElementsByTagName('input');
     a = elems[0];
     b = elems[1];
-    if (a.value == "") {
-        document.getElementById("error").innerText = "Enter a username";
+    if (a.value == '') {
+        setText(document.getElementById('error'), 'Enter a username');
         return;
-    } else if (b.value == "") {
-        document.getElementById("error").innerText = "Enter a password";
+    } else if (b.value == '') {
+        setText(document.getElementById('error'), 'Enter a password');
         return;
     }
-    document.getElementById("error").innerText = "\u00a0";
+    setText(document.getElementById('error'), '\u00a0');
 
     c = CryptoJS.SHA512(b.value).toString();
 
     f = document.createElement('form');
-    f.method = "POST";
-    f.action = "login.cgi";
+    f.method = 'POST';
+    f.action = 'login.cgi';
     i1 = document.createElement('input');
-    i1.name = "a";
-    i1.type = "text";
+    i1.name = 'a';
+    i1.type = 'text';
     i1.value = a.value;
     i2 = document.createElement('input');
-    i2.name = "c";
-    i2.type = "password";
+    i2.name = 'c';
+    i2.type = 'password';
     i2.value = c;
     f.appendChild(i1);
     f.appendChild(i2);
+    f.style.display = 'none';
+    document.body.appendChild(f);
     f.submit();
+}
+
+function setText(element, text) {
+    element.innerText = text;
+    element.innerHTML = text;
 }
 
 function addTab(element, tabElement) {
     tabElement.className = 'tab ' + element.id;
-    tabLink = document.createElement('a');
     tabLink.href = '#';
     tabLink.appendChild(tabElement);
     x = document.createElement('img');
     x.src = 'images/x.png';
     x.alt = 'Close tab';
+    x.setAttribute('data-id', element.id);
     x.onclick = function() {
-        closeTab(element.id);
+        closeTab(this.getAttribute('data-id'));
     }
-    tabElement.innerText += '\u00a0';
+    setText(tabElement, tabElement.innerText + '\u00a0');
     tabElement.appendChild(x);
     document.getElementById('tabs').appendChild(tabLink);
     document.getElementById('main').appendChild(element);
@@ -53,15 +60,15 @@ function closeTab(tabID) {
 }
 
 function switchTab(tabID) {
-    if (!document.getElementById(tabID)) return;
+    if (!document.getElementById(tabID)) {return;}
 
-    oldTab = document.getElementsByClassName("selected")[0];
-    if (oldTab.id == tabID) return;
-    oldTab.style.display = "none";
-    oldTab.className = oldTab.className.replace("selected", "").trim();
+    oldTab = document.getElementsByClassName('selected')[0];
+    if (oldTab.id == tabID) {return;}
+    oldTab.style.display = 'none';
+    oldTab.className = oldTab.className.replace('selected', '').trim();
     newTab = document.getElementById(tabID);
-    newTab.style.display = "inline-block";
-    newTab.className = newTab.className + " selected";
+    newTab.style.display = 'inline-block';
+    newTab.className = newTab.className + ' selected';
 }
 
 function openNotes() {
@@ -69,7 +76,7 @@ function openNotes() {
     notes = document.createElement('div');
     id = 'notes' + new Date().getTime();
     notes.id = id;
-    notes.className = "notes";
+    notes.className = 'notes';
     notes.style.display = 'none';
 
     notesList = document.createElement('div');
@@ -83,13 +90,13 @@ function openNotes() {
 
     // Create table to display notes in
     notesTable = document.createElement('table');
-    notesTable.className = "notes";
+    notesTable.className = 'notes';
 
     headerRow = document.createElement('tr');
     tableTitle = document.createElement('th');
-    tableTitle.innerText = 'Title';
+    setText(tableTitle, 'Title');
     tableMTime = document.createElement('th');
-    tableMTime.innerText = 'Last Modified';
+    setText(tableMTime, 'Last Modified');
     headerRow.appendChild(tableTitle);
     headerRow.appendChild(tableMTime);
     notesTable.appendChild(headerRow);
@@ -99,7 +106,7 @@ function openNotes() {
     // Create editor pane
     titleDesc = document.createElement('p');
     titleDesc.className = 'form_label';
-    titleDesc.innerText = 'Title:';
+    setText(titleDesc, 'Title:');
 
     noteTitle = document.createElement('input');
     noteTitle.className = 'note_title';
@@ -108,7 +115,7 @@ function openNotes() {
 
     textDesc = document.createElement('p');
     textDesc.className = 'form_label';
-    textDesc.innerText = 'Note:';
+    setText(textDesc, 'Note:');
 
     noteText = document.createElement('textarea');
     noteText.className = 'note_editor';
@@ -116,7 +123,7 @@ function openNotes() {
 
     saveButton = document.createElement('button');
     saveButton.className = 'left_action';
-    saveButton.innerText = 'Save';
+    setText(saveButton, 'Save');
     saveButton.onclick = function() {
         editPane = this.parentElement;
         noteID = editPane.getAttribute('data-note_id');
@@ -135,10 +142,10 @@ function openNotes() {
         }
 
         if (noteTitle.length == 0) {
-            errorText.innerText = 'You must enter a title';
+            setText(errorText, 'You must enter a title');
             return;
         } else if (noteText.length == 0) {
-            errorText.innerText = 'You must enter a note';
+            setText(errorText, 'You must enter a note');
             return;
         }
 
@@ -147,32 +154,36 @@ function openNotes() {
         saveReq.onreadystatechange = function() {
             if (saveReq.readyState == 4 && saveReq.status == 200) {
                 status = saveReq.responseText;
-                /* Need to handle the following responses:
-                    success
-                    none - no rows updated
-                    extra - two or more rows updated
-                    expired - session dead
-                    badid
-                    baddata
-                */
+
+                if (status == 'success') {
+                } else if (status == 'none') {
+                    setText(errorText, 'Update failed - no matching note found!');
+                } else if (status == 'extra') {
+                    setText(errorText, 'Update succeeded, but found multiple matching notes!');
+                } else if (status == 'expired') {
+                } else if (status == 'badid') {
+                    setText(errorText, 'Update failed - no matching note found!');
+                } else if (status == 'baddata') {
+                    setText(errorText, 'Update failed - invalid data in title or text field!');
+                }
             }
         }
 
         saveReq.open('POST', 'notes.cgi', true);
-        saveReq.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+        saveReq.setRequestHeader('Content-type','application/x-www-form-urlencoded');
         saveReq.send('mode=1&note_id=' + noteID +
                      '&note_title=' + encodeURIComponent(noteTitle) + '&note_text=' + encodeURIComponent(noteText));
     }
 
     cancelButton = document.createElement('button');
     cancelButton.className = 'right_action';
-    cancelButton.innerText = 'Cancel';
+    setText(cancelButton, 'Cancel');
     cancelButton.onclick = function() {
         this.parentElement.setAttribute('data-note_id', -1);
         c = this.parentElement.children;
         for (i = 0; i < c.length; i++) {
-            if (c[i].tagName == 'INPUT' || c[i].tagName == 'TEXTAREA') c[i].value = '';
-            if (c[i].className == 'error_text') c[i].innerText = '';
+            if (c[i].tagName == 'INPUT' || c[i].tagName == 'TEXTAREA') {c[i].value = '';}
+            if (c[i].className == 'error_text') {setText(c[i], '');}
         }
     };
 
@@ -192,16 +203,16 @@ function openNotes() {
     req = new XMLHttpRequest();
 
     req.onreadystatechange = function() {
-        if (req.readyState == 4 && req.status == 200) populateNotes(req.responseText, notesTable, notesEditor, id);
+        if (req.readyState == 4 && req.status == 200) {populateNotes(req.responseText, notesTable, notesEditor, id);}
     }
 
     req.open('POST', 'notes.cgi', true);
-    req.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+    req.setRequestHeader('Content-type','application/x-www-form-urlencoded');
     req.send('mode=0');
 
     // Create actual note tab
     noteTab = document.createElement('div');
-    noteTab.innerText = 'Notes';
+    setText(noteTab, 'Notes');
     noteTab.className = 'tab';
     noteTab.onclick = function() {
         switchTab(id);
@@ -211,7 +222,7 @@ function openNotes() {
 }
 
 function populateNotes(data, notesTable, notesEditor, id) {
-    if (data == "noauth") window.location.reload(true);
+    if (data == 'noauth') {window.location.reload(true);}
 
     // Else
     notes = JSON.parse(data);
@@ -220,8 +231,7 @@ function populateNotes(data, notesTable, notesEditor, id) {
         r = document.createElement('tr');
         r.setAttribute('data-note', JSON.stringify(note));
         r.onclick = function() {
-            note = JSON.parse(this.getAttribute('data-note'));
-            editNote(note, this);
+            editNote(JSON.parse(this.getAttribute('data-note')), this);
         }
         r.onmouseover = function() {
             this.style.fontWeight = 'bold';
@@ -233,9 +243,9 @@ function populateNotes(data, notesTable, notesEditor, id) {
             this.style.fontStyle = 'normal';
         }
         title = document.createElement('td');
-        title.innerText = note.title;
+        setText(title, note.title);
         mtime = document.createElement('td');
-        mtime.innerText = note.mtime;
+        setText(mtime, note.mtime);
 
         r.appendChild(title);
         r.appendChild(mtime);
@@ -271,8 +281,8 @@ function editNote(note, row) {
     editPane.setAttribute('data-note_id', note.id);
     editElems = editPane.children;
     for (i = 0; i < editElems.length; i++) {
-        if (editElems[i].tagName == 'INPUT') editElems[i].value = note.title;
-        if (editElems[i].tagName == 'TEXTAREA') editElems[i].value = note.text;
-        if (editElems[i].className == 'error_text') editElems[i].innerText = '';
+        if (editElems[i].tagName == 'INPUT') {editElems[i].value = note.title;}
+        if (editElems[i].tagName == 'TEXTAREA') {editElems[i].value = note.text;}
+        if (editElems[i].className == 'error_text') {setText(editElems[i], '');}
     }
 }
