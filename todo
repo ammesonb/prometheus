@@ -1,0 +1,15 @@
+GIT
+Access controls - services on a per-user basis
+User controls via GUI - need differentiation between all and just yourself - see above point
+    Some accounts shared, such as pepband
+        have boolean as part of table?
+    Domain shouldn't be changeable, except by root(/other admins?)
+Images for other services
+Write other services
+Handle resize of window more gracefully, somehow?
+Autosave for things like notes and taskmanager?
+    Display data on attempted submit and recommend saving
+Night theme
+Notes
+    Add delete option
+Display "Session timed out" on login screen for failed attempts
