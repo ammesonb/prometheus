@@ -50,6 +50,21 @@ if ($mode == 0) {
         exit;
     }
 
+    # Check parameter validity
+    my $noteID = $q->param('note_id');
+    my $noteTitle = $q->param('note_title');
+    my $noteText = $q->param('note_text');
+    if (not ($noteID =~ /^[0-9]\+$/)) {
+        print 'baddata';
+        exit;
+    } elsif (not COMMON::checkPrintable($noteTitle)) {
+        print 'baddata';
+        exit;
+    } elsif (not COMMON::checkPrintable($noteText)) {
+        print 'baddata';
+        exit;
+    }
+
     print 'success';
 }
 

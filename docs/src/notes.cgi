@@ -50,6 +50,13 @@ if ($mode == 0) {
         exit;
     }
 
+    my $noteID = $q->param('note_id');
+    my $noteTitle = $q->param('note_title');
+    my $noteText = $q->param('note_text');
+    if (not ($noteID =~ /^[0-9]\+$/)) {
+        print 'baddata';
+        exit;
+    }
     print 'success';
 }
 

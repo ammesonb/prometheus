@@ -244,6 +244,12 @@ sub attempt_login {
     return 2;
 }
 
+sub checkPrintable {
+    my $str = shift;
+
+    return (not ($str =~ /^[\x20-\x7E]+$/));
+}
+
 1;
 
 __END__
@@ -344,8 +350,6 @@ Returns a reference to an array of sorted hash references to rows that matched t
 
 =head2 attempt_login
 
-=cut
-
 =pod
 
 Takes a username and a (hashed) password
@@ -364,6 +368,14 @@ Returns the login state:
     3 => Domain blocked
 
 =back
+
+=cut
+
+=head2 check_printable
+
+=pod
+
+Takes a string and returns true if it is between hex 20 and 7E, AKA a printable ASCII character
 
 =cut
 
