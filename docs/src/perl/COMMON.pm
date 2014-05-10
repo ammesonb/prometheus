@@ -282,7 +282,7 @@ sub attempt_login {
 sub checkPrintable {
     my $str = shift;
 
-    return ($str =~ /^[\x20-\x7E]+$/);
+    return ($str =~ /^[\n\r\t\x20-\x7E]+$/);
 }
 
 1;
