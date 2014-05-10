@@ -2,10 +2,10 @@ function login() {
     elems = document.getElementsByTagName('input');
     a = elems[0];
     b = elems[1];
-    if (a.value == '') {
+    if (a.value === '') {
         setText(document.getElementById('error'), 'Enter a username');
         return;
-    } else if (b.value == '') {
+    } else if (b.value === '') {
         setText(document.getElementById('error'), 'Enter a password');
         return;
     }
@@ -47,7 +47,7 @@ function addTab(element, tabElement) {
     x.setAttribute('data-id', element.id);
     x.onclick = function() {
         closeTab(this.getAttribute('data-id'));
-    }
+    };
     setText(tabElement, tabElement.innerText + '\u00a0');
     tabElement.appendChild(x);
     document.getElementById('tabs').appendChild(tabLink);
@@ -142,10 +142,10 @@ function openNotes() {
             }
         }
 
-        if (noteTitle.length == 0) {
+        if (noteTitle.length === 0) {
             setText(errorText, 'You must enter a title');
             return;
-        } else if (noteText.length == 0) {
+        } else if (noteText.length === 0) {
             setText(errorText, 'You must enter a note');
             return;
         }
@@ -168,12 +168,25 @@ function openNotes() {
                     setText(errorText, 'Update failed - invalid data in title or text field!');
                 }
             }
-        }
+        };
 
         saveReq.open('POST', 'notes.cgi', true);
-        saveReq.setRequestHeader('Content-type','application/x-www-form-urlencoded');
+        saveReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
         saveReq.send('mode=1&note_id=' + noteID +
                      '&note_title=' + encodeURIComponent(noteTitle) + '&note_text=' + encodeURIComponent(noteText));
+
+        // Delay update for one second
+        setTimeout(function() {
+            updateReq = new XMLHttpRequest();
+    
+            updateReq.onreadystatechange = function() {
+                if (updateReq.readyState == 4 && updateReq.status == 200) {refreshNotes(updateReq.responseText);}
+            };
+    
+            updateReq.open('POST', 'notes.cgi', true);
+            updateReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+            updateReq.send('mode=0');
+        }, 1000);
     }
 
     cancelButton = document.createElement('button');
@@ -204,11 +217,11 @@ function openNotes() {
     req = new XMLHttpRequest();
 
     req.onreadystatechange = function() {
-        if (req.readyState == 4 && req.status == 200) {populateNotes(req.responseText, notesTable, notesEditor, id);}
+        if (req.readyState == 4 && req.status == 200) {populateNotes(req.responseText, notesTable, notesEditor, 1);}
     }
 
     req.open('POST', 'notes.cgi', true);
-    req.setRequestHeader('Content-type','application/x-www-form-urlencoded');
+    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
     req.send('mode=0');
 
     // Create actual note tab
@@ -223,7 +236,7 @@ function openNotes() {
     switchTab(id);
 }
 
-function populateNotes(data, notesTable, notesEditor, id) {
+function populateNotes(data, notesTable, notesEditor, resize) {
     if (data == 'noauth') {window.location.reload(true);}
 
     // Else
@@ -256,18 +269,20 @@ function populateNotes(data, notesTable, notesEditor, id) {
     }
 
     // Resize notes text to fill height
-    noteText = 0;
-    c = notesEditor.children;
-    for (i = 0; i < c.length; i++) {
-        if (c[i].tagName == 'TEXTAREA') {
-            noteText = c[i];
-            break;
+    if (resize) {
+        noteText = 0;
+        c = notesEditor.children;
+        for (i = 0; i < c.length; i++) {
+            if (c[i].tagName == 'TEXTAREA') {
+                noteText = c[i];
+                break;
+            }
         }
-    }
-    noteText.style.height = notesEditor.offsetHeight - noteText.offsetTop - 30 + 'px';
+        noteText.style.height = notesEditor.offsetHeight - noteText.offsetTop - 30 + 'px';
 
-    titleTD = notesTable.children[0].children[0];
-    titleTD.style.width = titleTD.offsetWidth + 10 + 'px';
+        titleTD = notesTable.children[0].children[0];
+        titleTD.style.width = titleTD.offsetWidth + 10 + 'px';
+    }
 }
 
 function editNote(note, row) {
@@ -286,5 +301,41 @@ function editNote(note, row) {
         if (editElems[i].tagName == 'INPUT') {editElems[i].value = note.title;}
         if (editElems[i].tagName == 'TEXTAREA') {editElems[i].value = note.text;}
         if (editElems[i].className == 'error_text') {setText(editElems[i], '');}
+    }
+}
+
+function refreshNotes(notes) {
+    notesPanes = document.getElementsByClassName('notes');
+    for (i = 0; i < notesPanes.length; i++) {
+        if (notesPanes[i].tagName != 'DIV') {continue;}
+
+        notePane = notesPanes[i];
+        noteTable = 0;
+        noteEditor = 0;
+        // Get note table and note editor
+        // and clear out old entries
+        for (j = 0; j < notePane.children.length; j++) {
+            elem = notePane.children[j];
+            if (elem.className == 'notes_editor') {noteEditor = elem;}
+            if (elem.className == 'notes_list') {
+                noteTable = elem.children[0];
+
+                while (noteTable.children.length > 1) {
+                    row = noteTable.children[1];
+                    row.remove();
+                }
+            }
+        }
+
+        // If this pane wasn't selected, clear out its edit panel
+        if (noteTable.parentElement.parentElement.className.search('selected') == -1) {
+            noteEditor.setAttribute('data-note_id', -1);
+            for (j = 0; j < noteEditor.children.length; j++) {
+                elem = noteEditor.children[j];
+                if (elem.tagName == 'INPUT' || elem.tagName == 'TEXTAREA') {elem.value = '';}
+            }
+        }
+
+        populateNotes(notes, noteTable, noteEditor, 0);
     }
 }
