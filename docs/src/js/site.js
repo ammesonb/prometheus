@@ -306,10 +306,10 @@ function editNote(note, row) {
 
 function refreshNotes(notes) {
     notesPanes = document.getElementsByClassName('notes');
-    for (i = 0; i < notesPanes.length; i++) {
-        if (notesPanes[i].tagName != 'DIV') {continue;}
+    for (pane = 0; pane < notesPanes.length; pane++) {
+        if (notesPanes[pane].tagName != 'DIV') {continue;}
 
-        notePane = notesPanes[i];
+        notePane = notesPanes[pane];
         noteTable = 0;
         noteEditor = 0;
         // Get note table and note editor

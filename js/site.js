@@ -132,15 +132,17 @@ function openNotes() {
         noteText = '';
         errorText = 0;
         c = editPane.children;
-        for (i = 0; i < c.length; i++) {
-            if (c[i].tagName == 'INPUT') {
-                noteTitle = c[i].value;
-            } else if (c[i].tagName == 'TEXTAREA') {
-                noteText = c[i].value;
-            } else if (c[i].className == 'error_text') {
-                errorText = c[i];
+
+        for (child= 0; child < c.length; child++) {
+            if (c[child].tagName == 'INPUT') {
+                noteTitle = c[child].value;
+            } else if (c[child].tagName == 'TEXTAREA') {
+                noteText = c[child].value;
+            } else if (c[child].className == 'error_text') {
+                errorText = c[child];
             }
         }
+        setText(errorText, '');
 
         if (noteTitle.length === 0) {
             setText(errorText, 'You must enter a title');
@@ -195,9 +197,9 @@ function openNotes() {
     cancelButton.onclick = function() {
         this.parentElement.setAttribute('data-note_id', -1);
         c = this.parentElement.children;
-        for (i = 0; i < c.length; i++) {
-            if (c[i].tagName == 'INPUT' || c[i].tagName == 'TEXTAREA') {c[i].value = '';}
-            if (c[i].className == 'error_text') {setText(c[i], '');}
+        for (child = 0; child < c.length; i++) {
+            if (c[child].tagName == 'INPUT' || c[child].tagName == 'TEXTAREA') {c[child].value = '';}
+            if (c[child].className == 'error_text') {setText(c[child], '');}
         }
     };
 
@@ -241,8 +243,8 @@ function populateNotes(data, notesTable, notesEditor, resize) {
 
     // Else
     notes = JSON.parse(data);
-    for (i = 0; i < notes.length; i++) {
-        note = notes[i];
+    for (n = 0; n < notes.length; n++) {
+        note = notes[n];
         r = document.createElement('tr');
         r.setAttribute('data-note', JSON.stringify(note));
         r.onclick = function() {
@@ -272,9 +274,9 @@ function populateNotes(data, notesTable, notesEditor, resize) {
     if (resize) {
         noteText = 0;
         c = notesEditor.children;
-        for (i = 0; i < c.length; i++) {
-            if (c[i].tagName == 'TEXTAREA') {
-                noteText = c[i];
+        for (child= 0; child < c.length; child++) {
+            if (c[child].tagName == 'TEXTAREA') {
+                noteText = c[child];
                 break;
             }
         }
@@ -289,33 +291,33 @@ function editNote(note, row) {
     notePanel = row.parentElement.parentElement.parentElement;
     panes = notePanel.children;
     editPane = 0;
-    for (i = 0; i < panes.length; i++) {
-        if (panes[i].className == 'notes_editor') {
-            editPane = panes[i];
+    for (pane = 0; pane < panes.length; pane++) {
+        if (panes[pane].className == 'notes_editor') {
+            editPane = panes[pane];
             break;
         }
     }
     editPane.setAttribute('data-note_id', note.id);
     editElems = editPane.children;
-    for (i = 0; i < editElems.length; i++) {
-        if (editElems[i].tagName == 'INPUT') {editElems[i].value = note.title;}
-        if (editElems[i].tagName == 'TEXTAREA') {editElems[i].value = note.text;}
-        if (editElems[i].className == 'error_text') {setText(editElems[i], '');}
+    for (elem = 0; elem < editElems.length; elem++) {
+        if (editElems[elem].tagName == 'INPUT') {editElems[elem].value = note.title;}
+        if (editElems[elem].tagName == 'TEXTAREA') {editElems[elem].value = note.text;}
+        if (editElems[elem].className == 'error_text') {setText(editElems[elem], '');}
     }
 }
 
 function refreshNotes(notes) {
     notesPanes = document.getElementsByClassName('notes');
-    for (i = 0; i < notesPanes.length; i++) {
-        if (notesPanes[i].tagName != 'DIV') {continue;}
+    for (pane = 0; pane < notesPanes.length; pane++) {
+        if (notesPanes[pane].tagName != 'DIV') {continue;}
 
-        notePane = notesPanes[i];
+        notePane = notesPanes[pane];
         noteTable = 0;
         noteEditor = 0;
         // Get note table and note editor
         // and clear out old entries
-        for (j = 0; j < notePane.children.length; j++) {
-            elem = notePane.children[j];
+        for (child = 0; child < notePane.children.length; child++) {
+            elem = notePane.children[child];
             if (elem.className == 'notes_editor') {noteEditor = elem;}
             if (elem.className == 'notes_list') {
                 noteTable = elem.children[0];
@@ -330,8 +332,8 @@ function refreshNotes(notes) {
         // If this pane wasn't selected, clear out its edit panel
         if (noteTable.parentElement.parentElement.className.search('selected') == -1) {
             noteEditor.setAttribute('data-note_id', -1);
-            for (j = 0; j < noteEditor.children.length; j++) {
-                elem = noteEditor.children[j];
+            for (child = 0; child < noteEditor.children.length; child++) {
+                elem = noteEditor.children[child];
                 if (elem.tagName == 'INPUT' || elem.tagName == 'TEXTAREA') {elem.value = '';}
             }
         }
