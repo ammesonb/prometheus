@@ -311,8 +311,10 @@ function populateNotes(data, notesTable, notesEditor, resize) {
         i.title = 'Delete note';
         a.appendChild(i);
         a.setAttribute('data-note_id', note.id);
+        a.setAttribute('data-note_title', note.title);
         a.onclick = function() {
-            // NOTEID doesn't work
+            confirmDelete = confirm('Are you sure you want to delete note \'' + this.getAttribute('data-note_title') + '\'?');
+            if (!confirmDelete) {return;}
             deletedNoteID = this.getAttribute('data-note_id');
             deleteReq = new XMLHttpRequest();
             
