@@ -14,7 +14,7 @@ my %domainRegexes = (
     'ALL' => '.*'
 );
 
-my $indent = "    ";
+my $indent = '    ';
 
 sub init {
     my $session = shift;
@@ -117,8 +117,8 @@ sub init {
 
 sub checkSession {
     my $session = shift;
-    return 1 if (not $session->param('logged_in'));
     return 2 if ($session->param('blocked'));
+    return 1 if (not $session->param('logged_in'));
     return 0;
 }
 
@@ -169,7 +169,7 @@ sub searchTable {
     my $dbh = connectToDB();
 
     # Create query
-    my $query = "SELECT " . join(", ", @columns) . " FROM $tableName WHERE ";
+    my $query = "SELECT " . join(', ', @columns) . " FROM $tableName WHERE ";
     for (my $i = 0; $i <= $#logic; $i++) {
         $query .= "$searchColumns[$i] $operators[$i] $patterns[$i] $logic[$i] ";
     }
@@ -202,7 +202,7 @@ sub searchTableSort {
     my $dbh = connectToDB();
 
     # Create query
-    my $query = "SELECT " . join(", ", @columns) . " FROM $tableName WHERE ";
+    my $query = "SELECT " . join(', ', @columns) . " FROM $tableName WHERE ";
     for (my $i = 0; $i <= $#logic; $i++) {
         $query .= "$searchColumns[$i] $operators[$i] $patterns[$i] $logic[$i] ";
     }
@@ -219,6 +219,24 @@ sub searchTableSort {
 
     $dbh->disconnect();
     return \@rows;
+}
+
+sub insertIntoTable {
+    # Get parameters
+    my $tableName = shift;
+    my $insertColsRef = shift;
+    my @insertColumns = @$insertColsRef;
+    my $insertValsRef = shift;
+    my @insertValues = @$insertValsRef;
+
+    my $dbh = connectToDB();
+
+    # Create query
+    my $query = "INSERT INTO $tableName (" . join(', ', @insertColumns) . ') VALUES (' . join(', ', @insertValues) . ')';
+    my $rows = $dbh->do($query);
+    $dbh->disconnect();
+
+    return $rows;
 }
 
 sub updateTable {
@@ -252,6 +270,33 @@ sub updateTable {
     my $rowsChanged = $dbh->do($query);
     $dbh->disconnect;
     return $rowsChanged;
+}
+
+sub deleteFromTable {
+    # Get parameters
+    my $tableName = shift;
+    my $deleteColsRef = shift;
+    my @deleteCols = @$deleteColsRef;
+    my $deleteOpsRef = shift;
+    my @deleteOps = @$deleteOpsRef;
+    my $deleteValsRef = shift;
+    my @deleteValues = @$deleteValsRef;
+    my $deleteLogicRef = shift;
+    my @deleteLogic = @$deleteLogicRef;
+
+    my $dbh = connectToDB();
+
+    # Create query
+    my $query = "DELETE FROM $tableName * WHERE ";
+    for (my $i = 0; $i <= $#deleteLogic; $i++) {
+        $query .= "$deleteCols[$i] $deleteOps[$i] $deleteValues[$i] $deleteLogic[$i] ";
+    }
+    $query .= "$deleteCols[$#deleteCols] $deleteOps[$#deleteOps] $deleteValues[$#deleteValues]";
+
+    my $deletedRows = $dbh->do($query);
+    $dbh->disconnect();
+
+    return $deletedRows;
 }
 
 sub attempt_login {
@@ -385,6 +430,17 @@ Returns a reference to an array of sorted hash references to rows that matched t
 
 =cut
 
+=head2 insertIntoTable
+
+=pod
+
+Takes a table name, a reference to an array of columns to fill with value,
+and a reference to an array of values to fill the columns with.
+
+Returns the number of rows created.
+
+=cut
+
 =head2 updateTable
 
 =pod
@@ -397,6 +453,19 @@ reference to an array of patterns to filter the columns with,
 and a reference to an array of logic operators to use to combine the terms
 
 Returns the number of rows updated.
+
+=cut
+
+=head2 deleteFromTable
+
+=pod
+
+Takes a table name, a reference to an array of columns to filter the deletion on,
+a reference to an array of operators to use for filtering,
+a reference to an array of values to filter the columns by,
+and a reference to an array of logic operators to combine the filters with.
+
+Returns the number of rows deleted
 
 =cut
 

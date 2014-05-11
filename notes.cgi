@@ -19,7 +19,7 @@ if (COMMON::checkSession($session) && $mode != 1) {
     exit;
 }
 
-if (not ($mode =~ /^[0-9]$/)) {
+if (not ($mode =~ /^[0-2]$/)) {
     print "Bad request!";
     exit;
 }
@@ -54,6 +54,25 @@ if ($mode == 0) {
     my $noteID = $q->param('note_id');
     my $noteTitle = $q->param('note_title');
     my $noteText = $q->param('note_text');
+
+    # If ID is -1, create note instead of update
+    if (($noteID cmp '-1') == 0) {
+        if (not COMMON::checkPrintable($noteTitle)) {
+            print 'baddata';
+            exit;
+        } elsif (not COMMON::checkPrintable($noteText)) {
+            print 'baddata';
+            exit;
+        }
+        my @columns = ('user_id', 'title', 'text');
+        my @values = ($session->param('user_id'), "'$noteTitle'", "'$noteText'");
+        my $rows = COMMON::insertIntoTable('notes', \@columns, \@values);
+        print 'success' if ($rows == 1);
+        print 'fail' if ($rows == 0);
+        print 'extra' if ($rows > 1);
+        exit;
+    }
+
     if (not ($noteID =~ /^[0-9]+$/)) {
         print 'badid';
         exit;
@@ -78,6 +97,16 @@ if ($mode == 0) {
     print 'success' if ($rows == 1);
     print 'none' if ($rows == 0);
     print 'extra' if ($rows > 1);
+} elsif ($mode == 2) {
+    my $noteID = $q->param('note_id');
+    if ($noteID =~ /^[0-9]+$/) {
+        my @deleteCols = ('id');
+        my @deleteOps = ('=');
+        my @deleteVals = ($noteID);
+        my @deleteLogic = ();
+        COMMON::deleteFromTable('notes', \@deleteCols, \@deleteOps, \@deleteVals, \@deleteLogic);
+        # Update notes here
+    }
 }
 
 exit;

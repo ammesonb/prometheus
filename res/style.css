@@ -126,7 +126,8 @@ button.left_action {
 }
 
 button.right_action {
-    float: left;
+    float: right;
+    margin-left: 10px;
 }
 
 p#error {

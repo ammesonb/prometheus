@@ -59,7 +59,9 @@
 	<li><a href="#getSortedTable">getSortedTable</a></li>
 	<li><a href="#searchTable">searchTable</a></li>
 	<li><a href="#searchTableSort">searchTableSort</a></li>
+	<li><a href="#insertIntoTable">insertIntoTable</a></li>
 	<li><a href="#updateTable">updateTable</a></li>
+	<li><a href="#deleteFromTable">deleteFromTable</a></li>
 	<li><a href="#attempt_login">attempt_login</a></li>
 	<li><a href="#check_printable">check_printable</a></li>
 </ul>
@@ -199,8 +201,8 @@ and is in acceptable location</p>
 
 sub checkSession {
     my $session = shift;
-    return 1 if (not $session->param('logged_in'));
     return 2 if ($session->param('blocked'));
+    return 1 if (not $session->param('logged_in'));
     return 0;
 }
 </pre></div>
@@ -294,7 +296,7 @@ sub searchTable {
     my $dbh = connectToDB();
 
     # Create query
-    my $query = "SELECT " . join(", ", @columns) . " FROM $tableName WHERE ";
+    my $query = "SELECT " . join(', ', @columns) . " FROM $tableName WHERE ";
     for (my $i = 0; $i <= $#logic; $i++) {
         $query .= "$searchColumns[$i] $operators[$i] $patterns[$i] $logic[$i] ";
     }
@@ -341,7 +343,7 @@ sub searchTableSort {
     my $dbh = connectToDB();
 
     # Create query
-    my $query = "SELECT " . join(", ", @columns) . " FROM $tableName WHERE ";
+    my $query = "SELECT " . join(', ', @columns) . " FROM $tableName WHERE ";
     for (my $i = 0; $i <= $#logic; $i++) {
         $query .= "$searchColumns[$i] $operators[$i] $patterns[$i] $logic[$i] ";
     }
@@ -368,6 +370,36 @@ reference to an array of logic operators to combine the terms,
 and a sort string of the format 'column_name[,column2]... [ASC || DESC]</p>
 
 <p>Returns a reference to an array of sorted hash references to rows that matched the filter</p>
+
+<h2 id="insertIntoTable">insertIntoTable</h2>
+
+<p><a href="#" onclick="toggleCode('method_insertIntoTable');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_insertIntoTable">
+                                        <pre>
+
+sub insertIntoTable {
+    # Get parameters
+    my $tableName = shift;
+    my $insertColsRef = shift;
+    my @insertColumns = @$insertColsRef;
+    my $insertValsRef = shift;
+    my @insertValues = @$insertValsRef;
+
+    my $dbh = connectToDB();
+
+    # Create query
+    my $query = "INSERT INTO $tableName (" . join(', ', @insertColumns) . ') VALUES (' . join(', ', @insertValues) . ')';
+    my $rows = $dbh->do($query);
+    $dbh->disconnect();
+
+    return $rows;
+}
+</pre></div>
+
+<p>Takes a table name, a reference to an array of columns to fill with value,
+and a reference to an array of values to fill the columns with.</p>
+
+<p>Returns the number of rows created.</p>
 
 <h2 id="updateTable">updateTable</h2>
 
@@ -417,6 +449,47 @@ reference to an array of patterns to filter the columns with,
 and a reference to an array of logic operators to use to combine the terms</p>
 
 <p>Returns the number of rows updated.</p>
+
+<h2 id="deleteFromTable">deleteFromTable</h2>
+
+<p><a href="#" onclick="toggleCode('method_deleteFromTable');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_deleteFromTable">
+                                        <pre>
+
+sub deleteFromTable {
+    # Get parameters
+    my $tableName = shift;
+    my $deleteColsRef = shift;
+    my @deleteCols = @$deleteColsRef;
+    my $deleteOpsRef = shift;
+    my @deleteOps = @$deleteOpsRef;
+    my $deleteValsRef = shift;
+    my @deleteValues = @$deleteValsRef;
+    my $deleteLogicRef = shift;
+    my @deleteLogic = @$deleteLogicRef;
+
+    my $dbh = connectToDB();
+
+    # Create query
+    my $query = "DELETE FROM $tableName * WHERE ";
+    for (my $i = 0; $i <= $#deleteLogic; $i++) {
+        $query .= "$deleteCols[$i] $deleteOps[$i] $deleteValues[$i] $deleteLogic[$i] ";
+    }
+    $query .= "$deleteCols[$#deleteCols] $deleteOps[$#deleteOps] $deleteValues[$#deleteValues]";
+
+    my $deletedRows = $dbh->do($query);
+    $dbh->disconnect();
+
+    return $deletedRows;
+}
+</pre></div>
+
+<p>Takes a table name, a reference to an array of columns to filter the deletion on,
+a reference to an array of operators to use for filtering,
+a reference to an array of values to filter the columns by,
+and a reference to an array of logic operators to combine the filters with.</p>
+
+<p>Returns the number of rows deleted</p>
 
 <h2 id="attempt_login">attempt_login</h2>
 

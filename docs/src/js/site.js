@@ -44,6 +44,7 @@ function addTab(element, tabElement) {
     x = document.createElement('img');
     x.src = 'images/x.png';
     x.alt = 'Close tab';
+    x.title = 'Close tab';
     x.setAttribute('data-id', element.id);
     x.onclick = function() {
         closeTab(this.getAttribute('data-id'));
@@ -161,6 +162,8 @@ function openNotes() {
                 if (status == 'success') {
                 } else if (status == 'none') {
                     setText(errorText, 'Update failed - no matching note found!');
+                } else if (status == 'fail') {
+                    setText(errorText, 'Failed to create new note!');
                 } else if (status == 'extra') {
                     setText(errorText, 'Update succeeded, but found multiple matching notes!');
                 } else if (status == 'expired') {
@@ -192,12 +195,25 @@ function openNotes() {
     }
 
     cancelButton = document.createElement('button');
-    cancelButton.className = 'right_action';
+    cancelButton.className = 'left_action';
     setText(cancelButton, 'Cancel');
     cancelButton.onclick = function() {
         this.parentElement.setAttribute('data-note_id', -1);
         c = this.parentElement.children;
-        for (child = 0; child < c.length; i++) {
+        for (child = 0; child < c.length; child++) {
+            if (c[child].tagName == 'INPUT' || c[child].tagName == 'TEXTAREA') {c[child].value = '';}
+            if (c[child].className == 'error_text') {setText(c[child], '');}
+        }
+    };
+
+    createButton = document.createElement('button');
+    createButton.className = 'right_action';
+    createButton.style.marginRight = '10px';
+    setText(createButton, 'Create note');
+    createButton.onclick = function() {
+        this.parentElement.setAttribute('data-note_id', -1);
+        c = this.parentElement.children;
+        for (child = 0; child < c.length; child++) {
             if (c[child].tagName == 'INPUT' || c[child].tagName == 'TEXTAREA') {c[child].value = '';}
             if (c[child].className == 'error_text') {setText(c[child], '');}
         }
@@ -214,6 +230,7 @@ function openNotes() {
     notesEditor.appendChild(saveButton);
     notesEditor.appendChild(cancelButton);
     notesEditor.appendChild(errorText);
+    notesEditor.appendChild(createButton);
 
     // Fetch notes
     req = new XMLHttpRequest();
@@ -242,19 +259,40 @@ function populateNotes(data, notesTable, notesEditor, resize) {
     if (data == 'noauth') {window.location.reload(true);}
 
     // Else
+    // Get current editor state
+    editorTitleText = '';
+    editorNoteText = '';
+    for (child = 0; child < notesEditor.children.length; child++) {
+        editorElem = notesEditor.children[child];
+        if (editorElem.tagName == 'INPUT') {editorTitleText = editorElem.value;}
+        if (editorElem.tagName == 'TEXTAREA') {editorNoteText = editorElem.value;}
+    }
+
     notes = JSON.parse(data);
     for (n = 0; n < notes.length; n++) {
         note = notes[n];
         r = document.createElement('tr');
         r.setAttribute('data-note', JSON.stringify(note));
+
+        // If no note loaded, but title and text match, this note must have just been created
+        if (notesEditor.getAttribute('data-note_id') == '-1' &&
+            note.title == editorTitleText && note.text == editorNoteText) {
+            notesEditor.setAttribute('data-note_id', note.id);
+            r.style.textDecoration = 'underline';
+        }
+
         r.onclick = function() {
             editNote(JSON.parse(this.getAttribute('data-note')), this);
+            children = this.parentElement.children;
+            for (child = 0; child < children.length; child++) {
+                children[child].style.textDecoration = 'none';
+            }
+            this.style.textDecoration = 'underline';
         }
         r.onmouseover = function() {
             this.style.fontWeight = 'bold';
             this.style.fontStyle = 'italic';
         }
-
         r.onmouseout = function() {
             this.style.fontWeight = 'normal';
             this.style.fontStyle = 'normal';
@@ -263,6 +301,51 @@ function populateNotes(data, notesTable, notesEditor, resize) {
         setText(title, note.title);
         mtime = document.createElement('td');
         setText(mtime, note.mtime);
+        a = document.createElement('a');
+        a.href = '#';
+        a.style.float = 'right';
+        a.style.paddingRight = '5px';
+        i = document.createElement('img');
+        i.src = 'images/x.png';
+        i.alt = 'Delete note';
+        i.title = 'Delete note';
+        a.appendChild(i);
+        a.setAttribute('data-note_id', note.id);
+        a.onclick = function() {
+            // NOTEID doesn't work
+            deletedNoteID = this.getAttribute('data-note_id');
+            deleteReq = new XMLHttpRequest();
+            
+            deleteReq.onreadystatechange = function() {
+                if (deleteReq.readyState == 4 && deleteReq.status == 200) {
+                    refreshReq = new XMLHttpRequest();
+
+                    refreshReq.onreadystatechange = function() {
+                        if (refreshReq.readyState == 4 && refreshReq.status == 200) {
+                            if (notesEditor.getAttribute('data-note_id') == deletedNoteID) {
+                                notesEditor.setAttribute('data-note_id', -1);
+                                for (child = 0; child < notesEditor.children.length; child++) {
+                                    elem = notesEditor.children[child];
+                                    if (elem.tagName == 'INPUT' || elem.tagName == 'TEXTAREA') {elem.value = '';}
+                                }
+                            }
+                            refreshNotes(refreshReq.responseText);
+                        }
+                    }
+
+                    refreshReq.open('POST', 'notes.cgi', true);
+                    refreshReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+                    refreshReq.send('mode=0');
+                    // Do something
+                    // Probably refreshNotes - make notes.cgi return updated list of notes, possibly tie into mode 0?
+                }
+            };
+
+            deleteReq.open('POST', 'notes.cgi', true);
+            deleteReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+            deleteReq.send('mode=2&note_id=' + this.getAttribute('data-note_id'));
+        }
+        mtime.appendChild(a);
 
         r.appendChild(title);
         r.appendChild(mtime);
