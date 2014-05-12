@@ -198,6 +198,13 @@ function openNotes() {
     cancelButton.className = 'left_action';
     setText(cancelButton, 'Cancel');
     cancelButton.onclick = function() {
+        tab = this.parentElement.parentElement.children[0];
+        table = 0;
+        for (child = 0; child < tab.children.length; child++) {
+            if (tab.children[child].tagName === 'TABLE') {table = tab.children[child];}
+        }
+        for (child = 0; child < table.children.length; child++) {table.children[child].style.textDecoration = 'none';}
+
         this.parentElement.setAttribute('data-note_id', -1);
         c = this.parentElement.children;
         for (child = 0; child < c.length; child++) {
@@ -211,6 +218,13 @@ function openNotes() {
     createButton.style.marginRight = '10px';
     setText(createButton, 'Create note');
     createButton.onclick = function() {
+        tab = this.parentElement.parentElement.children[0];
+        table = 0;
+        for (child = 0; child < tab.children.length; child++) {
+            if (tab.children[child].tagName === 'TABLE') {table = tab.children[child];}
+        }
+        for (child = 0; child < table.children.length; child++) {table.children[child].style.textDecoration = 'none';}
+
         this.parentElement.setAttribute('data-note_id', -1);
         c = this.parentElement.children;
         for (child = 0; child < c.length; child++) {
