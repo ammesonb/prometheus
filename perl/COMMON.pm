@@ -165,6 +165,12 @@ sub searchTable {
     my @patterns = @$patternsRef;
     my $logicRef = shift;
     my @logic = @$logicRef;
+    my $useAgg = shift;
+    my @groupColumns;
+    if ($useAgg) {
+        my $groupColsRef = shift;
+        my @groupColumns = @$groupColsRef;
+    }
 
     my $dbh = connectToDB();
 
@@ -174,6 +180,7 @@ sub searchTable {
         $query .= "$searchColumns[$i] $operators[$i] $patterns[$i] $logic[$i] ";
     }
     $query .= "$searchColumns[$#searchColumns] $operators[$#operators] $patterns[$#patterns]";
+    $query .= " GROUP BY " . join(', ', @groupColumns) if ($useAgg);
 
     # Execute query
     my $sth = $dbh->prepare($query);
@@ -407,10 +414,13 @@ Returns a reference to an array of references to hashes, indexed by column name
 
 =pod
 
-Takes a table name, reference to an array of columns to return, reference to an array of columns to search on,
+Takes a table name, reference to an array of columns to return,
+reference to an array of columns to search on,
 reference to an array of operators to use,
 reference to an array of patterns to search the columns by,
-and reference to an array of logic operators to combine the terms
+reference to an array of logic operators to combine the terms,
+and optionally a boolean to specify if aggregate functions are used
+If so, it will also take a reference to an array of columns to group by
 
 Returns a reference to a hash of the filtered table
 
