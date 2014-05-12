@@ -36,6 +36,7 @@ function setText(element, text) {
     element.innerHTML = text;
 }
 
+/* Tabs */
 function addTab(element, tabElement) {
     tabElement.className = 'tab ' + element.id;
     tabLink = document.createElement('a');
@@ -73,6 +74,7 @@ function switchTab(tabID) {
     newTab.className = newTab.className + ' selected';
 }
 
+/* Notes */
 function openNotes() {
     // Create notes panel
     notes = document.createElement('div');
@@ -262,9 +264,7 @@ function openNotes() {
     setText(noteTab, 'Notes');
     noteTab.className = 'tab';
     noteTab.setAttribute('data-id', id);
-    noteTab.onclick = function() {
-        switchTab(this.getAttribute('data-id'));
-    };
+    noteTab.onclick = function() {switchTab(this.getAttribute('data-id'));};
     addTab(notes, noteTab);
     switchTab(id);
 }
@@ -439,4 +439,20 @@ function refreshNotes(notes) {
 
         populateNotes(notes, noteTable, noteEditor, 0);
     }
+}
+
+/* Account Management */
+function viewAccount() {
+    id = 'my_account_' + new Date().getTime();
+    accountPanel = document.createElement('div');
+    accountPanel.id = id;
+
+    // Create tab and display panel
+    accountTab = document.createElement('div');
+    setText(accountTab, 'My Account');
+    accountTab.className = 'tab';
+    accountTab.setAttribute('data-id', id);
+    accountTab.onclick = function() {switchTab(this.getAttribute('data-id'));};
+    addTab(accountPanel, accountTab);
+    switchTab(id);
 }

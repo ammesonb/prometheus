@@ -1,4 +1,7 @@
+Account
+    Need shared/admin accessible by JS
 Access controls - services on a per-user basis
+    Only show services user is allowed to see
     Need aggregate function for searching
         Plus sort?
         Or the joined sort?
