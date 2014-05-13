@@ -7,6 +7,7 @@ use CGI::Session;
 use CGI::Carp qw(fatalsToBrowser);
 use DBI;
 use DBD::Pg;
+use List::MoreUtils qw(first_index);
 use strict;
 
 my %domainRegexes = (
@@ -93,10 +94,29 @@ sub init {
     tabs.style.width = window.innerWidth - 300 + 'px';
     tabs.style.marginLeft = -.5 * (window.innerWidth - 300) + 'px';
     </script>\n";
+
+        # Get services the user has access to
+        my @returnCols = ('user_id', 'array_agg(service_id)');
+        my @searchCols = ('user_id');
+        my @searchOps = ('=');
+        my @searchVals = ($session->param('user_id'));
+        my @logic = ();
+        my @groupBy = ('user_id');
+        my $servicesRef = searchTable('user_services', \@returnCols, \@searchCols, \@searchOps, \@searchVals, \@logic, 1, \@groupBy, 'user_id');
+        my %services = %$servicesRef;
+        my @serviceKeys = keys(%services);
+        $servicesRef = $services{$serviceKeys[0]};
+        %services = %$servicesRef;
+        @serviceKeys = keys(%services);
+        my @services = @services{$serviceKeys[0]};
+        $servicesRef = $services[0];
+        my @serviceIDs = @$servicesRef;
+
         my $toolsRef = getSortedTable("services", "row_order");
         my @tools = @$toolsRef;
         foreach (@tools) {
             my %tool = %$_;
+            if ((first_index {$_ == $tool{'id'}} @serviceIDs) == -1) {next;}
             $html .= $indent . "<a href=\"#\" onclick=\"$tool{'function'}()\">\n";
             $html .= $indent x 2 . "<span class=\"tool\">\n";
             my $image = $tool{'service'};
@@ -169,8 +189,9 @@ sub searchTable {
     my @groupColumns;
     if ($useAgg) {
         my $groupColsRef = shift;
-        my @groupColumns = @$groupColsRef;
+        @groupColumns = @$groupColsRef;
     }
+    my $idCol = shift;
 
     my $dbh = connectToDB();
 
@@ -185,7 +206,9 @@ sub searchTable {
     # Execute query
     my $sth = $dbh->prepare($query);
     $sth->execute();
-    my $dataRef = $sth->fetchall_hashref(['id']);
+    my $dataRef;
+    if ($idCol) {$dataRef = $sth->fetchall_hashref([$idCol]);}
+    else {$dataRef = $sth->fetchall_hashref(['id']);}
     $dbh->disconnect();
 
     return $dataRef;
