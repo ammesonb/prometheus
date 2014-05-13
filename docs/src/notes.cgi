@@ -11,16 +11,16 @@ use strict;
 my $q = new CGI();
 my $session = CGI::Session->new($q);
 
-my $mode = $q->param('mode');
 print "Content-type: text/plain\r\n\r\n";
+my $mode = $q->param('mode');
 if (COMMON::checkSession($session) && $mode != 1) {
     $session->param('timed_out', 1);
-    print "noauth";
+    print 'noauth';
     exit;
 }
 
 if (not ($mode =~ /^[0-2]$/)) {
-    print "Bad request!";
+    print 'Bad request!';
     exit;
 }
 
@@ -31,7 +31,7 @@ if ($mode == 0) {
     my @operators = ('=');
     my @patterns = ($session->param('user_id'));
     my @logic = ();
-    my $sort = "title, mtime DESC";
+    my $sort = "title, mtime DESC';
 
     my $notesRef = COMMON::searchTableSort($table, \@returnCols, \@searchCols, \@operators, \@patterns, \@logic, $sort);
     my @notes = @$notesRef;
