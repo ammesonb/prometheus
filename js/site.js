@@ -169,6 +169,7 @@ function openNotes() {
                 } else if (status == 'extra') {
                     setText(errorText, 'Update succeeded, but found multiple matching notes!');
                 } else if (status == 'expired') {
+                    alert('Session has expired! Please save any modified data locally and reload the page.');
                 } else if (status == 'badid') {
                     setText(errorText, 'Update failed - no matching note found!');
                 } else if (status == 'baddata') {
@@ -177,11 +178,12 @@ function openNotes() {
             }
         };
 
-        saveReq.open('POST', 'notes.cgi', true);
+        saveReq.open('POST', 'notes.cgi', false);
         saveReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
         saveReq.send('mode=1&note_id=' + noteID +
                      '&note_title=' + encodeURIComponent(noteTitle) + '&note_text=' + encodeURIComponent(noteText));
 
+        if (saveReq.responseText === 'expired') {return;}
         // Delay update for one second
         setTimeout(function() {
             updateReq = new XMLHttpRequest();

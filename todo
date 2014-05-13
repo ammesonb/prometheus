@@ -1,11 +1,5 @@
 Account
     Need shared/admin accessible by JS
-Access controls - services on a per-user basis
-    Only show services user is allowed to see
-    Need aggregate function for searching
-        Plus sort?
-        Or the joined sort?
-            This is getting pretty complex - why not just write out the query?
 Night theme
 User controls via GUI - need differentiation between all and just yourself - see above point
     Some accounts shared, such as pepband, so password can't be changed
@@ -14,5 +8,3 @@ User controls via GUI - need differentiation between all and just yourself - see
 Images for other services
 Write other services
 Handle resize of window more gracefully, somehow?
-Autosave for things like notes and taskmanager?
-    Display data on attempted submit and recommend saving
