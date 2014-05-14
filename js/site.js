@@ -449,6 +449,18 @@ function viewAccount() {
     accountPanel = document.createElement('div');
     accountPanel.id = id;
 
+    privilegesReq = new XMLHttpRequest();
+
+    privilegesReq.onreadystatechange = function() {
+        if (privilegesReq.readyState == 4 && privilegesReq.status == 200) {
+            alert(privilegesReq.responseText);
+        }
+    };
+
+    privilegesReq.open('POST', 'account.cgi', false);
+    privilegesReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    privilegesReq.send('mode=0');
+
     // Create tab and display panel
     accountTab = document.createElement('div');
     setText(accountTab, 'My Account');

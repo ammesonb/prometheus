@@ -1,5 +1,8 @@
 Account
-    Need shared/admin accessible by JS
+    Use AJAX response to display proper elements for form
+All
+    Make sure attempted change in database matches user's ID to avoid
+    changes made in the HTML data property
 Night theme
 User controls via GUI - need differentiation between all and just yourself - see above point
     Some accounts shared, such as pepband, so password can't be changed

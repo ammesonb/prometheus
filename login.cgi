@@ -19,7 +19,7 @@ my $session = CGI::Session->new($q);
 my $response = COMMON::attempt_login($q->param('a'), $q->param('c'));
 
 # Get user data
-my @returnCols = ('id');
+my @returnCols = ('id', 'is_shared', 'is_admin');
 my @searchCols = ('username');
 my @operators = ('=');
 my @patterns = ("'" . $q->param('a') . "'");
@@ -40,6 +40,10 @@ $session->param('logged_in', 0);
 $session->expire('logged_in', '+30m');
 $session->param('blocked', 0);
 $session->expire('blocked', '+30m');
+$session->param('is_admin', $userData{$userID}{'is_admin'});
+$session->expire('is_admin', '+30m');
+$session->param('is_shared', $userData{$userID}{'is_shared'});
+$session->expire('is_shared', '+30m');
 $session->param('logged_in', 1) if ($response == 0);
 $session->param('blocked', 1) if ($response == 3);
 if ($response == 0) {
