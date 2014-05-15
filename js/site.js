@@ -453,7 +453,49 @@ function viewAccount() {
 
     privilegesReq.onreadystatechange = function() {
         if (privilegesReq.readyState == 4 && privilegesReq.status == 200) {
-            alert(privilegesReq.responseText);
+            data = privilegesReq.responseText;
+            data = data.split(';');
+            accountType = data[0];
+            services = data[1];
+            serviceP = document.createElement('p');
+            serviceP.className = 'normal_text';
+            setText(serviceP, 'You may access the following services: ' + services);
+            accountPanel.appendChild(serviceP);
+
+            if (accountType != 'shared') {
+                passText = document.createElement('p');
+                passText.className = 'normal_section_header';
+                setText(passText, 'Update Password');
+
+                pBox = document.createElement('span');
+                pBox.style.textAlign = 'right';
+                pBox.style.float = 'left';
+                pBox.className = 'normal';
+                p1 = document.createElement('input');
+                p1.type = 'password';
+                p2 = document.createElement('input');
+                p2.type = 'password';
+
+                // updateButton = document.createElement('button');
+                // setText(updateButton, 'Update Password');
+
+                pBox.appendChild(document.createTextNode('Enter password: '));
+                pBox.appendChild(p1);
+                pBox.appendChild(document.createElement('br'));
+                pBox.appendChild(document.createTextNode('Enter password again: '));
+                pBox.appendChild(p2);
+                pBox.appendChild(document.createElement('br'));
+
+                accountPanel.appendChild(passText);
+                accountPanel.appendChild(pBox);
+                /*accountPanel.appendChild(document.createElement('br'));
+                accountPanel.appendChild(document.createElement('br'));
+                accountPanel.appendChild(document.createElement('br'));*/
+                // accountPanel.appendChild(updateButton);
+            }
+
+            if (accountType == 'admin') {
+            }
         }
     };
 

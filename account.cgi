@@ -28,5 +28,6 @@ if ($mode == 0) {
     if ($session->param('is_shared')) {print 'shared';}
     elsif ($session->param('is_admin')) {print 'admin';}
     else {print 'normal';}
+    print ';' . $session->param('services');
 }
 exit;

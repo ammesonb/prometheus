@@ -31,7 +31,7 @@ if ($mode == 0) {
     my @operators = ('=');
     my @patterns = ($session->param('user_id'));
     my @logic = ();
-    my $sort = "title, mtime DESC';
+    my $sort = 'title, mtime DESC';
 
     my $notesRef = COMMON::searchTableSort($table, \@returnCols, \@searchCols, \@operators, \@patterns, \@logic, $sort);
     my @notes = @$notesRef;

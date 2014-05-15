@@ -32,7 +32,8 @@ div#tabs {
 
 div#main {
     display: inline-block;
-    background-color: white;
+    /*background-color: white;*/
+    background-color: #222;
     border: 5px groove #999;
     padding: 5px;
     width: 800px;
@@ -42,6 +43,12 @@ div#main {
     left: 50%;
     margin-left: -400px;
     margin-top: -250px;
+    padding-left: 20px;
+    padding-right: 15px;
+}
+
+div.normal {
+    color: white;
 }
 
 div.notes {
@@ -77,20 +84,15 @@ div.tab {
     margin-right: 5px;
 }
 
+span.normal {
+    color: white;
+}
+
 span.tool {
     margin-left: 40px;
     margin-top: 30px;
     float: left;
     text-align: center;
-    color: #555;
-    font-weight: bold;
-    font-size: 120%;
-    /*color: white;
-    text-shadow:
-        -1px -1px 0 #000,
-        1px -1px 0 #000,
-        -1px 1px 0 #000,
-        1px 1px 0 #000;*/
 }
 
 table.notes {
@@ -150,6 +152,29 @@ p#userinfo a {
     color: white;
     text-decoration: none;
     font-style: italic;
+}
+
+p.normal_text {
+    color: white;
+}
+
+p.normal_section_header {
+    color: white;
+    font-size: 125%;
+    font-weight: bold;
+}
+
+p.tool_name {
+    color: white;
+    /*color: #555;*/
+    font-weight: bold;
+    font-size: 120%;
+    /*color: white;
+    text-shadow:
+        -1px -1px 0 #000,
+        1px -1px 0 #000,
+        -1px 1px 0 #000,
+        1px 1px 0 #000;*/
 }
 
 p.form_label {

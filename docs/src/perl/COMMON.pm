@@ -114,18 +114,22 @@ sub init {
 
         my $toolsRef = getSortedTable("services", "row_order");
         my @tools = @$toolsRef;
+        my @services = ();
         foreach (@tools) {
             my %tool = %$_;
             if ((first_index {$_ == $tool{'id'}} @serviceIDs) == -1) {next;}
+            push(@services, $tool{'service'});
             $html .= $indent . "<a href=\"#\" onclick=\"$tool{'function'}()\">\n";
             $html .= $indent x 2 . "<span class=\"tool\">\n";
             my $image = $tool{'service'};
             $image =~ s/^(.*)$/\L$1.png/;
+            $image =~ s/ /_/g;
             $html .= $indent x 3 . "<img src=\"images/$image\" alt=\"$tool{'service'}\" width=\"83px\" height=\"137\">\n";
             $html .= $indent x 3 . "<p class=\"tool_name\">$tool{'service'}</p>\n";
             $html .= $indent . "</span>\n";
             $html .= $indent . "</a>\n";
         }
+        $session->param('services', join(', ', @services));
         $html .= "</div>\n";
         $html .= "</div>\n";
     }
