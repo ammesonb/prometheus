@@ -155,11 +155,11 @@ function openNotes() {
             return;
         }
 
-        saveReq = new XMLHttpRequest();
+        saveNoteReq = new XMLHttpRequest();
 
-        saveReq.onreadystatechange = function() {
-            if (saveReq.readyState == 4 && saveReq.status == 200) {
-                status = saveReq.responseText;
+        saveNoteReq.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                status = this.responseText;
 
                 if (status == 'success') {
                 } else if (status == 'none') {
@@ -178,23 +178,23 @@ function openNotes() {
             }
         };
 
-        saveReq.open('POST', 'notes.cgi', false);
-        saveReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-        saveReq.send('mode=1&note_id=' + noteID +
+        saveNoteReq.open('POST', 'notes.cgi', false);
+        saveNoteReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        saveNoteReq.send('mode=1&note_id=' + noteID +
                      '&note_title=' + encodeURIComponent(noteTitle) + '&note_text=' + encodeURIComponent(noteText));
 
-        if (saveReq.responseText === 'expired') {return;}
+        if (saveNoteReq.responseText === 'expired') {return;}
         // Delay update for one second
         setTimeout(function() {
-            updateReq = new XMLHttpRequest();
+            updateNoteReq = new XMLHttpRequest();
     
-            updateReq.onreadystatechange = function() {
-                if (updateReq.readyState == 4 && updateReq.status == 200) {refreshNotes(updateReq.responseText);}
+            updateNoteReq.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {refreshNotes(this.responseText);}
             };
     
-            updateReq.open('POST', 'notes.cgi', true);
-            updateReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-            updateReq.send('mode=0');
+            updateNoteReq.open('POST', 'notes.cgi', true);
+            updateNoteReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+            updateNoteReq.send('mode=0');
         }, 1000);
     }
 
@@ -332,14 +332,14 @@ function populateNotes(data, notesTable, notesEditor, resize) {
             confirmDelete = confirm('Are you sure you want to delete note \'' + this.getAttribute('data-note_title') + '\'?');
             if (!confirmDelete) {return;}
             deletedNoteID = this.getAttribute('data-note_id');
-            deleteReq = new XMLHttpRequest();
+            deleteNoteReq = new XMLHttpRequest();
             
-            deleteReq.onreadystatechange = function() {
-                if (deleteReq.readyState == 4 && deleteReq.status == 200) {
+            deleteNoteReq.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
                     refreshReq = new XMLHttpRequest();
 
-                    refreshReq.onreadystatechange = function() {
-                        if (refreshReq.readyState == 4 && refreshReq.status == 200) {
+                    refreshNotesReq.onreadystatechange = function() {
+                        if (this.readyState == 4 && this.status == 200) {
                             if (notesEditor.getAttribute('data-note_id') == deletedNoteID) {
                                 notesEditor.setAttribute('data-note_id', -1);
                                 for (child = 0; child < notesEditor.children.length; child++) {
@@ -347,21 +347,19 @@ function populateNotes(data, notesTable, notesEditor, resize) {
                                     if (elem.tagName == 'INPUT' || elem.tagName == 'TEXTAREA') {elem.value = '';}
                                 }
                             }
-                            refreshNotes(refreshReq.responseText);
+                            refreshNotes(this.responseText);
                         }
                     }
 
-                    refreshReq.open('POST', 'notes.cgi', true);
-                    refreshReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-                    refreshReq.send('mode=0');
-                    // Do something
-                    // Probably refreshNotes - make notes.cgi return updated list of notes, possibly tie into mode 0?
+                    refreshNotesReq.open('POST', 'notes.cgi', true);
+                    refreshNotesReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+                    refreshNotesReq.send('mode=0');
                 }
             };
 
-            deleteReq.open('POST', 'notes.cgi', true);
-            deleteReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-            deleteReq.send('mode=2&note_id=' + this.getAttribute('data-note_id'));
+            deleteNoteReq.open('POST', 'notes.cgi', true);
+            deleteNoteReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+            deleteNoteReq.send('mode=2&note_id=' + this.getAttribute('data-note_id'));
         }
         mtime.appendChild(a);
 
@@ -560,6 +558,9 @@ function viewAccount() {
                 updateButton = document.createElement('button');
                 updateButton.id = 'update_pass_' + id;
                 updateButton.disabled = true;
+                updateButton.onclick = function() {
+                    updatePassReq = 
+                }
                 setText(updateButton, 'Update Password');
 
                 // Add children
