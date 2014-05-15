@@ -462,36 +462,41 @@ function viewAccount() {
             setText(serviceP, 'You may access the following services: ' + services);
             accountPanel.appendChild(serviceP);
 
+            // If account isn't shared, show password box
             if (accountType != 'shared') {
                 passText = document.createElement('p');
                 passText.className = 'normal_section_header';
                 setText(passText, 'Update Password');
 
-                pBox = document.createElement('span');
-                pBox.style.textAlign = 'right';
-                pBox.style.float = 'left';
+                pBox = document.createElement('div');
+                pBox.style.display = 'inline-block';
+                pBox.style.textAlign = 'center';
                 pBox.className = 'normal';
+                iBox = document.createElement('div');
+                iBox.style.textAlign = 'left';
+                p = document.createElement('p');
+                p.style.display = 'inline-block';
+                p.style.textAlign = 'right';
                 p1 = document.createElement('input');
                 p1.type = 'password';
                 p2 = document.createElement('input');
                 p2.type = 'password';
 
-                // updateButton = document.createElement('button');
-                // setText(updateButton, 'Update Password');
+                updateButton = document.createElement('button');
+                setText(updateButton, 'Update Password');
 
-                pBox.appendChild(document.createTextNode('Enter password: '));
-                pBox.appendChild(p1);
-                pBox.appendChild(document.createElement('br'));
-                pBox.appendChild(document.createTextNode('Enter password again: '));
-                pBox.appendChild(p2);
-                pBox.appendChild(document.createElement('br'));
+                p.appendChild(document.createTextNode('Enter password:\u00a0\u00a0'));
+                p.appendChild(p1);
+                p.appendChild(document.createElement('br'));
+                p.appendChild(document.createTextNode('Enter password again:\u00a0\u00a0'));
+                p.appendChild(p2);
+                p.appendChild(document.createElement('br'));
+                iBox.appendChild(p);
+                pBox.appendChild(iBox);
+                pBox.appendChild(updateButton);
 
                 accountPanel.appendChild(passText);
                 accountPanel.appendChild(pBox);
-                /*accountPanel.appendChild(document.createElement('br'));
-                accountPanel.appendChild(document.createElement('br'));
-                accountPanel.appendChild(document.createElement('br'));*/
-                // accountPanel.appendChild(updateButton);
             }
 
             if (accountType == 'admin') {
