@@ -32,8 +32,8 @@ div#tabs {
 
 div#main {
     display: inline-block;
-    /*background-color: white;*/
-    background-color: #222;
+    background-color: white;
+    background-color: rgba(0, 0, 0, .50);
     border: 5px groove #999;
     padding: 5px;
     width: 800px;
@@ -133,6 +133,14 @@ button.right_action {
 }
 
 p#error {
+    font-size: 10pt;
+    font-weight: bold;
+    color: red;
+    margin-top: 5px;
+    padding-top: 0px;
+}
+
+p.error {
     font-size: 10pt;
     font-weight: bold;
     color: red;

@@ -466,25 +466,104 @@ function viewAccount() {
             if (accountType != 'shared') {
                 passText = document.createElement('p');
                 passText.className = 'normal_section_header';
+                passText.style.paddingBottom = '0px';
+                passText.style.marginBottom = '10px';
                 setText(passText, 'Update Password');
 
+                // Divs for alignment
                 pBox = document.createElement('div');
                 pBox.style.display = 'inline-block';
                 pBox.style.textAlign = 'center';
                 pBox.className = 'normal';
                 iBox = document.createElement('div');
                 iBox.style.textAlign = 'left';
+
+                // Text
                 p = document.createElement('p');
                 p.style.display = 'inline-block';
                 p.style.textAlign = 'right';
+                p.style.paddingTop = '0px';
+                p.style.paddingBottom = '0px';
+                p.style.marginTop = '0px';
+                p.style.marginBottom = '0px';
+
+                error_p = document.createElement('p');
+                error_p.id = 'pass_error_' + id;
+                error_p.className = 'error';
+                error_p.style.paddingTop = '0px';
+                error_p.style.paddingBottom = '0px';
+                error_p.style.marginTop = '0px';
+                error_p.style.marginBottom = '0px';
+                setText(error_p, '\u00a0');
+
+                // Inputs
                 p1 = document.createElement('input');
                 p1.type = 'password';
+                p1.id = 'pass_' + id;
+                p1.setAttribute('data-button_id', 'update_pass_' + id);
+                p1.setAttribute('data-other_input_id', 'pass_verify_' + id);
+                p1.setAttribute('data-error_id', 'pass_error_' + id);
                 p2 = document.createElement('input');
+                p2.id = 'pass_verify_' + id;
                 p2.type = 'password';
+                p2.setAttribute('data-button_id', 'update_pass_' + id);
+                p2.setAttribute('data-other_input_id', 'pass_' + id);
+                p2.setAttribute('data-error_id', 'pass_error_' + id);
+
+                p1.onkeyup = function() {
+                    b = document.getElementById(this.getAttribute('data-button_id'));
+                    if (this.value == '' || this.value.length < 8) {
+                        b.disabled = true;
+                    } else if (this.value ==
+                               document.getElementById(this.getAttribute('data-other_input_id')).value) {
+                        b.disabled = false;
+
+                    } else {
+                        b.disabled = true;
+                    }
+                };
+                p1.onchange = function() {
+                    if (this.value == '' || this.value.length < 8) {
+                        if (this.value) {
+                            setText(document.getElementById(this.getAttribute('data-error_id')),
+                                    'Password must have at least 8 characters');
+                        }
+                    } else if (this.value ==
+                               document.getElementById(this.getAttribute('data-other_input_id')).value) {
+                        setText(document.getElementById(this.getAttribute('data-error_id')), '\u00a0');
+                    } else {
+                        setText(document.getElementById(this.getAttribute('data-error_id')),
+                                'Passwords don\'t match');
+                    }
+                }
+                p2.onkeyup = function() {
+                    b = document.getElementById(this.getAttribute('data-button_id'));
+                    if (this.value.length < 8) {
+                        b.disabled = true;
+                    } else if (this.value ==
+                               document.getElementById(this.getAttribute('data-other_input_id')).value) {
+                        b.disabled = false;
+                    } else {
+                        b.disabled = true;
+                    }
+                };
+                p2.onchange = function() {
+                    if (this.value.length >= 8 && this.value ==
+                            document.getElementById(this.getAttribute('data-other_input_id')).value) {
+                        setText(document.getElementById(this.getAttribute('data-error_id')), '\u00a0');
+                    } else {
+                        setText(document.getElementById(this.getAttribute('data-error_id')),
+                                'Passwords don\'t match');
+                    }
+                }
 
                 updateButton = document.createElement('button');
+                updateButton.id = 'update_pass_' + id;
+                updateButton.disabled = true;
                 setText(updateButton, 'Update Password');
 
+                // Add children
+                p.appendChild(error_p);
                 p.appendChild(document.createTextNode('Enter password:\u00a0\u00a0'));
                 p.appendChild(p1);
                 p.appendChild(document.createElement('br'));
