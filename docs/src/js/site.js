@@ -184,6 +184,7 @@ function openNotes() {
                      '&note_title=' + encodeURIComponent(noteTitle) + '&note_text=' + encodeURIComponent(noteText));
 
         if (saveNoteReq.responseText === 'expired') {return;}
+
         // Delay update for one second
         setTimeout(function() {
             updateNoteReq = new XMLHttpRequest();
@@ -196,7 +197,7 @@ function openNotes() {
             updateNoteReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
             updateNoteReq.send('mode=0');
         }, 1000);
-    }
+    };
 
     cancelButton = document.createElement('button');
     cancelButton.className = 'left_action';
@@ -290,10 +291,14 @@ function populateNotes(data, notesTable, notesEditor, resize) {
         r = document.createElement('tr');
         r.setAttribute('data-note', JSON.stringify(note));
 
+        // Select appropriate note
         // If no note loaded, but title and text match, this note must have just been created
         if (notesEditor.getAttribute('data-note_id') == '-1' &&
             note.title == editorTitleText && note.text == editorNoteText) {
             notesEditor.setAttribute('data-note_id', note.id);
+            r.style.textDecoration = 'underline';
+        // Otherwise if current note is in editor
+        } else if (notesEditor.getAttribute('data-note_id') == note.id) {
             r.style.textDecoration = 'underline';
         }
 
@@ -314,6 +319,9 @@ function populateNotes(data, notesTable, notesEditor, resize) {
             this.style.fontStyle = 'normal';
         }
         title = document.createElement('td');
+        title.style.paddingRight = '5px';
+        title.style.maxWidth = notesTable.clientWidth * .3 + 'px';
+        title.style.wordWrap = 'break-word';
         setText(title, note.title);
         mtime = document.createElement('td');
         setText(mtime, note.mtime);
@@ -336,7 +344,7 @@ function populateNotes(data, notesTable, notesEditor, resize) {
             
             deleteNoteReq.onreadystatechange = function() {
                 if (this.readyState == 4 && this.status == 200) {
-                    refreshReq = new XMLHttpRequest();
+                    refreshNotesReq = new XMLHttpRequest();
 
                     refreshNotesReq.onreadystatechange = function() {
                         if (this.readyState == 4 && this.status == 200) {
@@ -559,7 +567,7 @@ function viewAccount() {
                 updateButton.id = 'update_pass_' + id;
                 updateButton.disabled = true;
                 updateButton.onclick = function() {
-                    updatePassReq = 
+                    updatePassReq = new XMLHttpRequest();
                 }
                 setText(updateButton, 'Update Password');
 
