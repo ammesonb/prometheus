@@ -39,7 +39,7 @@ sub init {
     $html .= $indent . "<title>$title</title>\n";
     $html .= $indent . "<link rel=\"stylesheet\" type=\"text/css\" href=\"res/style.css\"/>\n";
     $html .= "</head>\n";
-    $html .= "<body>\n";
+    $html .= "<body data-night-theme=" . $session->param('night_theme') . ">\n";
     if ($authorized == 2) {
         $html .= "<div id=\"login\">\n";
         $html .= "<img src=\"images/prometheus.png\" alt=\"Prometheus\">\n";

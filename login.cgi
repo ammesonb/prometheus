@@ -20,7 +20,7 @@ my $session = CGI::Session->new($q);
 my $response = COMMON::attempt_login($q->param('a'), $q->param('c'));
 
 # Get user data
-my @returnCols = ('id', 'is_shared', 'is_admin');
+my @returnCols = ('id', 'is_shared', 'is_admin', 'theme');
 my @searchCols = ('username');
 my @operators = ('=');
 my @patterns = ("'" . $q->param('a') . "'");
@@ -33,6 +33,8 @@ my $userID = $userIDs[0];
 # Set session parameters
 $session->param('attempt_login', 1);
 $session->expire('attempt_login', '+30m');
+$session->param('night_theme', $userData{$userID}{'theme'});
+$session->expire('night_theme', '+30m');
 $session->param('user', $q->param("a"));
 $session->expire('user', '+30m');
 $session->param('user_id', $userID);

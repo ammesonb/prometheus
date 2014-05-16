@@ -1,12 +1,12 @@
+Currently on error text for theme updating
+    Still need backend too
+
 Account
     Domain should probably be moved to the database
-All
-    Change if/else JS to switch case
 Night theme
-User controls via GUI - need differentiation between all and just yourself - see above point
-    Some accounts shared, such as pepband, so password can't be changed
-        have boolean as part of table?
-    Domain shouldn't be changeable, except by root(/other admins?)
+    Add as user preference?
+        Never/at time X/Always?
+Account management
 Images for other services
 Write other services
 Handle resize of window more gracefully, somehow?

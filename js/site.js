@@ -88,7 +88,7 @@ function openNotes() {
     notes.appendChild(notesList);
 
     notesEditor = document.createElement('div');
-    notesEditor.setAttribute('data-note_id', -1);
+    notesEditor.setAttribute('data-note-id', -1);
     notesEditor.className = 'notes_editor';
     notes.appendChild(notesEditor);
 
@@ -130,7 +130,7 @@ function openNotes() {
     setText(saveButton, 'Save');
     saveButton.onclick = function() {
         editPane = this.parentElement;
-        noteID = editPane.getAttribute('data-note_id');
+        noteID = editPane.getAttribute('data-note-id');
         noteTitle = '';
         noteText = '';
         errorText = 0;
@@ -222,7 +222,7 @@ function openNotes() {
         }
         for (child = 0; child < table.children.length; child++) {table.children[child].style.textDecoration = 'none';}
 
-        this.parentElement.setAttribute('data-note_id', -1);
+        this.parentElement.setAttribute('data-note-id', -1);
         c = this.parentElement.children;
         for (child = 0; child < c.length; child++) {
             if (c[child].tagName == 'INPUT' || c[child].tagName == 'TEXTAREA') {c[child].value = '';}
@@ -242,7 +242,7 @@ function openNotes() {
         }
         for (child = 0; child < table.children.length; child++) {table.children[child].style.textDecoration = 'none';}
 
-        this.parentElement.setAttribute('data-note_id', -1);
+        this.parentElement.setAttribute('data-note-id', -1);
         c = this.parentElement.children;
         for (child = 0; child < c.length; child++) {
             if (c[child].tagName == 'INPUT' || c[child].tagName == 'TEXTAREA') {c[child].value = '';}
@@ -305,12 +305,12 @@ function populateNotes(data, notesTable, notesEditor, resize) {
 
         // Select appropriate note
         // If no note loaded, but title and text match, this note must have just been created
-        if (notesEditor.getAttribute('data-note_id') == '-1' &&
+        if (notesEditor.getAttribute('data-note-id') == '-1' &&
             note.title == editorTitleText && note.text == editorNoteText) {
-            notesEditor.setAttribute('data-note_id', note.id);
+            notesEditor.setAttribute('data-note-id', note.id);
             r.style.textDecoration = 'underline';
         // Otherwise if current note is in editor
-        } else if (notesEditor.getAttribute('data-note_id') == note.id) {
+        } else if (notesEditor.getAttribute('data-note-id') == note.id) {
             r.style.textDecoration = 'underline';
         }
 
@@ -346,12 +346,12 @@ function populateNotes(data, notesTable, notesEditor, resize) {
         i.alt = 'Delete note';
         i.title = 'Delete note';
         a.appendChild(i);
-        a.setAttribute('data-note_id', note.id);
-        a.setAttribute('data-note_title', note.title);
+        a.setAttribute('data-note-id', note.id);
+        a.setAttribute('data-note-title', note.title);
         a.onclick = function() {
-            confirmDelete = confirm('Are you sure you want to delete note \'' + this.getAttribute('data-note_title') + '\'?');
+            confirmDelete = confirm('Are you sure you want to delete note \'' + this.getAttribute('data-note-title') + '\'?');
             if (!confirmDelete) {return;}
-            deletedNoteID = this.getAttribute('data-note_id');
+            deletedNoteID = this.getAttribute('data-note-id');
             deleteNoteReq = new XMLHttpRequest();
             
             deleteNoteReq.onreadystatechange = function() {
@@ -360,8 +360,8 @@ function populateNotes(data, notesTable, notesEditor, resize) {
 
                     refreshNotesReq.onreadystatechange = function() {
                         if (this.readyState == 4 && this.status == 200) {
-                            if (notesEditor.getAttribute('data-note_id') == deletedNoteID) {
-                                notesEditor.setAttribute('data-note_id', -1);
+                            if (notesEditor.getAttribute('data-note-id') == deletedNoteID) {
+                                notesEditor.setAttribute('data-note-id', -1);
                                 for (child = 0; child < notesEditor.children.length; child++) {
                                     elem = notesEditor.children[child];
                                     if (elem.tagName == 'INPUT' || elem.tagName == 'TEXTAREA') {elem.value = '';}
@@ -379,7 +379,7 @@ function populateNotes(data, notesTable, notesEditor, resize) {
 
             deleteNoteReq.open('POST', 'notes.cgi', true);
             deleteNoteReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-            deleteNoteReq.send('mode=2&note_id=' + this.getAttribute('data-note_id'));
+            deleteNoteReq.send('mode=2&note_id=' + this.getAttribute('data-note-id'));
         }
         mtime.appendChild(a);
 
@@ -416,7 +416,7 @@ function editNote(note, row) {
             break;
         }
     }
-    editPane.setAttribute('data-note_id', note.id);
+    editPane.setAttribute('data-note-id', note.id);
     editElems = editPane.children;
     for (elem = 0; elem < editElems.length; elem++) {
         if (editElems[elem].tagName == 'INPUT') {editElems[elem].value = note.title;}
@@ -450,7 +450,7 @@ function refreshNotes(notes) {
 
         // If this pane wasn't selected, clear out its edit panel
         if (noteTable.parentElement.parentElement.className.search('selected') == -1) {
-            noteEditor.setAttribute('data-note_id', -1);
+            noteEditor.setAttribute('data-note-id', -1);
             for (child = 0; child < noteEditor.children.length; child++) {
                 elem = noteEditor.children[child];
                 if (elem.tagName == 'INPUT' || elem.tagName == 'TEXTAREA') {elem.value = '';}
@@ -519,24 +519,24 @@ function viewAccount() {
                 p1 = document.createElement('input');
                 p1.type = 'password';
                 p1.id = 'pass_' + id;
-                p1.setAttribute('data-button_id', 'update_pass_' + id);
-                p1.setAttribute('data-other_input_id', 'pass_verify_' + id);
-                p1.setAttribute('data-error_id', 'pass_error_' + id);
+                p1.setAttribute('data-button-id', 'update_pass_' + id);
+                p1.setAttribute('data-other-input-id', 'pass_verify_' + id);
+                p1.setAttribute('data-error-id', 'pass_error_' + id);
                 p2 = document.createElement('input');
                 p2.id = 'pass_verify_' + id;
                 p2.type = 'password';
-                p2.setAttribute('data-button_id', 'update_pass_' + id);
-                p2.setAttribute('data-other_input_id', 'pass_' + id);
-                p2.setAttribute('data-error_id', 'pass_error_' + id);
+                p2.setAttribute('data-button-id', 'update_pass_' + id);
+                p2.setAttribute('data-other_input-id', 'pass_' + id);
+                p2.setAttribute('data-error-id', 'pass_error_' + id);
 
                 p1.onkeyup = function() {
-                    b = document.getElementById(this.getAttribute('data-button_id'));
+                    b = document.getElementById(this.getAttribute('data-button-id'));
                     if (this.value == '' || this.value.length < 8) {
                         b.disabled = true;
                     } else if (this.value ==
-                               document.getElementById(this.getAttribute('data-other_input_id')).value) {
+                               document.getElementById(this.getAttribute('data-other-input-id')).value) {
                         b.disabled = false;
-                        setText(document.getElementById(this.getAttribute('data-error_id')), '\u00a0');
+                        setText(document.getElementById(this.getAttribute('data-error-id')), '\u00a0');
                     } else {
                         b.disabled = true;
                     }
@@ -544,35 +544,35 @@ function viewAccount() {
                 p1.onchange = function() {
                     if (this.value == '' || this.value.length < 8) {
                         if (this.value) {
-                            setText(document.getElementById(this.getAttribute('data-error_id')),
+                            setText(document.getElementById(this.getAttribute('data-error-id')),
                                     'Password must have at least 8 characters');
                         }
                     } else if (this.value ==
-                               document.getElementById(this.getAttribute('data-other_input_id')).value) {
-                        setText(document.getElementById(this.getAttribute('data-error_id')), '\u00a0');
+                               document.getElementById(this.getAttribute('data-other-input-id')).value) {
+                        setText(document.getElementById(this.getAttribute('data-error-id')), '\u00a0');
                     } else {
-                        setText(document.getElementById(this.getAttribute('data-error_id')),
+                        setText(document.getElementById(this.getAttribute('data-error-id')),
                                 'Passwords don\'t match');
                     }
                 }
                 p2.onkeyup = function() {
-                    b = document.getElementById(this.getAttribute('data-button_id'));
+                    b = document.getElementById(this.getAttribute('data-button-id'));
                     if (this.value.length < 8) {
                         b.disabled = true;
                     } else if (this.value ==
-                               document.getElementById(this.getAttribute('data-other_input_id')).value) {
+                               document.getElementById(this.getAttribute('data-other-input-id')).value) {
                         b.disabled = false;
-                        setText(document.getElementById(this.getAttribute('data-error_id')), '\u00a0');
+                        setText(document.getElementById(this.getAttribute('data-error-id')), '\u00a0');
                     } else {
                         b.disabled = true;
                     }
                 };
                 p2.onchange = function() {
                     if (this.value.length >= 8 && this.value ==
-                            document.getElementById(this.getAttribute('data-other_input_id')).value) {
-                        setText(document.getElementById(this.getAttribute('data-error_id')), '\u00a0');
+                            document.getElementById(this.getAttribute('data-other-input-id')).value) {
+                        setText(document.getElementById(this.getAttribute('data-error-id')), '\u00a0');
                     } else {
-                        setText(document.getElementById(this.getAttribute('data-error_id')),
+                        setText(document.getElementById(this.getAttribute('data-error-id')),
                                 'Passwords don\'t match');
                     }
                 }
@@ -580,11 +580,11 @@ function viewAccount() {
                 updateButton = document.createElement('button');
                 updateButton.id = 'update_pass_' + id;
                 updateButton.disabled = true;
-                updateButton.setAttribute('data-pass_id', 'pass_' + id);
-                updateButton.setAttribute('data-error_id', 'pass_error_' + id);
+                updateButton.setAttribute('data-pass-id', 'pass_' + id);
+                updateButton.setAttribute('data-error-id', 'pass_error_' + id);
                 updateButton.onclick = function() {
                     updatePassReq = new XMLHttpRequest();
-                    error_id = this.getAttribute('data-error_id');
+                    error_id = this.getAttribute('data-error-id');
 
                     updatePassReq.onreadystatechange = function() {
                         if (this.readyState == 4 && this.status == 200) {
@@ -609,7 +609,7 @@ function viewAccount() {
                     updatePassReq.open('POST', 'account.cgi', true);
                     updatePassReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
                     updatePassReq.send('mode=1&p=' +
-                        CryptoJS.SHA512(document.getElementById(this.getAttribute('data-pass_id')).value));
+                        CryptoJS.SHA512(document.getElementById(this.getAttribute('data-pass-id')).value));
                 };
                 setText(updateButton, 'Update Password');
 
@@ -631,6 +631,61 @@ function viewAccount() {
 
             if (accountType == 'admin') {
             }
+
+            // Theme selection
+            themeP = document.createElement('p');
+            themeP.className = 'normal_text';
+            setText(themeP, 'Night theme: ');
+            themeS = document.createElement('select');
+            themeS.setAttribute('data-error-id', 'theme_error_' + id);
+            opt1 = document.createElement('option');
+            opt1.value = 0;
+            setText(opt1, 'Never');
+            opt2 = document.createElement('option');
+            opt2.value = 1;
+            setText(opt2, 'After 7 PM local time');
+            opt3 = document.createElement('option');
+            opt3.value = 2;
+            setText(opt3, 'Always');
+            opts = [opt1, opt2, opt3];
+            opts[document.body.getAttribute('data-night-theme')].selected = true;
+            themeError = document.createElement('p');
+            themeError.className = 'error';
+            themeError.fontWeight = 'bold';
+            themeError.id = 'theme_error_' + id;
+            setText(themeError, '\u00a0');
+
+            themeS.onchange = function() {
+                updateThemeReq = new XMLHttpRequest();
+                error = document.getElementById(this.getAttribute('data-error-id'));
+
+                updateThemeReq.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 200) {
+                        switch(this.responseText) {
+                            case 'success':
+                                error.style.color = 'green';
+                                setText(error, 'Saved.');
+                                break;
+                            case 'fail':
+                                error.style.color = 'red';
+                                setText(error, 'Failed.');
+                                break;
+                        }
+                    }
+                };
+
+                updateThemeReq.open('POST', 'account.cgi', false);
+                updateThemeReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+                updateThemeReq.send('mode=2&theme=' + this.value);
+                
+            };
+
+            themeS.appendChild(opt1);
+            themeS.appendChild(opt2);
+            themeS.appendChild(opt3);
+            themeP.appendChild(themeS);
+            accountPanel.appendChild(themeP);
+
         }
     };
 
