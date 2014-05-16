@@ -29,5 +29,20 @@ if ($mode == 0) {
     elsif ($session->param('is_admin')) {print 'admin';}
     else {print 'normal';}
     print ';' . $session->param('services');
+} elsif ($mode == 1) {
+    my $userID = $session->param('user_id');
+    my $newPass = $q->param('p');
+    if (not ($userID =~ /^[0-9]+$/)) {print 'badid'; exit;}
+    elsif (not ($newPass =~ /^[0-9a-f]{128}$/)) {print 'baddata'; exit;}
+    my @updateCols = ('pw');
+    my @updateVals = ("'$newPass'");
+    my @searchCols = ('id');
+    my @searchOps = ('=');
+    my @searchVals = ($userID);
+    my @logic = ();
+    my $rows = COMMON::updateTable('users', \@updateCols, \@updateVals, \@searchCols, \@searchOps, \@searchVals, \@logic);
+    print 'none' if ($rows == 0);
+    print 'success' if ($rows == 1);
+    print 'extra' if ($rows > 1);
 }
 exit;

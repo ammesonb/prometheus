@@ -485,6 +485,16 @@ function viewAccount() {
                 iBox.style.textAlign = 'left';
 
                 // Text
+                error_p = document.createElement('p');
+                error_p.id = 'pass_error_' + id;
+                error_p.className = 'error';
+                error_p.style.fontWeight = 'bold';
+                error_p.style.paddingTop = '0px';
+                error_p.style.paddingBottom = '0px';
+                error_p.style.marginTop = '0px';
+                error_p.style.marginBottom = '10px';
+                setText(error_p, '\u00a0');
+
                 p = document.createElement('p');
                 p.style.display = 'inline-block';
                 p.style.textAlign = 'right';
@@ -492,15 +502,6 @@ function viewAccount() {
                 p.style.paddingBottom = '0px';
                 p.style.marginTop = '0px';
                 p.style.marginBottom = '0px';
-
-                error_p = document.createElement('p');
-                error_p.id = 'pass_error_' + id;
-                error_p.className = 'error';
-                error_p.style.paddingTop = '0px';
-                error_p.style.paddingBottom = '0px';
-                error_p.style.marginTop = '0px';
-                error_p.style.marginBottom = '0px';
-                setText(error_p, '\u00a0');
 
                 // Inputs
                 p1 = document.createElement('input');
@@ -523,7 +524,7 @@ function viewAccount() {
                     } else if (this.value ==
                                document.getElementById(this.getAttribute('data-other_input_id')).value) {
                         b.disabled = false;
-
+                        setText(document.getElementById(this.getAttribute('data-error_id')), '\u00a0');
                     } else {
                         b.disabled = true;
                     }
@@ -549,6 +550,7 @@ function viewAccount() {
                     } else if (this.value ==
                                document.getElementById(this.getAttribute('data-other_input_id')).value) {
                         b.disabled = false;
+                        setText(document.getElementById(this.getAttribute('data-error_id')), '\u00a0');
                     } else {
                         b.disabled = true;
                     }
@@ -566,13 +568,40 @@ function viewAccount() {
                 updateButton = document.createElement('button');
                 updateButton.id = 'update_pass_' + id;
                 updateButton.disabled = true;
+                updateButton.setAttribute('data-pass_id', 'pass_' + id);
+                updateButton.setAttribute('data-error_id', 'pass_error_' + id);
                 updateButton.onclick = function() {
                     updatePassReq = new XMLHttpRequest();
-                }
+                    error_id = this.getAttribute('data-error_id');
+
+                    updatePassReq.onreadystatechange = function() {
+                        if (this.readyState == 4 && this.status == 200) {
+                            e = document.getElementById(error_id);
+                            switch(this.responseText) {
+                                case 'success':
+                                    e.style.color = 'green';
+                                    setText(e, 'Password changed successfully');
+                                    break;
+                                case 'none':
+                                    setText(e, 'Failed to change password!');
+                                    break;
+                                case 'extra':
+                                    setText(e, 'Multiple passwords changed!');
+                                    break;
+                                default:
+                                    setText(e, 'Failed to change password!');
+                                    break;
+                            }
+                        }
+                    };
+                    updatePassReq.open('POST', 'account.cgi', true);
+                    updatePassReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+                    updatePassReq.send('mode=1&p=' +
+                        CryptoJS.SHA512(document.getElementById(this.getAttribute('data-pass_id')).value));
+                };
                 setText(updateButton, 'Update Password');
 
                 // Add children
-                p.appendChild(error_p);
                 p.appendChild(document.createTextNode('Enter password:\u00a0\u00a0'));
                 p.appendChild(p1);
                 p.appendChild(document.createElement('br'));
@@ -580,6 +609,7 @@ function viewAccount() {
                 p.appendChild(p2);
                 p.appendChild(document.createElement('br'));
                 iBox.appendChild(p);
+                pBox.appendChild(error_p);
                 pBox.appendChild(iBox);
                 pBox.appendChild(updateButton);
 
