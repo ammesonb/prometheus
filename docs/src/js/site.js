@@ -161,21 +161,31 @@ function openNotes() {
             if (this.readyState == 4 && this.status == 200) {
                 status = this.responseText;
 
-                if (status == 'success') {
-                } else if (status == 'none') {
-                    setText(errorText, 'Update failed - no matching note found!');
-                } else if (status == 'fail') {
-                    setText(errorText, 'Failed to create new note!');
-                } else if (status == 'extra') {
-                    setText(errorText, 'Update succeeded, but found multiple matching notes!');
-                } else if (status == 'expired') {
-                    alert('Session has expired! Please save any modified data locally and reload the page.');
-                } else if (status == 'badid') {
-                    setText(errorText, 'Update failed - no matching note found!');
-                } else if (status == 'baddata') {
-                    setText(errorText, 'Update failed - invalid data in title or text field!');
-                } else if (status ==  'notmine') {
-                    alert('You tried to edit something not belonging to you! This account has been disabled!');
+                switch(status) {
+                    case 'success':
+                        setText(errorText, '\u00a0');
+                        break;
+                    case 'none':
+                        setText(errorText, 'Update failed - no matching note found!');
+                        break;
+                    case 'fail':
+                        setText(errorText, 'Failed to create new note!');
+                        break;
+                    case 'extra':
+                        setText(errorText, 'Update succeeded, but found multiple matching notes!');
+                        break;
+                    case 'expired':
+                        alert('Session has expired! Please save any modified data locally and reload the page.');
+                        break;
+                    case 'badid':
+                        setText(errorText, 'Update failed - no matching note found!');
+                        break;
+                    case 'baddata':
+                        setText(errorText, 'Update failed - invalid data in title or text field!');
+                        break;
+                    case 'notmine':
+                        alert('You tried to edit something not belonging to you! This account has been disabled!');
+                        break;
                 }
             }
         };
