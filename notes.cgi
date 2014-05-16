@@ -5,6 +5,7 @@ use CGI;
 use CGI::Session;
 use CGI::Carp qw(fatalsToBrowser);
 use JSON;
+use List::MoreUtils qw(first_index);
 use COMMON;
 use strict;
 
@@ -64,6 +65,8 @@ if ($mode == 0) {
             print 'baddata';
             exit;
         }
+        $noteTitle =~ s/'/''/g;
+        $noteText =~ s/'/''/g;
         my @columns = ('user_id', 'title', 'text');
         my @values = ($session->param('user_id'), "'$noteTitle'", "'$noteText'");
         my $rows = COMMON::insertIntoTable('notes', \@columns, \@values);
@@ -84,6 +87,27 @@ if ($mode == 0) {
         exit;
     }
 
+    # Make sure user has access to given note
+    my @noteCols = ('id');
+    my @searchCols = ('user_id');
+    my @noteOps = ('=');
+    my @noteVals = ($session->param('user_id'));
+    my @logic;
+    my $noteIDsRef = COMMON::searchTable('notes', \@noteCols, \@searchCols, \@noteOps, \@noteVals, \@logic);
+    my %tmpNotes = %$noteIDsRef;
+    my @myNoteIDs = keys(%tmpNotes);
+    if ((first_index {$_ == $noteID} @myNoteIDs) == -1) {
+        print 'notmine';
+        my @updateCols = ('disabled');
+        my @updateVals = ('true');
+        COMMON::updateTable('users', \@updateCols, \@updateVals, \@noteCols, \@noteOps, \@noteVals, \@logic);
+        $session->param('disabled', 1);
+        exit;
+    }
+    
+    # Update note
+    $noteTitle =~ s/'/''/g;
+    $noteText =~ s/'/''/g;
     my @updateCols = ('title', 'text');
     my @updateVals = ("'$noteTitle'", "'$noteText'");
     my @filterCols = ('id');
@@ -100,12 +124,31 @@ if ($mode == 0) {
 } elsif ($mode == 2) {
     my $noteID = $q->param('note_id');
     if ($noteID =~ /^[0-9]+$/) {
+
+        # Make sure user has access to given note
+        my @noteCols = ('id');
+        my @searchCols = ('user_id');
+        my @noteOps = ('=');
+        my @noteVals = ($session->param('user_id'));
+        my @logic;
+        my $noteIDsRef = COMMON::searchTable('notes', \@noteCols, \@searchCols, \@noteOps, \@noteVals, \@logic);
+        my %tmpNotes = %$noteIDsRef;
+        my @myNoteIDs = keys(%tmpNotes);
+        if ((first_index {$_ == $noteID} @myNoteIDs) == -1) {
+            print 'notmine';
+            my @updateCols = ('disabled');
+            my @updateVals = ('true');
+            COMMON::updateTable('users', \@updateCols, \@updateVals, \@noteCols, \@noteOps, \@noteVals, \@logic);
+            $session->param('disabled', 1);
+            exit;
+        }
+
+        # Delete note
         my @deleteCols = ('id');
         my @deleteOps = ('=');
         my @deleteVals = ($noteID);
         my @deleteLogic = ();
         COMMON::deleteFromTable('notes', \@deleteCols, \@deleteOps, \@deleteVals, \@deleteLogic);
-        # Update notes here
     }
 }
 

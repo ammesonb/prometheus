@@ -174,6 +174,8 @@ function openNotes() {
                     setText(errorText, 'Update failed - no matching note found!');
                 } else if (status == 'baddata') {
                     setText(errorText, 'Update failed - invalid data in title or text field!');
+                } else if (status ==  'notmine') {
+                    alert('You tried to edit something not belonging to you! This account has been disabled!');
                 }
             }
         };

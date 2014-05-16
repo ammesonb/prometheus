@@ -43,8 +43,12 @@ sub init {
     if ($authorized == 2) {
         $html .= "<div id=\"login\">\n";
         $html .= "<img src=\"images/prometheus.png\" alt=\"Prometheus\">\n";
-        $html .= "<p><strong>You are not allowed to access this from your current location!<br/>Please contact me at ammesonb\@gmail.com!</strong></p>\n";
+        $html .= "<p><strong>You are not allowed to access this from your current location.<br/>Please contact me at ammesonb\@gmail.com.</strong></p>\n";
         $html .= "</div>\n";
+    } elsif ($authorized == 3) {
+        $html .= "<div id=\"login\">\n";
+        $html .= "<img src=\"images/prometheus.png\" alt=\"Prometheus\">\n";
+        $html .= "<p><strong>This account has been disabled.<br/>Please contact me at ammesonb\@gmail.com.</strong></p>\n";
     } elsif ($authorized == 1) {
         $html .= "<div id=\"login\">\n";
         $html .= $indent . "<a href=\"/\"><img src=\"images/prometheus.png\" alt=\"Prometheus\"></a>\n";
@@ -114,7 +118,7 @@ sub init {
 
         my $toolsRef = getSortedTable("services", "row_order");
         my @tools = @$toolsRef;
-        my @services = ();
+        @services = ();
         foreach (@tools) {
             my %tool = %$_;
             if ((first_index {$_ == $tool{'id'}} @serviceIDs) == -1) {next;}
@@ -141,6 +145,7 @@ sub init {
 
 sub checkSession {
     my $session = shift;
+    return 3 if ($session->param('disabled'));
     return 2 if ($session->param('blocked'));
     return 1 if (not $session->param('logged_in'));
     return 0;
@@ -345,6 +350,7 @@ sub attempt_login {
         my %user = %$userRef;
         
         if (($username cmp $user{'username'}) == 0) {
+            return 4 if ($user{'disabled'});
             if (($pass cmp $user{'pw'}) == 0) {
                 my $pattern = $domainRegexes{$user{'domain'}};
                 return 0 if (($ENV{'REMOTE_ADDR'}) =~ /$pattern/);
@@ -524,6 +530,7 @@ Returns the login state:
     1 => Invalid user/pass combination
     2 => Username doesn't exit
     3 => Domain blocked
+    4 => Account disabled
 
 =back
 

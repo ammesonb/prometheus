@@ -11,7 +11,8 @@ my %titles = (
     0 => "Prometheus",
     1 => "Login",
     2 => "Login",
-    3 => "Blocked"
+    3 => "Blocked",
+    4 => "Disabled"
 );
 
 my $q = new CGI();
@@ -45,10 +46,11 @@ $session->expire('is_admin', '+30m');
 $session->param('is_shared', $userData{$userID}{'is_shared'});
 $session->expire('is_shared', '+30m');
 $session->param('logged_in', 1) if ($response == 0);
+print $q->redirect('/') if ($response == 0);
 $session->param('blocked', 1) if ($response == 3);
-if ($response == 0) {
-    print $q->redirect("/");
-}
+$session->param('disabled', 1) if ($response == 4);
+$session->expire('disabled', '+30m') if ($response == 4);
+
 my $html = COMMON::init($session, $titles{$response});
 print $html;
 exit;

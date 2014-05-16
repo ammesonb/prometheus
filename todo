@@ -1,9 +1,7 @@
 Account
-    Use AJAX response to display proper elements for form
     Domain should probably be moved to the database
 All
-    Make sure attempted change in database matches user's ID to avoid
-    changes made in the HTML data property
+    Change if/else JS to switch case
 Night theme
 User controls via GUI - need differentiation between all and just yourself - see above point
     Some accounts shared, such as pepband, so password can't be changed
