@@ -44,5 +44,19 @@ if ($mode == 0) {
     print 'none' if ($rows == 0);
     print 'success' if ($rows == 1);
     print 'extra' if ($rows > 1);
+} elsif ($mode == 2) {
+    my $theme = $q->param('theme');
+    if (not ($theme =~ /^[0-9]$/)) {print 'baddata'; exit;}
+    my @updateCols = ('theme');
+    my @updateVals = ($theme);
+    my @searchCols = ('id');
+    my @searchOps = ('=');
+    my @searchVals = ($session->param('user_id'));
+    my @logic = ();
+    my $rows = COMMON::updateTable('users', \@updateCols, \@updateVals, \@searchCols, \@searchOps, \@searchVals, \@logic);
+    if ($rows >= 1) {$session->param('night_theme', $theme);}
+    print 'success' if ($rows == 1);
+    print 'none' if ($rows == 0);
+    print 'extra' if ($rows > 1);
 }
 exit;

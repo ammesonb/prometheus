@@ -31,6 +31,12 @@ function login() {
     f.submit();
 }
 
+function useNightTheme() {
+    theme = document.body.getAttribute('data-night-theme');
+    now = new Date();
+    return ((theme == 1 && now.getHours() >= 19) || theme == 2);
+}
+
 function setText(element, text) {
     element.innerText = text;
     element.innerHTML = text;
@@ -526,7 +532,7 @@ function viewAccount() {
                 p2.id = 'pass_verify_' + id;
                 p2.type = 'password';
                 p2.setAttribute('data-button-id', 'update_pass_' + id);
-                p2.setAttribute('data-other_input-id', 'pass_' + id);
+                p2.setAttribute('data-other-input-id', 'pass_' + id);
                 p2.setAttribute('data-error-id', 'pass_error_' + id);
 
                 p1.onkeyup = function() {
@@ -627,65 +633,69 @@ function viewAccount() {
 
                 accountPanel.appendChild(passText);
                 accountPanel.appendChild(pBox);
+
+                // Theme selection shouldn't be allowed for shared accounts
+                // to avoid conflict
+                themeP = document.createElement('p');
+                themeP.className = 'normal_text';
+                setText(themeP, 'Night theme: ');
+                themeS = document.createElement('select');
+                themeS.setAttribute('data-error-id', 'theme_error_' + id);
+                opt1 = document.createElement('option');
+                opt1.value = 0;
+                setText(opt1, 'Never');
+                opt2 = document.createElement('option');
+                opt2.value = 1;
+                setText(opt2, 'After 7 PM local time');
+                opt3 = document.createElement('option');
+                opt3.value = 2;
+                setText(opt3, 'Always');
+                opts = [opt1, opt2, opt3];
+                opts[document.body.getAttribute('data-night-theme')].selected = true;
+                themeError = document.createElement('span');
+                themeError.id = 'theme_error_' + id;
+                themeError.className = 'error';
+                themeError.fontWeight = 'bold';
+                themeError.style.paddingLeft = '10px';
+                setText(themeError, '\u00a0');
+    
+                themeS.onchange = function() {
+                    updateThemeReq = new XMLHttpRequest();
+                    error = document.getElementById(this.getAttribute('data-error-id'));
+                    theme = this.value;
+    
+                    updateThemeReq.onreadystatechange = function() {
+                        if (this.readyState == 4 && this.status == 200) {
+                            switch(this.responseText) {
+                                case 'success':
+                                    error.style.color = 'green';
+                                    setText(error, 'Saved.');
+                                    document.body.setAttribute('data-night-theme', theme);
+                                    break;
+                                default:
+                                    error.style.color = 'red';
+                                    setText(error, 'Failed.');
+                                    break;
+                            }
+                        }
+                    };
+    
+                    updateThemeReq.open('POST', 'account.cgi', false);
+                    updateThemeReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+                    updateThemeReq.send('mode=2&theme=' + this.value);
+                    
+                };
+    
+                themeS.appendChild(opt1);
+                themeS.appendChild(opt2);
+                themeS.appendChild(opt3);
+                themeP.appendChild(themeS);
+                themeP.appendChild(themeError);
+                accountPanel.appendChild(themeP);
             }
 
             if (accountType == 'admin') {
             }
-
-            // Theme selection
-            themeP = document.createElement('p');
-            themeP.className = 'normal_text';
-            setText(themeP, 'Night theme: ');
-            themeS = document.createElement('select');
-            themeS.setAttribute('data-error-id', 'theme_error_' + id);
-            opt1 = document.createElement('option');
-            opt1.value = 0;
-            setText(opt1, 'Never');
-            opt2 = document.createElement('option');
-            opt2.value = 1;
-            setText(opt2, 'After 7 PM local time');
-            opt3 = document.createElement('option');
-            opt3.value = 2;
-            setText(opt3, 'Always');
-            opts = [opt1, opt2, opt3];
-            opts[document.body.getAttribute('data-night-theme')].selected = true;
-            themeError = document.createElement('p');
-            themeError.className = 'error';
-            themeError.fontWeight = 'bold';
-            themeError.id = 'theme_error_' + id;
-            setText(themeError, '\u00a0');
-
-            themeS.onchange = function() {
-                updateThemeReq = new XMLHttpRequest();
-                error = document.getElementById(this.getAttribute('data-error-id'));
-
-                updateThemeReq.onreadystatechange = function() {
-                    if (this.readyState == 4 && this.status == 200) {
-                        switch(this.responseText) {
-                            case 'success':
-                                error.style.color = 'green';
-                                setText(error, 'Saved.');
-                                break;
-                            case 'fail':
-                                error.style.color = 'red';
-                                setText(error, 'Failed.');
-                                break;
-                        }
-                    }
-                };
-
-                updateThemeReq.open('POST', 'account.cgi', false);
-                updateThemeReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-                updateThemeReq.send('mode=2&theme=' + this.value);
-                
-            };
-
-            themeS.appendChild(opt1);
-            themeS.appendChild(opt2);
-            themeS.appendChild(opt3);
-            themeP.appendChild(themeS);
-            accountPanel.appendChild(themeP);
-
         }
     };
 

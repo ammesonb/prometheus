@@ -1,6 +1,6 @@
 #!/bin/bash
 
 pg_dump -sC prometheus > prometheus.db
-./updatedocs
+/bin/bash /var/www/updatedocs.sh
 git add *
 git commit -a

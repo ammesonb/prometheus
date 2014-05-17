@@ -101,15 +101,34 @@ sub init {
     $html .= $indent . "<script type=\"text/javascript\">
     window.onload = function() {
         document.body.style.backgroundSize = window.innerWidth + \"px \" + window.innerHeight + \"px\";
+        theme = document.body.getAttribute('data-night-theme');
+        d = new Date();
+        // Main page
         try {
             document.getElementById('tabs').style.top = document.getElementById('main').offsetTop - 25 + \"px\";
+
+            if (useNightTheme()) {
+                document.getElementById('main').className += ' night';
+                tools = document.getElementsByClassName('tool_name')
+                for (t = 0; t < tools.length; t++) {tools[t].className += ' night';}
+            }
         } catch(e) {}
+
+        // Login
+        try {
+            if (useNightTheme()) {
+                document.getElementById('login').className += ' night';
+                fields = document.getElementsByTagName('input')
+                for (i = 0; i < fields.length; i++) {fields[i].className += ' night';}
+            }
+        } catch(e) {}
+        document.body.style.visibility = 'visible';
     };
     </script>\n";
     $html .= $indent . "<title>$title</title>\n";
     $html .= $indent . "<link rel=\"stylesheet\" type=\"text/css\" href=\"res/style.css\"/>\n";
     $html .= "</head>\n";
-    $html .= "<body data-night-theme=" . $session->param('night_theme') . ">\n";
+    $html .= "<body style=\"visibility: hidden;\" data-night-theme=" . $session->param('night_theme') . ">\n";
     if ($authorized == 2) {
         $html .= "<div id=\"login\">\n";
         $html .= "<img src=\"images/prometheus.png\" alt=\"Prometheus\">\n";
