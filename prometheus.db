@@ -77,6 +77,40 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
+-- Name: domains; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE domains (
+    id integer NOT NULL,
+    name character varying NOT NULL,
+    regex character varying NOT NULL
+);
+
+
+ALTER TABLE public.domains OWNER TO root;
+
+--
+-- Name: domains_id_seq; Type: SEQUENCE; Schema: public; Owner: root
+--
+
+CREATE SEQUENCE domains_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.domains_id_seq OWNER TO root;
+
+--
+-- Name: domains_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: root
+--
+
+ALTER SEQUENCE domains_id_seq OWNED BY domains.id;
+
+
+--
 -- Name: notes; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
@@ -168,11 +202,11 @@ CREATE TABLE users (
     id integer NOT NULL,
     username character varying NOT NULL,
     pw character varying NOT NULL,
-    domain character varying DEFAULT 'WPI'::character varying,
     is_admin boolean,
     is_shared boolean,
     disabled boolean DEFAULT false,
-    theme integer DEFAULT 1
+    theme integer DEFAULT 1,
+    domain integer DEFAULT 2
 );
 
 
@@ -203,6 +237,13 @@ ALTER SEQUENCE users_id_seq OWNED BY users.id;
 -- Name: id; Type: DEFAULT; Schema: public; Owner: root
 --
 
+ALTER TABLE ONLY domains ALTER COLUMN id SET DEFAULT nextval('domains_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: root
+--
+
 ALTER TABLE ONLY notes ALTER COLUMN id SET DEFAULT nextval('notes_id_seq'::regclass);
 
 
@@ -218,6 +259,22 @@ ALTER TABLE ONLY services ALTER COLUMN id SET DEFAULT nextval('services_id_seq':
 --
 
 ALTER TABLE ONLY users ALTER COLUMN id SET DEFAULT nextval('users_id_seq'::regclass);
+
+
+--
+-- Name: domains_name_key; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY domains
+    ADD CONSTRAINT domains_name_key UNIQUE (name);
+
+
+--
+-- Name: domains_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY domains
+    ADD CONSTRAINT domains_pkey PRIMARY KEY (id);
 
 
 --
@@ -320,6 +377,14 @@ ALTER TABLE ONLY user_services
 
 ALTER TABLE ONLY user_services
     ADD CONSTRAINT user_services_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);
+
+
+--
+-- Name: users_domain_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY users
+    ADD CONSTRAINT users_domain_fkey FOREIGN KEY (domain) REFERENCES domains(id);
 
 
 --

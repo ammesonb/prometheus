@@ -10,11 +10,6 @@ use DBD::Pg;
 use List::MoreUtils qw(first_index);
 use strict;
 
-my %domainRegexes = (
-    'WPI' => '130\.215\.*',
-    'ALL' => '.*'
-);
-
 my $indent = '    ';
 
 sub init {
@@ -360,6 +355,16 @@ sub deleteFromTable {
 sub attempt_login {
     my $username = shift;
     my $pass = shift;
+    my $domainID = shift;
+
+    my @domainCols = ('id', 'regex');
+    my @searchCols = ('id');
+    my @searchOps = ('=');
+    my @searchVals = ($domainID);
+    my @logic = ();
+    my $domainRegexRef = searchTable('domains', \@domainCols, \@searchCols, \@searchOps, \@searchVals, \@logic);
+    my %domainRegex = %$domainRegexRef;
+    my $domainRegex = $domainRegex{$domainID}{'regex'};
 
     my $usersRef = getTable("users");
     my %usersHash = %$usersRef;
@@ -371,8 +376,7 @@ sub attempt_login {
         if (($username cmp $user{'username'}) == 0) {
             return 4 if ($user{'disabled'});
             if (($pass cmp $user{'pw'}) == 0) {
-                my $pattern = $domainRegexes{$user{'domain'}};
-                return 0 if (($ENV{'REMOTE_ADDR'}) =~ /$pattern/);
+                return 0 if (($ENV{'REMOTE_ADDR'}) =~ /$domainRegex/);
                 return 3;
             } else {
                 return 1;

@@ -754,9 +754,6 @@ function viewAccount() {
                 themeP.appendChild(themeError);
                 accountPanel.appendChild(themeP);
             }
-
-            if (accountType == 'admin') {
-            }
         }
     };
 

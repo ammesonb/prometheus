@@ -17,10 +17,19 @@ my %titles = (
 
 my $q = new CGI();
 my $session = CGI::Session->new($q);
-my $response = COMMON::attempt_login($q->param('a'), $q->param('c'));
+
+if (index($q->param('a'), "'", ) != -1) {
+    $session->param('attempt_login', 1);
+    $session->expire('attempt_login', '+30m');
+    $session->param('logged_in', 0);
+    $session->expire('logged_in', '+30m');
+    my $html = COMMON::init($session, 1);
+    print $html;
+    exit;
+}
 
 # Get user data
-my @returnCols = ('id', 'is_shared', 'is_admin', 'theme');
+my @returnCols = ('id', 'is_shared', 'is_admin', 'theme', 'domain');
 my @searchCols = ('username');
 my @operators = ('=');
 my @patterns = ("'" . $q->param('a') . "'");
@@ -29,6 +38,8 @@ my $userRef = COMMON::searchTable('users', \@returnCols, \@searchCols, \@operato
 my %userData = %$userRef;
 my @userIDs = keys %userData;
 my $userID = $userIDs[0];
+
+my $response = COMMON::attempt_login($q->param('a'), $q->param('c'), $userData{$userID}{'domain'});
 
 # Set session parameters
 $session->param('attempt_login', 1);
