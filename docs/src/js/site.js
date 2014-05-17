@@ -521,6 +521,17 @@ function openTasks() {
     taskPanel = document.createElement('div');
     taskPanel.id = id;
 
+    getTasksReq = new XMLHttpRequest();
+
+    getTasksReq.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+        }
+    };
+
+    getTasksReq.open('POST', 'tasks.cgi', false);
+    getTasksReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    getTasksReq.send('mode=0');
+
     taskTab = document.createElement('div');
     setText(taskTab, 'Task List');
     taskTab.className = 'tab';
