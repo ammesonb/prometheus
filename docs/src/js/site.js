@@ -172,9 +172,12 @@ function openNotes() {
             if (this.readyState == 4 && this.status == 200) {
                 status = this.responseText;
 
+                if (status == 'success') {errorText.style.color = 'green';}
+                else {errorText.style.color = 'red';}
+
                 switch(status) {
                     case 'success':
-                        setText(errorText, '\u00a0');
+                        setText(errorText, 'Saved at ' + new Date().getHours() + ':' + new Date().getMinutes() + ':' + new Date().getSeconds());
                         break;
                     case 'none':
                         setText(errorText, 'Update failed - no matching note found!');
