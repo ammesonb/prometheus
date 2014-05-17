@@ -582,6 +582,9 @@ function viewAccount() {
                     if (this.value.length >= 8 && this.value ==
                             document.getElementById(this.getAttribute('data-other-input-id')).value) {
                         setText(document.getElementById(this.getAttribute('data-error-id')), '\u00a0');
+                    } else if (this.value.length < 8) {
+                        setText(document.getElementById(this.getAttribute('data-error-id')),
+                                'Password must have at least 8 characters');
                     } else {
                         setText(document.getElementById(this.getAttribute('data-error-id')),
                                 'Passwords don\'t match');
