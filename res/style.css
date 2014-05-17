@@ -146,6 +146,7 @@ input {
 
 input.night {
     background-color: rgba(0, 0, 0, 0);
+    border: 1px solid silver;
 }
 
 input.note_title {
@@ -156,6 +157,16 @@ input.note_title {
 
 textarea.note_editor {
     width: 95%;
+}
+
+select.night {
+    background-color: #555;
+    border: 1px solid silver;
+}
+
+option.night {
+    background-color: #555;
+    color: white;
 }
 
 button.night {

@@ -699,6 +699,10 @@ function viewAccount() {
                     
                 };
     
+                if (useNightTheme()) {
+                    switchToNight([themeP, themeS, opt1, opt2, opt3]);
+                }
+
                 themeS.appendChild(opt1);
                 themeS.appendChild(opt2);
                 themeS.appendChild(opt3);
