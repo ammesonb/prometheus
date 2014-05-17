@@ -649,15 +649,17 @@ function viewAccount() {
             setText(opt3, 'Always');
             opts = [opt1, opt2, opt3];
             opts[document.body.getAttribute('data-night-theme')].selected = true;
-            themeError = document.createElement('p');
+            themeError = document.createElement('span');
+            themeError.id = 'theme_error_' + id;
             themeError.className = 'error';
             themeError.fontWeight = 'bold';
-            themeError.id = 'theme_error_' + id;
+            themeError.style.paddingLeft = '10px';
             setText(themeError, '\u00a0');
 
             themeS.onchange = function() {
                 updateThemeReq = new XMLHttpRequest();
                 error = document.getElementById(this.getAttribute('data-error-id'));
+                theme = this.value;
 
                 updateThemeReq.onreadystatechange = function() {
                     if (this.readyState == 4 && this.status == 200) {
@@ -665,8 +667,9 @@ function viewAccount() {
                             case 'success':
                                 error.style.color = 'green';
                                 setText(error, 'Saved.');
+                                document.body.setAttribute('data-night-theme', theme);
                                 break;
-                            case 'fail':
+                            default:
                                 error.style.color = 'red';
                                 setText(error, 'Failed.');
                                 break;
@@ -684,8 +687,8 @@ function viewAccount() {
             themeS.appendChild(opt2);
             themeS.appendChild(opt3);
             themeP.appendChild(themeS);
+            themeP.appendChild(themeError);
             accountPanel.appendChild(themeP);
-
         }
     };
 

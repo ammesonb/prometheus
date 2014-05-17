@@ -95,6 +95,14 @@ span.tool {
     text-align: center;
 }
 
+span.error {
+    font-size: 10pt;
+    font-weight: bold;
+    color: red;
+    margin-top: 5px;
+    padding-top: 0px;
+}
+
 table.notes {
     border-collapse: collapse;
     width: 100%;

@@ -1,0 +1,338 @@
+--
+-- PostgreSQL database dump
+--
+
+SET statement_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SET check_function_bodies = false;
+SET client_min_messages = warning;
+
+--
+-- Name: prometheus; Type: DATABASE; Schema: -; Owner: root
+--
+
+CREATE DATABASE prometheus WITH TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'en_US.UTF-8' LC_CTYPE = 'en_US.UTF-8';
+
+
+ALTER DATABASE prometheus OWNER TO root;
+
+\connect prometheus
+
+SET statement_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SET check_function_bodies = false;
+SET client_min_messages = warning;
+
+--
+-- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
+--
+
+CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
+
+
+--
+-- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
+
+
+SET search_path = public, pg_catalog;
+
+--
+-- Name: add_default_services(); Type: FUNCTION; Schema: public; Owner: root
+--
+
+CREATE FUNCTION add_default_services() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+insert into user_services values (NEW.id, 0); return NEW;
+END
+$$;
+
+
+ALTER FUNCTION public.add_default_services() OWNER TO root;
+
+--
+-- Name: update_mtime(); Type: FUNCTION; Schema: public; Owner: root
+--
+
+CREATE FUNCTION update_mtime() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+begin
+NEW.mtime = now();
+return NEW;
+end;
+$$;
+
+
+ALTER FUNCTION public.update_mtime() OWNER TO root;
+
+SET default_tablespace = '';
+
+SET default_with_oids = false;
+
+--
+-- Name: notes; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE notes (
+    id integer NOT NULL,
+    title character varying NOT NULL,
+    text character varying NOT NULL,
+    user_id integer,
+    ctime timestamp without time zone DEFAULT now(),
+    mtime timestamp without time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.notes OWNER TO root;
+
+--
+-- Name: notes_id_seq; Type: SEQUENCE; Schema: public; Owner: root
+--
+
+CREATE SEQUENCE notes_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.notes_id_seq OWNER TO root;
+
+--
+-- Name: notes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: root
+--
+
+ALTER SEQUENCE notes_id_seq OWNED BY notes.id;
+
+
+--
+-- Name: services; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE services (
+    id integer NOT NULL,
+    service character varying NOT NULL,
+    function character varying NOT NULL,
+    row_order integer NOT NULL
+);
+
+
+ALTER TABLE public.services OWNER TO root;
+
+--
+-- Name: services_id_seq; Type: SEQUENCE; Schema: public; Owner: root
+--
+
+CREATE SEQUENCE services_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.services_id_seq OWNER TO root;
+
+--
+-- Name: services_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: root
+--
+
+ALTER SEQUENCE services_id_seq OWNED BY services.id;
+
+
+--
+-- Name: user_services; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE user_services (
+    user_id integer NOT NULL,
+    service_id integer NOT NULL
+);
+
+
+ALTER TABLE public.user_services OWNER TO root;
+
+--
+-- Name: users; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE users (
+    id integer NOT NULL,
+    username character varying NOT NULL,
+    pw character varying NOT NULL,
+    domain character varying DEFAULT 'WPI'::character varying,
+    is_admin boolean,
+    is_shared boolean,
+    disabled boolean DEFAULT false,
+    theme integer DEFAULT 1
+);
+
+
+ALTER TABLE public.users OWNER TO root;
+
+--
+-- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: root
+--
+
+CREATE SEQUENCE users_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.users_id_seq OWNER TO root;
+
+--
+-- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: root
+--
+
+ALTER SEQUENCE users_id_seq OWNED BY users.id;
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY notes ALTER COLUMN id SET DEFAULT nextval('notes_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY services ALTER COLUMN id SET DEFAULT nextval('services_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY users ALTER COLUMN id SET DEFAULT nextval('users_id_seq'::regclass);
+
+
+--
+-- Name: notes_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY notes
+    ADD CONSTRAINT notes_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: row_order_key; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY services
+    ADD CONSTRAINT row_order_key UNIQUE (row_order);
+
+
+--
+-- Name: services_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY services
+    ADD CONSTRAINT services_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: services_service_key; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY services
+    ADD CONSTRAINT services_service_key UNIQUE (service);
+
+
+--
+-- Name: services_url_key; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY services
+    ADD CONSTRAINT services_url_key UNIQUE (function);
+
+
+--
+-- Name: user_services_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY user_services
+    ADD CONSTRAINT user_services_pkey PRIMARY KEY (user_id, service_id);
+
+
+--
+-- Name: users_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: users_username_key; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY users
+    ADD CONSTRAINT users_username_key UNIQUE (username);
+
+
+--
+-- Name: add_default_services; Type: TRIGGER; Schema: public; Owner: root
+--
+
+CREATE TRIGGER add_default_services AFTER INSERT ON users FOR EACH ROW EXECUTE PROCEDURE add_default_services();
+
+
+--
+-- Name: notes_update; Type: TRIGGER; Schema: public; Owner: root
+--
+
+CREATE TRIGGER notes_update BEFORE UPDATE ON notes FOR EACH ROW EXECUTE PROCEDURE update_mtime();
+
+
+--
+-- Name: notes_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY notes
+    ADD CONSTRAINT notes_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);
+
+
+--
+-- Name: user_services_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY user_services
+    ADD CONSTRAINT user_services_service_id_fkey FOREIGN KEY (service_id) REFERENCES services(id);
+
+
+--
+-- Name: user_services_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY user_services
+    ADD CONSTRAINT user_services_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);
+
+
+--
+-- Name: public; Type: ACL; Schema: -; Owner: postgres
+--
+
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON SCHEMA public FROM postgres;
+GRANT ALL ON SCHEMA public TO postgres;
+GRANT ALL ON SCHEMA public TO PUBLIC;
+
+
+--
+-- PostgreSQL database dump complete
+--
+
