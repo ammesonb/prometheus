@@ -218,14 +218,6 @@ p#error {
     padding-top: 0px;
 }
 
-p.error {
-    font-size: 10pt;
-    font-weight: bold;
-    color: red;
-    margin-top: 5px;
-    padding-top: 0px;
-}
-
 p#userinfo {
     position: absolute;
     top: .5%;
@@ -238,6 +230,18 @@ p#userinfo a {
     color: white;
     text-decoration: none;
     font-style: italic;
+}
+
+p.night {
+    color: silver;
+}
+
+p.error {
+    font-size: 10pt;
+    font-weight: bold;
+    color: red;
+    margin-top: 5px;
+    padding-top: 0px;
 }
 
 p.normal_text {

@@ -271,7 +271,7 @@ function openNotes() {
     errorText.className = 'error_text';
 
     if (useNightTheme()) {
-        switchToNight(noteTitle, textDesc, noteText, saveButton, cancelButton, createButton);
+        switchToNight(titleDesc, noteTitle, textDesc, noteText, saveButton, cancelButton, createButton);
     }
 
     notesEditor.appendChild(titleDesc);
