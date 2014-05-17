@@ -22,7 +22,7 @@ div#login {
 
 div#login.night {
     background-color: rgba(0, 0, 0, .30);
-    color: white;
+    color: silver;
 }
 
 div#tabs {
@@ -61,7 +61,7 @@ div.normal {
 }
 
 div.normal.night {
-    color: white;
+    color: silver;
 }
 
 div.notes {
@@ -130,13 +130,24 @@ table.notes {
 table.notes th {
     border: solid thin black;
     padding: 5px 0px 5px 5px;
-    background-color: gray;
+    background-color: #888;
     color: white;
+}
+
+table.notes.night th {
+    background-color: rgba(0, 0, 0, 0);
+    border: solid thin silver;
 }
 
 table.notes td {
     border: solid thin black;
     padding: 5px 0px 5px 5px;
+}
+
+table.notes.night td {
+    background-color: rgba(0, 0, 0, 0);
+    border: solid thin silver;
+    color: silver;
 }
 
 /* inputs */
@@ -147,12 +158,19 @@ input {
 input.night {
     background-color: rgba(0, 0, 0, 0);
     border: 1px solid silver;
+    color: silver;
 }
 
 input.note_title {
     width: 95%;
     padding-top: 0px;
     margin-top: 0px;
+}
+
+textarea.night {
+    background-color: rgba(0, 0, 0, 0);
+    border: 1px solid silver;
+    color: silver;
 }
 
 textarea.note_editor {
@@ -166,14 +184,14 @@ select.night {
 
 option.night {
     background-color: #555;
-    color: white;
+    color: silver;
 }
 
 button.night {
     background-color: rgba(0, 0, 0, 0);
-    border: 1px solid white;
+    border: 1px solid silver;
     border-radius: 10px;
-    color: white;
+    color: silver;
 }
 
 button.night:hover {
@@ -227,7 +245,7 @@ p.normal_text {
 }
 
 p.normal_text.night {
-    color: white;
+    color: silver;
 }
 
 p.normal_section_header {
@@ -237,15 +255,14 @@ p.normal_section_header {
 }
 
 p.normal_section_header.night {
-    color: white;
+    color: silver;
 }
 
 p.tool_name {
     color: #555;
     font-weight: bold;
     font-size: 120%;
-    /*color: white;
-    text-shadow:
+    /*text-shadow:
         -1px -1px 0 #000,
         1px -1px 0 #000,
         -1px 1px 0 #000,

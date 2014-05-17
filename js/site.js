@@ -37,8 +37,8 @@ function useNightTheme() {
     return ((theme == 1 && now.getHours() >= 19) || theme == 2);
 }
 
-function switchToNight(elems) {
-    for (e = 0; e < elems.length; e++) {elems[e].className += ' night';}
+function switchToNight() {
+    for (a = 0; a < arguments.length; a++) {arguments[a].className += ' night';}
 }
 
 function setText(element, text) {
@@ -105,6 +105,7 @@ function openNotes() {
     // Create table to display notes in
     notesTable = document.createElement('table');
     notesTable.className = 'notes';
+    if (useNightTheme()) {notesTable.className += ' night';}
 
     headerRow = document.createElement('tr');
     tableTitle = document.createElement('th');
@@ -262,6 +263,10 @@ function openNotes() {
 
     errorText = document.createElement('p');
     errorText.className = 'error_text';
+
+    if (useNightTheme()) {
+        switchToNight(noteTitle, textDesc, noteText, saveButton, cancelButton, createButton);
+    }
 
     notesEditor.appendChild(titleDesc);
     notesEditor.appendChild(noteTitle);
@@ -629,7 +634,7 @@ function viewAccount() {
 
                 // Switch to night theme if appropriate
                 if (useNightTheme()) {
-                    switchToNight([passText, pBox, p1, p2, updateButton]);
+                    switchToNight(passText, pBox, p1, p2, updateButton);
                 }
         
                 // Add children
@@ -700,7 +705,7 @@ function viewAccount() {
                 };
     
                 if (useNightTheme()) {
-                    switchToNight([themeP, themeS, opt1, opt2, opt3]);
+                    switchToNight(themeP, themeS, opt1, opt2, opt3);
                 }
 
                 themeS.appendChild(opt1);
