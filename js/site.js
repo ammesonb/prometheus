@@ -515,6 +515,21 @@ function refreshNotes(notes) {
     }
 }
 
+/* Tasks */
+function openTasks() {
+    id = 'tasks_' + new Date().getTime();
+    taskPanel = document.createElement('div');
+    taskPanel.id = id;
+
+    taskTab = document.createElement('div');
+    setText(taskTab, 'Task List');
+    taskTab.className = 'tab';
+    taskTab.setAttribute('data-id', id);
+    taskTab.onclick = function() {switchTab(this.getAttribute('data-id'));};
+    addTab(taskPanel, taskTab);
+    switchTab(id);
+}
+
 /* Account Management */
 function viewAccount() {
     id = 'my_account_' + new Date().getTime();
