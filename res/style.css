@@ -3,6 +3,7 @@ body {
     background: url(gradient.png);
 }
 
+/* div */
 div#login {
     display: inline-block;
     text-align: center;
@@ -52,7 +53,7 @@ div#main {
 }
 
 div#main.night {
-    background-color: rgba(0, 0, 0, .50);
+    background-color: rgba(0, 0, 0, .30);
 }
 
 div.normal {
@@ -96,6 +97,7 @@ div.tab {
     margin-right: 5px;
 }
 
+/* span */
 span.normal {
     color: black;
 }
@@ -119,6 +121,7 @@ span.error {
     padding-top: 0px;
 }
 
+/* table */
 table.notes {
     border-collapse: collapse;
     width: 100%;
@@ -136,6 +139,7 @@ table.notes td {
     padding: 5px 0px 5px 5px;
 }
 
+/* inputs */
 input {
     padding-left: 2px;
 }
@@ -154,6 +158,18 @@ textarea.note_editor {
     width: 95%;
 }
 
+button.night {
+    background-color: rgba(0, 0, 0, 0);
+    border: 1px solid white;
+    border-radius: 10px;
+    color: white;
+}
+
+button.night:hover {
+    color: #CCF;
+    border: 1px solid #CCF;
+}
+
 button.left_action {
     float: left;
     margin-right: 10px;
@@ -164,6 +180,7 @@ button.right_action {
     margin-left: 10px;
 }
 
+/* p */
 p#error {
     font-size: 10pt;
     font-weight: bold;

@@ -37,6 +37,10 @@ function useNightTheme() {
     return ((theme == 1 && now.getHours() >= 19) || theme == 2);
 }
 
+function switchToNight(elems) {
+    for (e = 0; e < elems.length; e++) {elems[e].className += ' night';}
+}
+
 function setText(element, text) {
     element.innerText = text;
     element.innerHTML = text;
@@ -484,9 +488,10 @@ function viewAccount() {
             serviceP = document.createElement('p');
             serviceP.className = 'normal_text';
             setText(serviceP, 'You may access the following services: ' + services);
+            if (useNightTheme()) {serviceP.className += ' night';}
             accountPanel.appendChild(serviceP);
 
-            // If account isn't shared, show password box
+            // If account isn't shared, show password box and theme
             if (accountType != 'shared') {
                 passText = document.createElement('p');
                 passText.className = 'normal_section_header';
@@ -619,6 +624,11 @@ function viewAccount() {
                 };
                 setText(updateButton, 'Update Password');
 
+                // Switch to night theme if appropriate
+                if (useNightTheme()) {
+                    switchToNight([passText, pBox, p1, p2, updateButton]);
+                }
+        
                 // Add children
                 p.appendChild(document.createTextNode('Enter password:\u00a0\u00a0'));
                 p.appendChild(p1);
