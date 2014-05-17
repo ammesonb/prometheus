@@ -1,8 +1,8 @@
-Account
-    Domain should probably be moved to the database
 Night theme
     Add as user preference?
         Never/at time X/Always?
+Account
+    Domain should probably be moved to the database
 Account management
 Images for other services
 Write other services

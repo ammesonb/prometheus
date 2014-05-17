@@ -31,6 +31,12 @@ function login() {
     f.submit();
 }
 
+function useNightTheme() {
+    theme = document.body.getAttribute('data-night-theme');
+    now = new Date();
+    return ((theme == 1 && now.getHours() >= 19) || theme == 2);
+}
+
 function setText(element, text) {
     element.innerText = text;
     element.innerHTML = text;
@@ -526,7 +532,7 @@ function viewAccount() {
                 p2.id = 'pass_verify_' + id;
                 p2.type = 'password';
                 p2.setAttribute('data-button-id', 'update_pass_' + id);
-                p2.setAttribute('data-other_input-id', 'pass_' + id);
+                p2.setAttribute('data-other-input-id', 'pass_' + id);
                 p2.setAttribute('data-error-id', 'pass_error_' + id);
 
                 p1.onkeyup = function() {

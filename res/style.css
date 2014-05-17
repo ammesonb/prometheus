@@ -19,6 +19,11 @@ div#login {
     font-style: italic;
 }
 
+div#login.night {
+    background-color: rgba(0, 0, 0, .30);
+    color: white;
+}
+
 div#tabs {
     display: inline-block;
     position: absolute;
@@ -33,7 +38,6 @@ div#tabs {
 div#main {
     display: inline-block;
     background-color: white;
-    background-color: rgba(0, 0, 0, .50);
     border: 5px groove #999;
     padding: 5px;
     width: 800px;
@@ -47,7 +51,15 @@ div#main {
     padding-right: 15px;
 }
 
+div#main.night {
+    background-color: rgba(0, 0, 0, .50);
+}
+
 div.normal {
+    color: black;
+}
+
+div.normal.night {
     color: white;
 }
 
@@ -85,6 +97,10 @@ div.tab {
 }
 
 span.normal {
+    color: black;
+}
+
+span.normal.night {
     color: white;
 }
 
@@ -116,8 +132,16 @@ table.notes th {
 }
 
 table.notes td {
-    border: solid thin;
+    border: solid thin black;
     padding: 5px 0px 5px 5px;
+}
+
+input {
+    padding-left: 2px;
+}
+
+input.night {
+    background-color: rgba(0, 0, 0, 0);
 }
 
 input.note_title {
@@ -171,18 +195,25 @@ p#userinfo a {
 }
 
 p.normal_text {
+    color: black;
+}
+
+p.normal_text.night {
     color: white;
 }
 
 p.normal_section_header {
-    color: white;
+    color: black;
     font-size: 125%;
     font-weight: bold;
 }
 
-p.tool_name {
+p.normal_section_header.night {
     color: white;
-    /*color: #555;*/
+}
+
+p.tool_name {
+    color: #555;
     font-weight: bold;
     font-size: 120%;
     /*color: white;
@@ -191,6 +222,10 @@ p.tool_name {
         1px -1px 0 #000,
         -1px 1px 0 #000,
         1px 1px 0 #000;*/
+}
+
+p.tool_name.night {
+    color: white;
 }
 
 p.form_label {
