@@ -25,6 +25,11 @@ if (not ($mode =~ /^[0-9]+$/)) {
 }
 
 if ($mode == 0) {
-    
+    my @taskCols = ('*');
+    my @searchCols = ('user_id')
+    my @searchOps = ('=');
+    my @searchVals = ($session->param('user_id'));
+    my @logic = ();
+    my $tasksRef = COMMON::searchTable('tasks', \@taskCols, \@searchCols, \@searchOps, \@searchVals, \@logic);
 }
 exit;

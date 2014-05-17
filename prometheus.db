@@ -42,6 +42,20 @@ COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 SET search_path = public, pg_catalog;
 
 --
+-- Name: add_default_project(); Type: FUNCTION; Schema: public; Owner: root
+--
+
+CREATE FUNCTION add_default_project() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+begin
+insert into projects (name, user_id) values ('Default', NEW.id); return NEW;
+end $$;
+
+
+ALTER FUNCTION public.add_default_project() OWNER TO root;
+
+--
 -- Name: add_default_services(); Type: FUNCTION; Schema: public; Owner: root
 --
 
@@ -154,7 +168,8 @@ ALTER SEQUENCE notes_id_seq OWNED BY notes.id;
 CREATE TABLE projects (
     id integer NOT NULL,
     name character varying NOT NULL,
-    parent integer
+    parent integer,
+    user_id integer NOT NULL
 );
 
 
@@ -228,7 +243,8 @@ CREATE TABLE tasks (
     priority integer,
     is_urgent boolean,
     is_trivial boolean,
-    project integer
+    project integer,
+    user_id integer NOT NULL
 );
 
 
@@ -373,14 +389,6 @@ ALTER TABLE ONLY notes
 
 
 --
--- Name: projects_name_key; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
---
-
-ALTER TABLE ONLY projects
-    ADD CONSTRAINT projects_name_key UNIQUE (name);
-
-
---
 -- Name: projects_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
 --
 
@@ -453,6 +461,13 @@ ALTER TABLE ONLY users
 
 
 --
+-- Name: add_default_project; Type: TRIGGER; Schema: public; Owner: root
+--
+
+CREATE TRIGGER add_default_project AFTER INSERT ON users FOR EACH STATEMENT EXECUTE PROCEDURE add_default_project();
+
+
+--
 -- Name: add_default_services; Type: TRIGGER; Schema: public; Owner: root
 --
 
@@ -483,11 +498,27 @@ ALTER TABLE ONLY projects
 
 
 --
+-- Name: projects_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY projects
+    ADD CONSTRAINT projects_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);
+
+
+--
 -- Name: tasks_project_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
 --
 
 ALTER TABLE ONLY tasks
     ADD CONSTRAINT tasks_project_fkey FOREIGN KEY (project) REFERENCES projects(id);
+
+
+--
+-- Name: tasks_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY tasks
+    ADD CONSTRAINT tasks_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);
 
 
 --
