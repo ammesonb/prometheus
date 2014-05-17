@@ -25,11 +25,30 @@ if (not ($mode =~ /^[0-9]+$/)) {
 }
 
 if ($mode == 0) {
-    my @taskCols = ('*');
-    my @searchCols = ('user_id')
+    my @returnCols = ('*');
+    my @searchCols = ('user_id');
     my @searchOps = ('=');
     my @searchVals = ($session->param('user_id'));
     my @logic = ();
-    my $tasksRef = COMMON::searchTable('tasks', \@taskCols, \@searchCols, \@searchOps, \@searchVals, \@logic);
+    my $projectsRef = COMMON::searchTableSort('projects', \@returnCols, \@searchCols, \@searchOps, \@searchVals, \@logic, 'id');
+    my $tasksRef = COMMON::searchTableSort('tasks', \@returnCols, \@searchCols, \@searchOps, \@searchVals, \@logic, 'id');
+
+    my @projects = @$projectsRef;
+    my @tasks = @$tasksRef;
+    my $count = 0;
+    print '[[';
+    foreach(@projects) {
+        print encode_json($_);
+        print ',' if ($count < $#projects);
+        $count++;
+    }
+    print '], [';
+    $count = 0;
+    foreach(@tasks) {
+        print encode_json($_);
+        print ',' if ($count < $#tasks);
+        $count++;
+    }
+    print ']]';
 }
 exit;
