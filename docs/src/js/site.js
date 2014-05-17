@@ -231,7 +231,10 @@ function openNotes() {
         for (child = 0; child < tab.children.length; child++) {
             if (tab.children[child].tagName === 'TABLE') {table = tab.children[child];}
         }
-        for (child = 0; child < table.children.length; child++) {table.children[child].style.textDecoration = 'none';}
+        while (document.getElementsByClassName('note_edit').length != 0) {
+            underlines = document.getElementsByClassName('note_edit');
+            for (u = 0; u < underlines.length; u++) {underlines[u].className = 'note_blank';}
+        }
 
         this.parentElement.setAttribute('data-note-id', -1);
         c = this.parentElement.children;
@@ -251,7 +254,10 @@ function openNotes() {
         for (child = 0; child < tab.children.length; child++) {
             if (tab.children[child].tagName === 'TABLE') {table = tab.children[child];}
         }
-        for (child = 0; child < table.children.length; child++) {table.children[child].style.textDecoration = 'none';}
+        while (document.getElementsByClassName('note_edit').length != 0) {
+            underlines = document.getElementsByClassName('note_edit');
+            for (u = 0; u < underlines.length; u++) {underlines[u].className = 'note_blank';}
+        }
 
         this.parentElement.setAttribute('data-note-id', -1);
         c = this.parentElement.children;
@@ -320,22 +326,29 @@ function populateNotes(data, notesTable, notesEditor, resize) {
 
         // Select appropriate note
         // If no note loaded, but title and text match, this note must have just been created
+        selected = 0;
         if (notesEditor.getAttribute('data-note-id') == '-1' &&
             note.title == editorTitleText && note.text == editorNoteText) {
             notesEditor.setAttribute('data-note-id', note.id);
-            r.style.textDecoration = 'underline';
+            selected = 1;
         // Otherwise if current note is in editor
         } else if (notesEditor.getAttribute('data-note-id') == note.id) {
-            r.style.textDecoration = 'underline';
+            selected = 1;
         }
 
         r.onclick = function() {
             editNote(JSON.parse(this.getAttribute('data-note')), this);
-            children = this.parentElement.children;
-            for (child = 0; child < children.length; child++) {
-                children[child].style.textDecoration = 'none';
+
+            // Since just doing it once doesn't seem to be enough....
+            while (document.getElementsByClassName('note_edit').length != 0) {
+                underlines = document.getElementsByClassName('note_edit');
+                for (u = 0; u < underlines.length; u++) {underlines[u].className = 'note_blank';}
             }
-            this.style.textDecoration = 'underline';
+            underlines = this.getElementsByTagName('u');
+            for (u = 0; u < underlines.length; u++) {
+                underlines[u].className = 'note_edit';
+                if (useNightTheme()) {switchToNight(underlines[u]);}
+            }
         }
         r.onmouseover = function() {
             this.style.fontWeight = 'bold';
@@ -345,13 +358,35 @@ function populateNotes(data, notesTable, notesEditor, resize) {
             this.style.fontWeight = 'normal';
             this.style.fontStyle = 'normal';
         }
+
         title = document.createElement('td');
         title.style.paddingRight = '5px';
         title.style.maxWidth = notesTable.clientWidth * .3 + 'px';
         title.style.wordWrap = 'break-word';
-        setText(title, note.title);
+        titleUnderline = document.createElement('u');
+        titleUnderline.className = 'note_blank';
+        if (selected) {
+            titleUnderline.className = 'note_edit';
+            if (useNightTheme()) {switchToNight(titleUnderline);}
+        }
+        titleText = document.createElement('span');
+        titleText.className = 'normal';
+        setText(titleText, note.title);
+        titleUnderline.appendChild(titleText);
+        title.appendChild(titleUnderline);
+
         mtime = document.createElement('td');
-        setText(mtime, note.mtime);
+        mtimeUnderline = document.createElement('u');
+        mtimeUnderline.className = 'note_blank';
+        if (selected) {
+            mtimeUnderline.className = 'note_edit';
+            if (useNightTheme()) {switchToNight(mtimeUnderline);}
+        }
+        mtimeText = document.createElement('span');
+        mtimeText.className = 'normal';
+        setText(mtimeText, note.mtime);
+        mtimeUnderline.appendChild(mtimeText);
+        mtime.appendChild(mtimeUnderline);
         a = document.createElement('a');
         a.href = '#';
         a.style.float = 'right';
@@ -398,6 +433,10 @@ function populateNotes(data, notesTable, notesEditor, resize) {
         }
         mtime.appendChild(a);
 
+        if (useNightTheme()) {
+            switchToNight(titleText, mtimeText);
+        }
+
         r.appendChild(title);
         r.appendChild(mtime);
 
@@ -417,7 +456,7 @@ function populateNotes(data, notesTable, notesEditor, resize) {
         noteText.style.height = notesEditor.offsetHeight - noteText.offsetTop - 30 + 'px';
 
         titleTD = notesTable.children[0].children[0];
-        titleTD.style.width = titleTD.offsetWidth + 10 + 'px';
+        titleTD.style.width = titleTD.offsetWidth + 20 + 'px';
     }
 }
 

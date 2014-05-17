@@ -103,7 +103,7 @@ span.normal {
 }
 
 span.normal.night {
-    color: white;
+    color: silver;
 }
 
 span.tool {
@@ -286,4 +286,16 @@ p.error_text {
     color: red;
     font-weight: bold;
     font-size: 75%;
+}
+
+u.note_blank {
+    color: rgba(0, 0, 0, 0);
+}
+
+u.note_edit {
+    color: black;
+}
+
+u.note_edit.night {
+    color: silver;
 }
