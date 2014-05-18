@@ -132,9 +132,6 @@ div.upcoming_tasks.night {
     border: 1px solid silver;
 }
 
-
-
-
 /* span */
 span.normal {
     color: black;
@@ -218,6 +215,7 @@ textarea.note_editor {
 select.night {
     background-color: #555;
     border: 1px solid silver;
+    color: silver;
 }
 
 option.night {
@@ -300,6 +298,15 @@ p.normal_section_header.night {
     color: silver;
 }
 
+p.project_name {
+    display: inline;
+    color: black;
+}
+
+p.project_name.night {
+    color: white;
+}
+
 p.tool_name {
     color: #555;
     font-weight: bold;
@@ -328,6 +335,17 @@ p.error_text {
     color: red;
     font-weight: bold;
     font-size: 75%;
+}
+
+/* a */
+a.openProject {
+    color: #CCF;
+    text-decoration: none;
+}
+
+a.closeProject {
+    color: red;
+    text-decoration: none;
 }
 
 /* underlines */

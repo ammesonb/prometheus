@@ -468,7 +468,7 @@ function editNote(note, row) {
     panes = notePanel.children;
     editPane = 0;
     for (pane = 0; pane < panes.length; pane++) {
-        if (panes[pane].className == 'notes_editor') {
+        if (panes[pane].className.search('notes_editor') != -1) {
             editPane = panes[pane];
             break;
         }
@@ -494,8 +494,8 @@ function refreshNotes(notes) {
         // and clear out old entries
         for (child = 0; child < notePane.children.length; child++) {
             elem = notePane.children[child];
-            if (elem.className == 'notes_editor') {noteEditor = elem;}
-            if (elem.className == 'notes_list') {
+            if (elem.className.search('notes_editor') != -1) {noteEditor = elem;}
+            if (elem.className.search('notes_list') != -1) {
                 noteTable = elem.children[0];
 
                 while (noteTable.children.length > 1) {
@@ -560,7 +560,7 @@ function openTasks() {
     getTasksReq.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
             data = JSON.parse(getTasksReq.responseText);
-            populateTasks(data[0], data[1]);
+            populateTasks(data[0], data[1], projectsList);
         }
     };
 
@@ -578,9 +578,53 @@ function openTasks() {
     switchTab(id);
 }
 
-function populateTasks(projects, tasks) {
-    console.log(projects);
-    console.log(tasks);
+function populateTasks(projects, tasks, projectsList) {
+    // Turn root projects into a list sorted by ID
+    // and have another list of subprojects indexed by ID
+    rootProjects = new Array();
+    subProjects = new Array();
+    defaultProject = -1;
+    for (project = 0; project < projects.length; project++) {
+        p = projects[project];
+        if (p.name == 'Default') {defaultProject = p; continue;}
+        if (!isNaN(p.parent)) {
+            rootProjects.push(p);
+            continue;
+        } else if (!isFinite(subProjects[p.parent])) {
+            subProjects[p.parent] = new Array();
+        }
+        subProjects[p.parent].push(p);
+    }
+    rootProjects.sort(function(p1, p2) {return (p1.name > p2.name);});
+    rootProjects.splice(0, 0, defaultProject);
+    
+    // Create project list
+    for (project = 0; project < rootProjects.length; project++) {
+        p = rootProjects[project];
+        expandProject = document.createElement('a');
+        expandProject.className = 'openProject';
+        // If there are actually projects to expand
+        if (subProjects[p.id]) {
+            expandProject.href = '#';
+            expandProject.onclick = function() {};
+        }
+        setText(expandProject, '+');
+
+        openProject = document.createElement('a');
+        openProject.href = '#';
+        openProject.style.textDecoration = 'none';
+        openProject.onclick = function() {};
+        projectName = document.createElement('p');
+        projectName.className = 'project_name';
+        setText(projectName, '\u00a0' + p.name);
+        openProject.appendChild(projectName);
+
+        if (useNightTheme()) {switchToNight(projectName);}
+
+        projectsList.appendChild(expandProject);
+        projectsList.appendChild(openProject);
+        projectsList.appendChild(document.createElement('br'));
+    }
 }
 
 /* Account Management */

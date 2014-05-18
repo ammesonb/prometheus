@@ -52,7 +52,8 @@ sub init {
             if (useNightTheme()) {
                 document.getElementById('login').className += ' night';
                 fields = document.getElementsByTagName('input')
-                for (i = 0; i < fields.length; i++) {fields[i].className += ' night';}
+                for (i = 0; i < fields.length; i++) {switchToNight(fields[i]);}
+                switchToNight(document.getElementsByTagName('button')[0]);
             }
         } catch(e) {}
         document.body.style.visibility = 'visible';
