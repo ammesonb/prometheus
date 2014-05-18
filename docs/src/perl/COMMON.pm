@@ -40,8 +40,10 @@ sub init {
             }
 
             // Because browsers and OSes are dumb at rendering things
-            if (css_browser_selector(navigator.userAgent).search(' win ') != -1) {topOffset -= 10;}
-            if (css_browser_selector(navigator.userAgent).search(' gecko ') != -1) {topOffset += 5;}
+            if (css_browser_selector(navigator.userAgent).search(' win ') != -1) {
+                topOffset -= 10;
+                if (css_browser_selector(navigator.userAgent).search('gecko') != -1) {topOffset += 5;}
+            }
             document.getElementById('tabs').style.top = topOffset + 'px';
         } catch(e) {}
 
