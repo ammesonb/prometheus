@@ -274,7 +274,7 @@ function openNotes() {
     errorText.className = 'error_text';
 
     if (useNightTheme()) {
-        switchToNight(titleDesc, noteTitle, textDesc, noteText, saveButton, cancelButton, createButton);
+        switchToNight(notesEditor, titleDesc, noteTitle, textDesc, noteText, saveButton, cancelButton, createButton);
     }
 
     notesEditor.appendChild(titleDesc);
@@ -522,12 +522,45 @@ function refreshNotes(notes) {
 function openTasks() {
     id = 'tasks_' + new Date().getTime();
     taskPanel = document.createElement('div');
+    taskPanel.className = 'tasks';
     taskPanel.id = id;
 
+    // Create panel skeleton
+    projectsList = document.createElement('div');
+    projectsList.className = 'project_list';
+
+    projectsTitle = document.createElement('p');
+    projectsTitle.className = 'normal_section_header';
+    projectsTitle.style.marginTop = '5px';
+    setText(projectsTitle, 'Projects:');
+
+    upcoming = document.createElement('div');
+    upcoming.className = 'upcoming_tasks';
+
+    upcomingU = document.createElement('u');
+    upcomingU.className = 'note_edit';
+    upcomingP = document.createElement('p');
+    upcomingP.className = 'normal_section_header';
+    setText(upcomingP, 'Upcoming tasks');
+    upcomingP.style.marginTop = '5px';
+    upcomingU.appendChild(upcomingP);
+
+    if (useNightTheme()) {
+        switchToNight(projectsList, projectsTitle, upcoming, upcomingU, upcomingP);
+    }
+
+    projectsList.appendChild(projectsTitle);
+    upcoming.appendChild(upcomingU);
+    taskPanel.appendChild(projectsList);
+    taskPanel.appendChild(upcoming);
+    
+    // Fetch projects and tasks
     getTasksReq = new XMLHttpRequest();
 
     getTasksReq.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
+            data = JSON.parse(getTasksReq.responseText);
+            populateTasks(data[0], data[1]);
         }
     };
 
@@ -535,6 +568,7 @@ function openTasks() {
     getTasksReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
     getTasksReq.send('mode=0');
 
+    // Add tab and panel
     taskTab = document.createElement('div');
     setText(taskTab, 'Task List');
     taskTab.className = 'tab';
@@ -542,6 +576,11 @@ function openTasks() {
     taskTab.onclick = function() {switchTab(this.getAttribute('data-id'));};
     addTab(taskPanel, taskTab);
     switchTab(id);
+}
+
+function populateTasks(projects, tasks) {
+    console.log(projects);
+    console.log(tasks);
 }
 
 /* Account Management */
