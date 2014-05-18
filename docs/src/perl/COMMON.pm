@@ -22,6 +22,7 @@ sub init {
     $html .= "<html>\n";
     $html .= "<head>\n";
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/sha512.js\"></script>\n";
+    $html .= $indent . "<script type=\"text/javascript\" src=\"js/css_browser_selector.js\"></script>\n";
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/site.js\"></script>\n";
     $html .= $indent . "<script type=\"text/javascript\">
     window.onload = function() {
@@ -30,13 +31,18 @@ sub init {
         d = new Date();
         // Main page
         try {
-            document.getElementById('tabs').style.top = document.getElementById('main').offsetTop - 25 + \"px\";
+            topOffset = document.getElementById('main').offsetTop - 25;
 
             if (useNightTheme()) {
                 document.getElementById('main').className += ' night';
                 tools = document.getElementsByClassName('tool_name')
                 for (t = 0; t < tools.length; t++) {tools[t].className += ' night';}
             }
+
+            // Because browsers and OSes are dumb at rendering things
+            if (css_browser_selector(navigator.userAgent).search(' win ') != -1) {topOffset -= 10;}
+            if (css_browser_selector(navigator.userAgent).search(' gecko ') != -1) {topOffset += 5;}
+            document.getElementById('tabs').style.top = topOffset + 'px';
         } catch(e) {}
 
         // Login
