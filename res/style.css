@@ -108,17 +108,21 @@ div.tasks {
     padding: 5px 0px 5px 5px;
 }
 
-div.project_list {
+div.project_panel {
     float: left;
     width: 35%;
     height: 100%;
     border: 1px solid black;
     padding-left: 5px;
-    overflow: auto;
 }
 
-div.project_list.night {
+div.project_panel.night {
     border: 1px solid silver;
+}
+
+div.project_list {
+    height: 94%;
+    overflow: auto;
 }
 
 div.upcoming_tasks {
@@ -196,6 +200,10 @@ input.night {
     background-color: rgba(0, 0, 0, 0);
     border: 1px solid silver;
     color: silver;
+}
+
+input.new_project {
+    width: 92%;
 }
 
 input.note_title {
@@ -340,12 +348,19 @@ p.error_text {
 }
 
 /* a */
-a.openProject {
+a.save_project {
+    position: absolute;
+    font-size: 200%;
+    text-decoration: none;
+    color: green;
+}
+
+a.open_project {
     color: #CCF;
     text-decoration: none;
 }
 
-a.closeProject {
+a.close_project {
     color: red;
     text-decoration: none;
 }

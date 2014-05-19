@@ -537,16 +537,41 @@ function openTasks() {
     taskPanel.id = id;
 
     // Create panel skeleton
+    projectsPanel = document.createElement('div');
+    projectsPanel.className = 'project_panel';
+
     projectsList = document.createElement('div');
     projectsList.className = 'project_list';
 
     projectsTitle = document.createElement('p');
     projectsTitle.className = 'normal_section_header';
     projectsTitle.style.marginTop = '5px';
+    projectsTitle.style.marginBottom = '10px';
     setText(projectsTitle, 'Projects:');
+
+    newProject = document.createElement('span');
+    newProjectName = document.createElement('input');
+    newProjectName.className = 'new_project';
+    newProjectName.value = 'Enter project name';
+    newProjectName.onfocus = function() {
+        if (this.value === 'Enter project name') {this.value = '';}
+    };
+    newProjectName.onblur = function() {
+        if (this.value === '') {this.value = 'Enter project name';}
+    };
+    saveNewProject = document.createElement('a');
+    saveNewProject.className = 'save_project';
+    saveNewProject.href = '#';
+    setText(saveNewProject, '+');
+    saveNewProject.onmouseover = function() {this.style.textDecoration = 'underline';};
+    saveNewProject.onmouseout = function() {this.style.textDecoration = 'none';};
+    newProject.appendChild(newProjectName);
+    newProject.appendChild(saveNewProject);
 
     upcoming = document.createElement('div');
     upcoming.className = 'upcoming_tasks';
+    upcoming.setAttribute('project_id', -1);
+    upcoming.setAttribute('project_level', 0);
 
     upcomingU = document.createElement('u');
     upcomingU.className = 'note_edit';
@@ -557,12 +582,14 @@ function openTasks() {
     upcomingU.appendChild(upcomingP);
 
     if (useNightTheme()) {
-        switchToNight(projectsList, projectsTitle, upcoming, upcomingU, upcomingP);
+        switchToNight(projectsPanel, projectsTitle, newProjectName, upcoming, upcomingU, upcomingP);
     }
 
+    projectsPanel.appendChild(projectsList);
+    projectsPanel.appendChild(newProject);
     projectsList.appendChild(projectsTitle);
     upcoming.appendChild(upcomingU);
-    taskPanel.appendChild(projectsList);
+    taskPanel.appendChild(projectsPanel);
     taskPanel.appendChild(upcoming);
     
     // Fetch projects and tasks
@@ -587,6 +614,9 @@ function openTasks() {
     taskTab.onclick = function() {switchTab(this.getAttribute('data-id'));};
     addTab(taskPanel, taskTab);
     switchTab(id);
+
+    saveNewProject.style.left = newProjectName.offsetLeft + newProjectName.offsetWidth + 5 + 'px';
+    saveNewProject.style.top = newProjectName.offsetTop + (.5 * newProjectName.offsetHeight - (.5 * saveNewProject.offsetHeight)) + 1 + 'px';
 }
 
 function populateTasks(projects, tasks, projectsList) {
@@ -619,7 +649,7 @@ function populateTasks(projects, tasks, projectsList) {
 function addProject(parent, project, level) {
     // Create and add this project to the list
     expandProject = document.createElement('a');
-    expandProject.className = 'openProject';
+    expandProject.className = 'open_project';
     expandProject.setAttribute('data-expanded', 0);
     expandProject.setAttribute('data-level', level);
     setText(expandProject, stringFill('\u00a0', 3 * level) + '~');
