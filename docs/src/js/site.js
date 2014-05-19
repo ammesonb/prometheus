@@ -537,6 +537,7 @@ function openTasks() {
     taskPanel.id = id;
 
     // Create panel skeleton
+    // Section headers
     projectsPanel = document.createElement('div');
     projectsPanel.className = 'project_panel';
     projectsPanel.setAttribute('data-project-id', -1);
@@ -544,6 +545,7 @@ function openTasks() {
     projectsList = document.createElement('div');
     projectsList.className = 'project_list';
 
+    projectsListHeader = document.createElement('span');
     upcomingTitle = document.createElement('p');
     upcomingTitle.className = 'normal_section_header';
     upcomingTitle.style.marginTop = '5px';
@@ -562,7 +564,10 @@ function openTasks() {
     projectsTitle.style.marginTop = '5px';
     projectsTitle.style.marginBottom = '10px';
     setText(projectsTitle, 'Projects:');
+    projectsListHeader.appendChild(upcomingTitle);
+    projectsListHeader.appendChild(projectsTitle);
 
+    // Create new project input/button
     newProject = document.createElement('span');
     newProjectName = document.createElement('input');
     newProjectName.className = 'new_project';
@@ -578,19 +583,20 @@ function openTasks() {
     saveNewProject.href = '#';
     saveNewProject.onclick = function() {
         saveProjReq = new XMLHttpRequest();
-        list = this.parentElement.parentElement;
-        name = this.previousSibling.value;
+        list = this.parentElement.parentElement.getElementsByClassName('project_list')[0];
+        nameElem = this.previousSibling;
         if (name === 'Enter project name') {return;}
 
         saveProjReq.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
                 switch(this.responseText) {
                     case 'success':
+                        nameElem.value = '';
                         refreshTasksReq = new XMLHttpRequest();
 
                         refreshTasksReq.onreadystatechange = function() {
                             if (this.readyState ==4 && this.status == 200) {
-                                while (list.children.length) {list.children[0].remove();}
+                                while (list.children.length > 1) {list.children[1].remove();}
                                 data = JSON.parse(this.responseText);
                                 populateTasks(data[0], data[1], list);
                             }
@@ -609,12 +615,13 @@ function openTasks() {
 
         saveProjReq.open('POST', 'tasks.cgi', true);
         saveProjReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-        saveProjReq.send('mode=1&name=' + name + '&parent=' + projectsPanel.getAttribute('data-project-id'));
+        saveProjReq.send('mode=1&name=' + nameElem.value + '&parent=' + projectsPanel.getAttribute('data-project-id'));
     };
     setText(saveNewProject, '+');
     newProject.appendChild(newProjectName);
     newProject.appendChild(saveNewProject);
 
+    // Upcoming panel
     upcoming = document.createElement('div');
     upcoming.className = 'upcoming_tasks';
     upcoming.setAttribute('project_level', 0);
@@ -633,8 +640,7 @@ function openTasks() {
 
     projectsPanel.appendChild(projectsList);
     projectsPanel.appendChild(newProject);
-    projectsList.appendChild(upcomingTitle);
-    projectsList.appendChild(projectsTitle);
+    projectsList.appendChild(projectsListHeader);
     upcoming.appendChild(upcomingU);
     taskPanel.appendChild(projectsPanel);
     taskPanel.appendChild(upcoming);
@@ -745,7 +751,7 @@ function addProject(parent, project, level) {
                 count = 0;
                 while (nextSibling.getAttribute('data-level') != this.getAttribute('data-level')) {
                     if (nextSibling.getAttribute('data-level')) {
-                        while (nextSibling.getAttribute('data-level') !=
+                        while (nextSibling.getAttribute('data-level').toString() !=
                                (parseInt(this.getAttribute('data-level')) + 1).toString()) {
                             nextSibling = nextSibling.nextElementSibling;
                         }
@@ -763,9 +769,9 @@ function addProject(parent, project, level) {
         };
 
         for (subp = 0; subp < subProjects[project.id].length; subp++) {
-            parent.setAttribute('data-current-sub', subp);
+            parent.setAttribute('data-current-sub-' + level, subp);
             addProject(parent, subProjects[project.id][subp], level + 1);
-            subp = parent.getAttribute('data-current-sub');
+            subp = parent.getAttribute('data-current-sub-' + level);
         }
     }
 }
