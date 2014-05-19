@@ -598,7 +598,7 @@ function openTasks() {
                             if (this.readyState ==4 && this.status == 200) {
                                 while (list.children.length > 1) {list.children[1].remove();}
                                 data = JSON.parse(this.responseText);
-                                populateTasks(data[0], data[1], list);
+                                populateProjects(data[0], list);
                             }
                         }
 
@@ -651,7 +651,8 @@ function openTasks() {
     getTasksReq.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
             data = JSON.parse(getTasksReq.responseText);
-            populateTasks(data[0], data[1], projectsList);
+            populateProjects(data[0], projectsList);
+            populateUpcoming(data[1], upcoming);
         }
     };
 
@@ -672,7 +673,7 @@ function openTasks() {
     saveNewProject.style.top = newProjectName.offsetTop + (.5 * newProjectName.offsetHeight - (.5 * saveNewProject.offsetHeight)) + 1 + 'px';
 }
 
-function populateTasks(projects, tasks, projectsList) {
+function populateProjects(projects, projectsList) {
     // Turn root projects into a list sorted by ID
     // and have another list of subprojects indexed by ID
     rootProjects = new Array();
@@ -696,6 +697,19 @@ function populateTasks(projects, tasks, projectsList) {
     for (project = 0; project < rootProjects.length; project++) {
         currentRoot = rootProjects[project];
         addProject(projectsList, currentRoot, 0);
+    }
+}
+
+function populateUpcoming(tasks, upcomingPanel) {
+    // Sort tasks by urgent, then date, then secondary
+    urgent = new Array();
+    secondary = new Array();
+    normal = new Array();
+    for (taskNum = 0; taskNum < tasks.length; taskNum++) {
+        task = tasks[taskNum];
+        if (task.is_urgent) {urgent.push(task);}
+        else if (task.is_secondary) {secondary.push(task);}
+        else {normal.push(task);}
     }
 }
 
@@ -734,8 +748,10 @@ function addProject(parent, project, level) {
             // Collapse
             if (this.getAttribute('data-expanded') == 1) {
                 this.setAttribute('data-expanded', 0);
+                this.className = 'open_project';
+                setText(this, stringFill('\u00a0', 3 * this.getAttribute('data-level')) + '+');
                 // Make all sub-nodes invisible
-                while (nextSibling.getAttribute('data-level') != this.getAttribute('data-level')) {
+                while (!nextSibling.getAttribute('data-level') || nextSibling.getAttribute('data-level') > this.getAttribute('data-level')) {
                     // If a br, remove
                     if (nextSibling.tagName == 'BR') {
                         nextSibling = nextSibling.nextElementSibling;
@@ -748,6 +764,8 @@ function addProject(parent, project, level) {
             // Expand
             } else {
                 this.setAttribute('data-expanded', 1);
+                this.className = 'close_project';
+                setText(this, stringFill('\u00a0', 3 * this.getAttribute('data-level')) + '-');
                 count = 0;
                 while (nextSibling.getAttribute('data-level') != this.getAttribute('data-level')) {
                     if (nextSibling.getAttribute('data-level')) {

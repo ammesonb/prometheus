@@ -243,7 +243,7 @@ CREATE TABLE tasks (
     priority integer,
     is_urgent boolean,
     is_secondary boolean,
-    project integer,
+    project integer NOT NULL,
     user_id integer NOT NULL
 );
 
