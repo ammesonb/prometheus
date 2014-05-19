@@ -317,6 +317,11 @@ p.project_name.night {
     color: white;
 }
 
+p.project_name:hover {
+    font-style: italic;
+    font-weight: bold;
+}
+
 p.tool_name {
     color: #555;
     font-weight: bold;
@@ -348,11 +353,29 @@ p.error_text {
 }
 
 /* a */
+a.normal_section_header {
+    color: black;
+    text-decoration: none;
+}
+
+a.normal_section_header:hover {
+    font-style: italic;
+    text-decoration: underline;
+}
+
+a.normal_section_header.night {
+    color: silver;
+}
+
 a.save_project {
     position: absolute;
     font-size: 200%;
     text-decoration: none;
     color: green;
+}
+
+a.save_project:hover {
+    text-decoration: underline;
 }
 
 a.open_project {

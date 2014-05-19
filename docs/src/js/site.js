@@ -543,6 +543,16 @@ function openTasks() {
     projectsList = document.createElement('div');
     projectsList.className = 'project_list';
 
+    upcomingTitle = document.createElement('p');
+    upcomingTitle.className = 'normal_section_header';
+    upcomingTitle.style.marginTop = '5px';
+    upcomingTitle.style.marginBottom = '10px';
+    upcomingLink = document.createElement('a');
+    upcomingLink.className = 'normal_section_header';
+    upcomingLink.href = '#';
+    setText(upcomingLink, 'Overview');
+    upcomingTitle.appendChild(upcomingLink);
+
     projectsTitle = document.createElement('p');
     projectsTitle.className = 'normal_section_header';
     projectsTitle.style.marginTop = '5px';
@@ -563,8 +573,6 @@ function openTasks() {
     saveNewProject.className = 'save_project';
     saveNewProject.href = '#';
     setText(saveNewProject, '+');
-    saveNewProject.onmouseover = function() {this.style.textDecoration = 'underline';};
-    saveNewProject.onmouseout = function() {this.style.textDecoration = 'none';};
     newProject.appendChild(newProjectName);
     newProject.appendChild(saveNewProject);
 
@@ -582,11 +590,12 @@ function openTasks() {
     upcomingU.appendChild(upcomingP);
 
     if (useNightTheme()) {
-        switchToNight(projectsPanel, projectsTitle, newProjectName, upcoming, upcomingU, upcomingP);
+        switchToNight(projectsPanel, upcomingTitle, upcomingLink, projectsTitle, newProjectName, upcoming, upcomingU, upcomingP);
     }
 
     projectsPanel.appendChild(projectsList);
     projectsPanel.appendChild(newProject);
+    projectsList.appendChild(upcomingTitle);
     projectsList.appendChild(projectsTitle);
     upcoming.appendChild(upcomingU);
     taskPanel.appendChild(projectsPanel);
@@ -976,3 +985,4 @@ function viewAccount() {
     addTab(accountPanel, accountTab);
     switchTab(id);
 }
+
