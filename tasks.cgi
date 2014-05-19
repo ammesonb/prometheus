@@ -50,5 +50,23 @@ if ($mode == 0) {
         $count++;
     }
     print ']]';
+} elsif ($mode == 1) {
+    my $name = $q->param('name');
+    $name =~ s/'/''/g;
+    my $parent = $q->param('parent');
+    if (not ($parent =~ /^-?[0-9]+$/)) {
+        print 'baddata';
+        exit;
+    }
+    
+    my @columns = ('user_id', 'name');
+    my @values = ($session->param('user_id'), "'$name'");
+    if (($parent cmp "-1") != 0) {
+        push(@columns, 'parent');
+        push(@values, $parent);
+    }
+    my $inserted = COMMON::insertIntoTable('projects', \@columns, \@values);
+    print 'success' if ($inserted == 1);
+    print 'fail' if ($inserted == 0);
 }
 exit;

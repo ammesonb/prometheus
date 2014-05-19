@@ -539,6 +539,7 @@ function openTasks() {
     // Create panel skeleton
     projectsPanel = document.createElement('div');
     projectsPanel.className = 'project_panel';
+    projectsPanel.setAttribute('data-project-id', -1);
 
     projectsList = document.createElement('div');
     projectsList.className = 'project_list';
@@ -550,6 +551,9 @@ function openTasks() {
     upcomingLink = document.createElement('a');
     upcomingLink.className = 'normal_section_header';
     upcomingLink.href = '#';
+    upcomingLink.onclick = function() {
+        this.parentElement.parentElement.parentElement.setAttribute('data-project-id', -1);
+    }
     setText(upcomingLink, 'Overview');
     upcomingTitle.appendChild(upcomingLink);
 
@@ -572,13 +576,47 @@ function openTasks() {
     saveNewProject = document.createElement('a');
     saveNewProject.className = 'save_project';
     saveNewProject.href = '#';
+    saveNewProject.onclick = function() {
+        saveProjReq = new XMLHttpRequest();
+        list = this.parentElement.parentElement;
+        name = this.previousSibling.value;
+        if (name === 'Enter project name') {return;}
+
+        saveProjReq.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                switch(this.responseText) {
+                    case 'success':
+                        refreshTasksReq = new XMLHttpRequest();
+
+                        refreshTasksReq.onreadystatechange = function() {
+                            if (this.readyState ==4 && this.status == 200) {
+                                while (list.children.length) {list.children[0].remove();}
+                                data = JSON.parse(this.responseText);
+                                populateTasks(data[0], data[1], list);
+                            }
+                        }
+
+                        refreshTasksReq.open('POST', 'tasks.cgi', true);
+                        refreshTasksReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+                        refreshTasksReq.send('mode=0');
+                        break;
+                    default:
+                        alert('Failed to create project!');
+                        break;
+                }
+            }
+        };
+
+        saveProjReq.open('POST', 'tasks.cgi', true);
+        saveProjReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        saveProjReq.send('mode=1&name=' + name + '&parent=' + projectsPanel.getAttribute('data-project-id'));
+    };
     setText(saveNewProject, '+');
     newProject.appendChild(newProjectName);
     newProject.appendChild(saveNewProject);
 
     upcoming = document.createElement('div');
     upcoming.className = 'upcoming_tasks';
-    upcoming.setAttribute('project_id', -1);
     upcoming.setAttribute('project_level', 0);
 
     upcomingU = document.createElement('u');
@@ -666,7 +704,9 @@ function addProject(parent, project, level) {
     openProject = document.createElement('a');
     openProject.href = '#';
     openProject.style.textDecoration = 'none';
-    openProject.onclick = function() {};
+    openProject.onclick = function() {
+        this.parentElement.parentElement.setAttribute('data-project-id', project.id);
+    };
     projectName = document.createElement('p');
     projectName.className = 'project_name';
     setText(projectName, '\u00a0' + project.name);
