@@ -622,7 +622,7 @@ function addProject(parent, project, level) {
     expandProject.className = 'openProject';
     expandProject.setAttribute('data-expanded', 0);
     expandProject.setAttribute('data-level', level);
-    setText(expandProject, stringFill('\u00a0', 2 * level) + '~');
+    setText(expandProject, stringFill('\u00a0', 3 * level) + '~');
 
     openProject = document.createElement('a');
     openProject.href = '#';
@@ -642,7 +642,7 @@ function addProject(parent, project, level) {
 
     // If there are actually projects to expand
     if (subProjects[project.id]) {
-        setText(expandProject, '+');
+        setText(expandProject, stringFill('\u00a0', 3 * level) + '+');
         expandProject.href = '#';
         expandProject.onclick = function() {
             nextSibling = this.nextElementSibling.nextElementSibling.nextElementSibling;
@@ -663,18 +663,23 @@ function addProject(parent, project, level) {
             // Expand
             } else {
                 this.setAttribute('data-expanded', 1);
-                count = 1;
+                count = 0;
                 while (nextSibling.getAttribute('data-level') != this.getAttribute('data-level')) {
+                    if (nextSibling.getAttribute('data-level')) {
+                        while (nextSibling.getAttribute('data-level') !=
+                               (parseInt(this.getAttribute('data-level')) + 1).toString()) {
+                            nextSibling = nextSibling.nextElementSibling;
+                        }
+                    }
                     nextSibling.style.display = 'inline';
                     count++;
-                    if (count == 3) {
+                    if (count == 2) {
                         count = 0;
                         parent.insertBefore(document.createElement('br'), nextSibling.nextElementSibling);
                         nextSibling = nextSibling.nextElementSibling;
                     }
                     nextSibling = nextSibling.nextElementSibling;
                 }
-                parent.insertBefore(document.createElement('br'), nextSibling);
             }
         };
 
