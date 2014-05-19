@@ -571,12 +571,12 @@ function openTasks() {
     newProject = document.createElement('span');
     newProjectName = document.createElement('input');
     newProjectName.className = 'new_project';
-    newProjectName.value = 'Enter project name';
+    newProjectName.value = 'Enter new project name';
     newProjectName.onfocus = function() {
-        if (this.value === 'Enter project name') {this.value = '';}
+        if (this.value === 'Enter new project name') {this.value = '';}
     };
     newProjectName.onblur = function() {
-        if (this.value === '') {this.value = 'Enter project name';}
+        if (this.value === '') {this.value = 'Enter new project name';}
     };
     saveNewProject = document.createElement('a');
     saveNewProject.className = 'save_project';
@@ -585,13 +585,13 @@ function openTasks() {
         saveProjReq = new XMLHttpRequest();
         list = this.parentElement.parentElement.getElementsByClassName('project_list')[0];
         nameElem = this.previousSibling;
-        if (name === 'Enter project name') {return;}
+        if (name === 'Enter new project name') {return;}
 
         saveProjReq.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
                 switch(this.responseText) {
                     case 'success':
-                        nameElem.value = '';
+                        nameElem.value = 'Enter new project name';
                         refreshTasksReq = new XMLHttpRequest();
 
                         refreshTasksReq.onreadystatechange = function() {
