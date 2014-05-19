@@ -34,11 +34,22 @@ function login() {
 function useNightTheme() {
     theme = document.body.getAttribute('data-night-theme');
     now = new Date();
-    return ((theme == 1 && now.getHours() >= 19) || theme == 2);
+    return ((theme == 1 && (now.getHours() >= 19 || now.getHours() < 8)) || theme == 2);
 }
 
 function switchToNight() {
     for (a = 0; a < arguments.length; a++) {arguments[a].className += ' night';}
+}
+
+function stringFill(x, n) {
+    var s = '';
+    for (;;) {
+        if (n & 1) {s += x;}
+        n >>= 1;
+        if (n) {x += x;}
+        else {break;}
+    }
+    return s;
 }
 
 function setText(element, text) {
@@ -234,7 +245,7 @@ function openNotes() {
         for (child = 0; child < tab.children.length; child++) {
             if (tab.children[child].tagName === 'TABLE') {table = tab.children[child];}
         }
-        while (document.getElementsByClassName('note_edit').length != 0) {
+        while (document.getElementsByClassName('note_edit').length !== 0) {
             underlines = document.getElementsByClassName('note_edit');
             for (u = 0; u < underlines.length; u++) {underlines[u].className = 'note_blank';}
         }
@@ -257,7 +268,7 @@ function openNotes() {
         for (child = 0; child < tab.children.length; child++) {
             if (tab.children[child].tagName === 'TABLE') {table = tab.children[child];}
         }
-        while (document.getElementsByClassName('note_edit').length != 0) {
+        while (document.getElementsByClassName('note_edit').length !== 0) {
             underlines = document.getElementsByClassName('note_edit');
             for (u = 0; u < underlines.length; u++) {underlines[u].className = 'note_blank';}
         }
@@ -292,7 +303,7 @@ function openNotes() {
 
     req.onreadystatechange = function() {
         if (req.readyState == 4 && req.status == 200) {populateNotes(req.responseText, notesTable, notesEditor, 1);}
-    }
+    };
 
     req.open('POST', 'notes.cgi', true);
     req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
@@ -343,7 +354,7 @@ function populateNotes(data, notesTable, notesEditor, resize) {
             editNote(JSON.parse(this.getAttribute('data-note')), this);
 
             // Since just doing it once doesn't seem to be enough....
-            while (document.getElementsByClassName('note_edit').length != 0) {
+            while (document.getElementsByClassName('note_edit').length !== 0) {
                 underlines = document.getElementsByClassName('note_edit');
                 for (u = 0; u < underlines.length; u++) {underlines[u].className = 'note_blank';}
             }
@@ -352,19 +363,19 @@ function populateNotes(data, notesTable, notesEditor, resize) {
                 underlines[u].className = 'note_edit';
                 if (useNightTheme()) {switchToNight(underlines[u]);}
             }
-        }
+        };
         r.onmouseover = function() {
             this.style.fontWeight = 'bold';
             this.style.fontStyle = 'italic';
-        }
+        };
         r.onmouseout = function() {
             this.style.fontWeight = 'normal';
             this.style.fontStyle = 'normal';
-        }
+        };
 
         title = document.createElement('td');
         title.style.paddingRight = '5px';
-        title.style.maxWidth = notesTable.clientWidth * .3 + 'px';
+        title.style.maxWidth = notesTable.clientWidth * 0.3 + 'px';
         title.style.wordWrap = 'break-word';
         titleUnderline = document.createElement('u');
         titleUnderline.className = 'note_blank';
@@ -587,10 +598,10 @@ function populateTasks(projects, tasks, projectsList) {
     for (project = 0; project < projects.length; project++) {
         p = projects[project];
         if (p.name == 'Default') {defaultProject = p; continue;}
-        if (!isNaN(p.parent)) {
+        if (!p.parent) {
             rootProjects.push(p);
             continue;
-        } else if (!isFinite(subProjects[p.parent])) {
+        } else if (!subProjects[p.parent]) {
             subProjects[p.parent] = new Array();
         }
         subProjects[p.parent].push(p);
@@ -600,30 +611,78 @@ function populateTasks(projects, tasks, projectsList) {
     
     // Create project list
     for (project = 0; project < rootProjects.length; project++) {
-        p = rootProjects[project];
-        expandProject = document.createElement('a');
-        expandProject.className = 'openProject';
-        // If there are actually projects to expand
-        if (subProjects[p.id]) {
-            expandProject.href = '#';
-            expandProject.onclick = function() {};
-        }
+        currentRoot = rootProjects[project];
+        addProject(projectsList, currentRoot, 0);
+    }
+}
+
+function addProject(parent, project, level) {
+    // Create and add this project to the list
+    expandProject = document.createElement('a');
+    expandProject.className = 'openProject';
+    expandProject.setAttribute('data-expanded', 0);
+    expandProject.setAttribute('data-level', level);
+    setText(expandProject, stringFill('\u00a0', 2 * level) + '~');
+
+    openProject = document.createElement('a');
+    openProject.href = '#';
+    openProject.style.textDecoration = 'none';
+    openProject.onclick = function() {};
+    projectName = document.createElement('p');
+    projectName.className = 'project_name';
+    setText(projectName, '\u00a0' + project.name);
+    openProject.appendChild(projectName);
+
+    if (useNightTheme()) {switchToNight(projectName);}
+    if (level != 0) {expandProject.style.display = 'none'; openProject.style.display = 'none';}
+
+    parent.appendChild(expandProject);
+    parent.appendChild(openProject);
+    if (level == 0) {parent.appendChild(document.createElement('br'));}
+
+    // If there are actually projects to expand
+    if (subProjects[project.id]) {
         setText(expandProject, '+');
+        expandProject.href = '#';
+        expandProject.onclick = function() {
+            nextSibling = this.nextElementSibling.nextElementSibling.nextElementSibling;
+            // Collapse
+            if (this.getAttribute('data-expanded') == 1) {
+                this.setAttribute('data-expanded', 0);
+                // Make all sub-nodes invisible
+                while (nextSibling.getAttribute('data-level') != this.getAttribute('data-level')) {
+                    // If a br, remove
+                    if (nextSibling.tagName == 'BR') {
+                        nextSibling = nextSibling.nextElementSibling;
+                        nextSibling.previousElementSibling.remove();
+                        continue;
+                    }
+                    nextSibling.style.display = 'none';
+                    nextSibling = nextSibling.nextElementSibling;
+                }
+            // Expand
+            } else {
+                this.setAttribute('data-expanded', 1);
+                count = 1;
+                while (nextSibling.getAttribute('data-level') != this.getAttribute('data-level')) {
+                    nextSibling.style.display = 'inline';
+                    count++;
+                    if (count == 3) {
+                        count = 0;
+                        parent.insertBefore(document.createElement('br'), nextSibling.nextElementSibling);
+                        nextSibling = nextSibling.nextElementSibling;
+                    }
+                    nextSibling = nextSibling.nextElementSibling;
+                }
+                parent.insertBefore(document.createElement('br'), nextSibling);
+            }
+        };
 
-        openProject = document.createElement('a');
-        openProject.href = '#';
-        openProject.style.textDecoration = 'none';
-        openProject.onclick = function() {};
-        projectName = document.createElement('p');
-        projectName.className = 'project_name';
-        setText(projectName, '\u00a0' + p.name);
-        openProject.appendChild(projectName);
-
-        if (useNightTheme()) {switchToNight(projectName);}
-
-        projectsList.appendChild(expandProject);
-        projectsList.appendChild(openProject);
-        projectsList.appendChild(document.createElement('br'));
+        for (subp = 0; subp < subProjects[project.id].length; subp++) {
+            parent.setAttribute('data-current-sub', subp);
+            addProject(parent, subProjects[project.id][subp], level + 1);
+            subp = parent.getAttribute('data-current-sub');
+        }
     }
 }
 
