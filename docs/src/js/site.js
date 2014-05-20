@@ -722,6 +722,7 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel) 
         else {normal.push(task);}
     }
 
+    // Create urgent tasks
     urgentHeader = document.createElement('p');
     urgentHeader.class = 'normal_section_header';
     urgentHeader.style.fontWeight = 'bold';
@@ -732,45 +733,42 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel) 
     urgentHR.className = 'upcoming_divider';
 
     urgentTasks = document.createElement('span');
-    for (task = 0; task < urgent.length; task++) {
-        ur = urgent[task];
-        h = 310 * (ur.priority/topPriority);
-        projString = projectsByID[ur.project].name;
-        projParent = projectHierarchy[ur.project];
-        while (projParent) {
-            projString = projectsByID[projParent].name + '&nbsp;:&nbsp;' + projString;
-            projParent = projectHierarchy[projParent];
-        }
-        projString = '&lt;' + projString + '&gt;';
-
-        taskElem = document.createElement('p');
-        taskElem.className = 'normal_text';
-        taskElem.appendChild(document.createTextNode(stringFill('\u00a0', 4)));
-        taskElem.style.marginTop = '0px';
-        taskElem.style.marginBottom = '5px';
-        taskLink = document.createElement('a');
-        taskLink.className = 'normal_text';
-        taskLink.style.color = 'hsl(' + h + ', 100%, 50%)';
-        if (useNightTheme()) {
-            taskLink.style.color = 'hsla(' + h + ', 100% ,50%, .7)';
-        }
-        taskLink.href = '#';
-        setText(taskLink, ur.name);
-        taskProj = document.createElement('p');
-        taskProj.className = 'normal_text';
-        taskProj.style.color = 'hsl(' + h + ', 100%, 50%)';
-        if (useNightTheme()) {
-            taskProj.style.color = 'hsla(' + h + ', 100%, 50%, .7)';
-        }
-        taskProj.style.display = 'inline';
-        setText(taskProj, stringFill('\u00a0', 3) + projString);
-        taskElem.appendChild(taskLink);
-        taskElem.appendChild(taskProj);
-
-        if (useNightTheme()) {switchToNight(taskElem, taskLink, taskProj);}
-
-        urgentTasks.appendChild(taskElem);
+    for (taskNum = 0; taskNum < urgent.length; taskNum++) {
+        task = urgent[taskNum];
+        addTask(task, projectsByID, projectHierarchy, topPriority, urgentTasks, false);
     }
+
+    // Create tasks with deadlines
+    normal.sort(function(a, b) {
+        return (a.deadline > b.deadline);
+    });
+
+    currentDate = 0;
+    normalTasks = document.createElement('span');
+    for (taskNum = 0; taskNum < normal.length; taskNum++) {
+        task = normal[taskNum];
+        d = new Date(task.deadline);
+        // If date has changed
+        if (d.toLocaleDateString() != currentDate) {
+            currentDate = d.toLocaleDateString();
+
+            dateHeader = document.createElement('p');
+            dateHeader.className = 'normal_section_header';
+            dateHeader.style.fontWeight = 'bold';
+            dateHeader.style.marginBottom = '0px';
+            setText(dateHeader, d.toDateString());
+
+            dateHR = document.createElement('hr');
+            dateHR.className = 'upcoming_divider';
+            if (useNightTheme()) {
+                switchToNight(dateHeader, dateHR);
+            }
+
+            normalTasks.appendChild(dateHeader);
+            normalTasks.appendChild(dateHR);
+        }
+        addTask(task, projectsByID, projectHierarchy, topPriority, normalTasks, true);
+    };
 
     if (useNightTheme()) {
         switchToNight(urgentHeader, urgentHR);
@@ -779,6 +777,63 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel) 
     upcomingPanel.appendChild(urgentHeader);
     upcomingPanel.appendChild(urgentHR);
     upcomingPanel.appendChild(urgentTasks);
+    upcomingPanel.appendChild(normalTasks);
+}
+
+function addTask(task, projectsByID, projectHierarchy, topPriority, parent, showTime) {
+    h = 310 * (task.priority/topPriority);
+    projString = projectsByID[task.project].name;
+    projParent = projectHierarchy[task.project];
+    while (projParent) {
+        projString = projectsByID[projParent].name + '&nbsp;:&nbsp;' + projString;
+        projParent = projectHierarchy[projParent];
+    }
+    projString = '&lt;' + projString + '&gt;';
+
+    // If normal, should have a deadline
+    taskDate = 0;
+    if (showTime) {
+        taskDate = document.createElement('p');
+        taskDate.style.display = 'inline';
+        taskDate.style.color = 'hsl(' + h + ', 100%, 65%)';
+        if (useNightTheme()) {
+            taskDate.style.color = 'hsla(' + h + ', 100%, 65%, .8)';
+            d = new Date(task.deadline);
+            time = d.toGMTString().split(' ')[4].split(':');
+            time = time[0] + ':' + time[1];
+            setText(taskDate, time + stringFill('\u00a0', 2));
+        }
+    }
+
+    taskElem = document.createElement('p');
+    taskElem.className = 'normal_text';
+    taskElem.appendChild(document.createTextNode(stringFill('\u00a0', 4)));
+    taskElem.style.marginTop = '0px';
+    taskElem.style.marginBottom = '5px';
+    taskLink = document.createElement('a');
+    taskLink.className = 'normal_text';
+    taskLink.style.color = 'hsl(' + h + ', 100%, 65%)';
+    if (useNightTheme()) {
+        taskLink.style.color = 'hsla(' + h + ', 100%, 65%, .8)';
+    }
+    taskLink.href = '#';
+    setText(taskLink, task.name);
+    taskProj = document.createElement('p');
+    taskProj.className = 'normal_text';
+    taskProj.style.color = 'hsl(' + h + ', 100%, 65%)';
+    if (useNightTheme()) {
+        taskProj.style.color = 'hsla(' + h + ', 100%, 65%, .8)';
+    }
+    taskProj.style.display = 'inline';
+
+    setText(taskProj, stringFill('\u00a0', 3) + projString);
+    if (showTime) {taskElem.appendChild(taskDate);}
+    taskElem.appendChild(taskLink);
+    taskElem.appendChild(taskProj);
+
+    if (useNightTheme()) {switchToNight(taskElem, taskLink, taskProj);}
+
+    parent.appendChild(taskElem);
 }
 
 function addProject(parent, project, level) {
