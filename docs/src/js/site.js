@@ -651,8 +651,10 @@ function openTasks() {
     getTasksReq.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
             data = JSON.parse(getTasksReq.responseText);
-            populateProjects(data[0], projectsList);
-            populateUpcoming(data[1], upcoming);
+            projectsByID = 0;
+            projectHierarchy = 0;
+            projectsByID, projectHierarchy = populateProjects(data[0], projectsList);
+            populateUpcoming(data[1], projectsByID, projectHierarchy, upcoming);
         }
     };
 
@@ -678,9 +680,13 @@ function populateProjects(projects, projectsList) {
     // and have another list of subprojects indexed by ID
     rootProjects = new Array();
     subProjects = new Array();
+    projectsByID = new Array();
+    projectHierarchy = new Array();
     defaultProject = -1;
     for (project = 0; project < projects.length; project++) {
         p = projects[project];
+        projectsByID[p.id] = p;
+        projectHierarchy[p.id] = p.parent;
         if (p.name == 'Default') {defaultProject = p; continue;}
         if (!p.parent) {
             rootProjects.push(p);
@@ -698,9 +704,11 @@ function populateProjects(projects, projectsList) {
         currentRoot = rootProjects[project];
         addProject(projectsList, currentRoot, 0);
     }
+
+    return projectsByID, projectHierarchy;
 }
 
-function populateUpcoming(tasks, upcomingPanel) {
+function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel) {
     // Sort tasks by urgent, then date, then secondary
     urgent = new Array();
     secondary = new Array();
@@ -711,6 +719,55 @@ function populateUpcoming(tasks, upcomingPanel) {
         else if (task.is_secondary) {secondary.push(task);}
         else {normal.push(task);}
     }
+
+    urgentHeader = document.createElement('p');
+    urgentHeader.class = 'normal_section_header';
+    urgentHeader.style.fontWeight = 'bold';
+    urgentHeader.style.marginBottom = '0px';
+    setText(urgentHeader, 'ASAP');
+
+    urgentHR = document.createElement('hr');
+    urgentHR.className = 'upcoming_divider';
+
+    urgentTasks = document.createElement('span');
+    for (task = 0; task < urgent.length; task++) {
+        ur = urgent[task];
+        projString = '&lt;' + projectsByID[ur.project].name;
+        projParent = projectHierarchy[ur.project];
+        while (projParent) {
+            projString += '::' + projectsByID[projParent].name;
+            projParent = projectHierarchy[projParent];
+        }
+        projString += '&gt;';
+
+        taskElem = document.createElement('p');
+        taskElem.className = 'normal_text';
+        taskElem.appendChild(document.createTextNode(stringFill('\u00a0', 4)));
+        taskElem.style.marginTop = '0px';
+        taskElem.style.marginBottom = '5px';
+        taskLink = document.createElement('a');
+        taskLink.className = 'normal_text';
+        taskLink.href = '#';
+        setText(taskLink, ur.name);
+        taskProj = document.createElement('p');
+        taskProj.className = 'normal_text';
+        taskProj.style.display = 'inline';
+        setText(taskProj, stringFill('\u00a0', 3) + projString);
+        taskElem.appendChild(taskLink);
+        taskElem.appendChild(taskProj);
+
+        if (useNightTheme()) {switchToNight(taskElem, taskLink, taskProj);}
+
+        urgentTasks.appendChild(taskElem);
+    }
+
+    if (useNightTheme()) {
+        switchToNight(urgentHeader, urgentHR);
+    }
+
+    upcomingPanel.appendChild(urgentHeader);
+    upcomingPanel.appendChild(urgentHR);
+    upcomingPanel.appendChild(urgentTasks);
 }
 
 function addProject(parent, project, level) {

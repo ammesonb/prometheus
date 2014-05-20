@@ -367,6 +367,20 @@ a.normal_section_header.night {
     color: silver;
 }
 
+a.normal_text {
+    color: black;
+    text-decoration: none;
+}
+
+a.normal_text:hover {
+    font-style: italic;
+    text-decoration: underline;
+}
+
+a.normal_text.night {
+    color: silver;
+}
+
 a.save_project {
     position: absolute;
     font-size: 200%;
@@ -388,7 +402,7 @@ a.close_project {
     text-decoration: none;
 }
 
-/* underlines */
+/* underlines, hr, etc */
 u.note_blank {
     color: rgba(0, 0, 0, 0);
 }
@@ -400,3 +414,13 @@ u.note_edit {
 u.note_edit.night {
     color: silver;
 }
+
+hr.upcoming_divider {
+    color: black;
+    margin-top: 0px;
+}
+
+hr.upcoming_divider.night {
+    color: silver;
+}
+
