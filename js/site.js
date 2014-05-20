@@ -713,8 +713,10 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel) 
     urgent = new Array();
     secondary = new Array();
     normal = new Array();
+    topPriority = -1;
     for (taskNum = 0; taskNum < tasks.length; taskNum++) {
         task = tasks[taskNum];
+        if (task.priority > topPriority) {topPriority = task.priority;}
         if (task.is_urgent) {urgent.push(task);}
         else if (task.is_secondary) {secondary.push(task);}
         else {normal.push(task);}
@@ -732,6 +734,7 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel) 
     urgentTasks = document.createElement('span');
     for (task = 0; task < urgent.length; task++) {
         ur = urgent[task];
+        h = 310 * (ur.priority/topPriority);
         projString = '&lt;' + projectsByID[ur.project].name;
         projParent = projectHierarchy[ur.project];
         while (projParent) {
@@ -747,10 +750,18 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel) 
         taskElem.style.marginBottom = '5px';
         taskLink = document.createElement('a');
         taskLink.className = 'normal_text';
+        taskLink.style.color = 'hsl(' + h + ', 100%, 50%)';
+        if (useNightTheme()) {
+            taskLink.style.color = 'hsla(' + h + ', 100% ,50%, .7)';
+        }
         taskLink.href = '#';
         setText(taskLink, ur.name);
         taskProj = document.createElement('p');
         taskProj.className = 'normal_text';
+        taskProj.style.color = 'hsl(' + h + ', 100%, 50%)';
+        if (useNightTheme()) {
+            taskProj.style.color = 'hsla(' + h + ', 100%, 50%, .7)';
+        }
         taskProj.style.display = 'inline';
         setText(taskProj, stringFill('\u00a0', 3) + projString);
         taskElem.appendChild(taskLink);
