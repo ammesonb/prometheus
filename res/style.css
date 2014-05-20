@@ -418,6 +418,9 @@ u.note_edit.night {
 hr.upcoming_divider {
     color: black;
     margin-top: 0px;
+    width: 98%;
+    margin-left: 0px;
+    padding-left: 0px;
 }
 
 hr.upcoming_divider.night {

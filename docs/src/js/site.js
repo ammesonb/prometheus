@@ -735,13 +735,13 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel) 
     for (task = 0; task < urgent.length; task++) {
         ur = urgent[task];
         h = 310 * (ur.priority/topPriority);
-        projString = '&lt;' + projectsByID[ur.project].name;
+        projString = projectsByID[ur.project].name;
         projParent = projectHierarchy[ur.project];
         while (projParent) {
-            projString += '::' + projectsByID[projParent].name;
+            projString = projectsByID[projParent].name + '&nbsp;:&nbsp;' + projString;
             projParent = projectHierarchy[projParent];
         }
-        projString += '&gt;';
+        projString = '&lt;' + projString + '&gt;';
 
         taskElem = document.createElement('p');
         taskElem.className = 'normal_text';
