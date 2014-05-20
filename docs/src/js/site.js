@@ -770,14 +770,50 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel) 
         addTask(task, projectsByID, projectHierarchy, topPriority, normalTasks, true);
     };
 
-    if (useNightTheme()) {
-        switchToNight(urgentHeader, urgentHR);
+    // Create secondary tasks
+    secondaryHeader = document.createElement('p');
+    secondaryHeader.class = 'normal_section_header';
+    secondaryHeader.style.fontWeight = 'bold';
+    secondaryHeader.style.marginBottom = '0px';
+    setText(secondaryHeader, 'When Possible');
+
+    secondaryHR = document.createElement('hr');
+    secondaryHR.className = 'upcoming_divider';
+
+    secondaryTasks = document.createElement('span');
+    for (taskNum = 0; taskNum < secondary.length; taskNum++) {
+        task = secondary[taskNum];
+        addTask(task, projectsByID, projectHierarchy, topPriority, secondaryTasks, false);
     }
 
-    upcomingPanel.appendChild(urgentHeader);
-    upcomingPanel.appendChild(urgentHR);
-    upcomingPanel.appendChild(urgentTasks);
-    upcomingPanel.appendChild(normalTasks);
+    if (useNightTheme()) {
+        switchToNight(urgentHeader, urgentHR, secondaryHeader, secondaryHR);
+    }
+
+    if (urgent.length != 0) {
+        upcomingPanel.appendChild(urgentHeader);
+        upcomingPanel.appendChild(urgentHR);
+        upcomingPanel.appendChild(urgentTasks);
+    }
+    if (normal.length != 0) {
+        upcomingPanel.appendChild(normalTasks);
+    }
+    if (secondary.length != 0) {
+        upcomingPanel.appendChild(secondaryHeader);
+        upcomingPanel.appendChild(secondaryHR);
+        upcomingPanel.appendChild(secondaryTasks);
+    }
+    if (urgent.length == 0 && normal.length == 0 && secondary.length == 0) {
+        blank = document.createElement('p');
+        blank.className = 'normal_text';
+        blank.style.marginTop = '0px';
+        blank.style.fontStyle = 'italic';
+        setText(blank, stringFill('\u00a0', 4) + 'No tasks');
+
+        if (useNightTheme()) {switchToNight(blank);}
+
+        upcomingPanel.appendChild(blank);
+    }
 }
 
 function addTask(task, projectsByID, projectHierarchy, topPriority, parent, showTime) {
@@ -804,7 +840,7 @@ function addTask(task, projectsByID, projectHierarchy, topPriority, parent, show
             setText(taskDate, time + stringFill('\u00a0', 2));
         }
     }
-
+    
     taskElem = document.createElement('p');
     taskElem.className = 'normal_text';
     taskElem.appendChild(document.createTextNode(stringFill('\u00a0', 4)));
@@ -813,6 +849,7 @@ function addTask(task, projectsByID, projectHierarchy, topPriority, parent, show
     taskLink = document.createElement('a');
     taskLink.className = 'normal_text';
     taskLink.style.color = 'hsl(' + h + ', 100%, 65%)';
+    taskLink.style.fontWeight = 'bold';
     if (useNightTheme()) {
         taskLink.style.color = 'hsla(' + h + ', 100%, 65%, .8)';
     }
