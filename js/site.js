@@ -242,7 +242,7 @@ function openNotes() {
     cancelButton.onclick = function() {
         tab = this.parentElement.parentElement.children[0];
         table = 0;
-        for (child = 0; child < tab.children.length; child++) {
+        for (child = 0; child < tab.childElementCount; child++) {
             if (tab.children[child].tagName === 'TABLE') {table = tab.children[child];}
         }
         while (document.getElementsByClassName('note_edit').length !== 0) {
@@ -265,7 +265,7 @@ function openNotes() {
     createButton.onclick = function() {
         tab = this.parentElement.parentElement.children[0];
         table = 0;
-        for (child = 0; child < tab.children.length; child++) {
+        for (child = 0; child < tab.childElementCount; child++) {
             if (tab.children[child].tagName === 'TABLE') {table = tab.children[child];}
         }
         while (document.getElementsByClassName('note_edit').length !== 0) {
@@ -326,7 +326,7 @@ function populateNotes(data, notesTable, notesEditor, resize) {
     // Get current editor state
     editorTitleText = '';
     editorNoteText = '';
-    for (child = 0; child < notesEditor.children.length; child++) {
+    for (child = 0; child < notesEditor.childElementCount; child++) {
         editorElem = notesEditor.children[child];
         if (editorElem.tagName == 'INPUT') {editorTitleText = editorElem.value;}
         if (editorElem.tagName == 'TEXTAREA') {editorNoteText = editorElem.value;}
@@ -426,7 +426,7 @@ function populateNotes(data, notesTable, notesEditor, resize) {
                         if (this.readyState == 4 && this.status == 200) {
                             if (notesEditor.getAttribute('data-note-id') == deletedNoteID) {
                                 notesEditor.setAttribute('data-note-id', -1);
-                                for (child = 0; child < notesEditor.children.length; child++) {
+                                for (child = 0; child < notesEditor.childElementCount; child++) {
                                     elem = notesEditor.children[child];
                                     if (elem.tagName == 'INPUT' || elem.tagName == 'TEXTAREA') {elem.value = '';}
                                 }
@@ -503,13 +503,13 @@ function refreshNotes(notes) {
         noteEditor = 0;
         // Get note table and note editor
         // and clear out old entries
-        for (child = 0; child < notePane.children.length; child++) {
+        for (child = 0; child < notePane.childElementCount; child++) {
             elem = notePane.children[child];
             if (elem.className.search('notes_editor') != -1) {noteEditor = elem;}
             if (elem.className.search('notes_list') != -1) {
                 noteTable = elem.children[0];
 
-                while (noteTable.children.length > 1) {
+                while (noteTable.childElementCount > 1) {
                     row = noteTable.children[1];
                     row.remove();
                 }
@@ -519,7 +519,7 @@ function refreshNotes(notes) {
         // If this pane wasn't selected, clear out its edit panel
         if (noteTable.parentElement.parentElement.className.search('selected') == -1) {
             noteEditor.setAttribute('data-note-id', -1);
-            for (child = 0; child < noteEditor.children.length; child++) {
+            for (child = 0; child < noteEditor.childElementCount; child++) {
                 elem = noteEditor.children[child];
                 if (elem.tagName == 'INPUT' || elem.tagName == 'TEXTAREA') {elem.value = '';}
             }
@@ -610,7 +610,7 @@ function openTasks() {
 
                         refreshTasksReq.onreadystatechange = function() {
                             if (this.readyState ==4 && this.status == 200) {
-                                while (list.children.length > 1) {list.children[1].remove();}
+                                while (list.childElementCount > 1) {list.children[1].remove();}
                                 data = JSON.parse(this.responseText);
                                 populateProjects(data[0], list);
                             }
