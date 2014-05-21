@@ -659,6 +659,7 @@ function openTasks() {
     taskPanel.appendChild(projectsPanel);
     taskPanel.appendChild(upcoming);
     
+    // Set up project list and upcoming tasks
     data = fetchTaskData();
     data = JSON.parse(data);
     projectsByID = 0;
@@ -675,7 +676,11 @@ function openTasks() {
     addTab(taskPanel, taskTab);
     switchTab(id);
 
-    // Position the new project button
+    // Position the new project elements
+    newProject.style.position = 'absolute';
+    newProject.style.top = projectsPanel.offsetTop + projectsPanel.offsetHeight - newProject.offsetHeight - 5 + 'px';
+    newProject.style.width = projectsPanel.offsetWidth - 5 + 'px';
+    newProjectName.style.width = newProject.offsetWidth - saveNewProject.offsetWidth - 10 + 'px';
     saveNewProject.style.left = newProjectName.offsetLeft + newProjectName.offsetWidth + 3 + 'px';
     saveNewProject.style.top = newProjectName.offsetTop + (.5 * newProjectName.offsetHeight - (.5 * saveNewProject.offsetHeight)) + 1 + 'px';
 }
