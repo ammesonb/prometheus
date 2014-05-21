@@ -555,6 +555,20 @@ function openTasks() {
     upcomingLink.href = '#';
     upcomingLink.onclick = function() {
         this.parentElement.parentElement.parentElement.setAttribute('data-project-id', -1);
+        // First three arguments don't need to be stored, since if they are modified
+        // it will be with updated information
+        upcoming = this.parentElement.parentElement.parentElement.parentElement.parentElement.children[1];
+        data = fetchTaskData();
+        data = JSON.parse(data);
+        projects = data[0];
+        tasks = data[1];
+        rootProjects = 0;
+        subProjects = 0;
+        projectsByID = 0;
+        projectHierarchy = 0;
+        rootProjects, subProjects, projectsByID, projectHierarchy = parseProjects(projects);
+
+        populateUpcoming(tasks, projectsByID, projectHierarchy, upcoming);
     }
     setText(upcomingLink, 'Overview');
     upcomingTitle.appendChild(upcomingLink);
@@ -645,22 +659,12 @@ function openTasks() {
     taskPanel.appendChild(projectsPanel);
     taskPanel.appendChild(upcoming);
     
-    // Fetch projects and tasks
-    getTasksReq = new XMLHttpRequest();
-
-    getTasksReq.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) {
-            data = JSON.parse(getTasksReq.responseText);
-            projectsByID = 0;
-            projectHierarchy = 0;
-            projectsByID, projectHierarchy = populateProjects(data[0], projectsList);
-            populateUpcoming(data[1], projectsByID, projectHierarchy, upcoming);
-        }
-    };
-
-    getTasksReq.open('POST', 'tasks.cgi', false);
-    getTasksReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-    getTasksReq.send('mode=0');
+    data = fetchTaskData();
+    data = JSON.parse(data);
+    projectsByID = 0;
+    projectHierarchy = 0;
+    projectsByID, projectHierarchy = populateProjects(data[0], projectsList);
+    populateUpcoming(data[1], projectsByID, projectHierarchy, upcoming);
 
     // Add tab and panel
     taskTab = document.createElement('div');
@@ -672,16 +676,26 @@ function openTasks() {
     switchTab(id);
 
     // Position the new project button
-    saveNewProject.style.left = newProjectName.offsetLeft + newProjectName.offsetWidth + 5 + 'px';
+    saveNewProject.style.left = newProjectName.offsetLeft + newProjectName.offsetWidth + 3 + 'px';
     saveNewProject.style.top = newProjectName.offsetTop + (.5 * newProjectName.offsetHeight - (.5 * saveNewProject.offsetHeight)) + 1 + 'px';
 }
 
-function populateProjects(projects, projectsList) {
-    // Turn root projects into a list sorted by ID
-    // and have another list of subprojects indexed by ID
+function fetchTaskData() {
+    getTasksReq = new XMLHttpRequest();
+    getTasksReq.open('POST', 'tasks.cgi', false);
+    getTasksReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    getTasksReq.send('mode=0');
+    return getTasksReq.responseText;
+}
+
+function parseProjects(projects) {
+    // Root projects is a list of project IDs that have no parents
     rootProjects = new Array();
+    // Sub projects are project IDs with parents
     subProjects = new Array();
+    // Projects by ID is a list of projects where the index is the project's ID
     projectsByID = new Array();
+    // Project Hierarchy is a list where a project's ID can be used to look up its parent's ID
     projectHierarchy = new Array();
     defaultProject = -1;
     for (project = 0; project < projects.length; project++) {
@@ -699,6 +713,16 @@ function populateProjects(projects, projectsList) {
     }
     rootProjects.sort(function(p1, p2) {return (p1.name > p2.name);});
     rootProjects.splice(0, 0, defaultProject);
+
+    return rootProjects, subProjects, projectsByID, projectHierarchy;
+}
+
+function populateProjects(projects, projectsList) {
+    rootProjects = 0;
+    subProjects = 0;
+    projectsByID = 0;
+    projectHierarchy = 0;
+    rootProjects, subProjects, projectsByID, projectHierarchy = parseProjects(projects);
     
     // Create project list
     for (project = 0; project < rootProjects.length; project++) {
@@ -710,6 +734,7 @@ function populateProjects(projects, projectsList) {
 }
 
 function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel) {
+    while (upcomingPanel.childElementCount > 1) {upcomingPanel.children[1].remove();}
     // Sort tasks by urgent, then date, then secondary
     urgent = new Array();
     secondary = new Array();
