@@ -858,6 +858,7 @@ function addTask(task, projectsByID, projectHierarchy, topPriority, parent, show
     taskElem = document.createElement('p');
     taskElem.className = 'normal_text';
     taskElem.appendChild(document.createTextNode(stringFill('\u00a0', 4)));
+    taskElem.style.height = '20px';
     taskElem.style.marginTop = '0px';
     taskElem.style.marginBottom = '5px';
     taskLink = document.createElement('a');
