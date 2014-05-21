@@ -637,7 +637,7 @@ function openTasks() {
 
     // Upcoming panel
     upcoming = document.createElement('div');
-    upcoming.className = 'upcoming_tasks';
+    upcoming.className = 'task_view';
     upcoming.setAttribute('project_level', 0);
 
     upcomingU = document.createElement('u');
@@ -685,6 +685,13 @@ function openTasks() {
     saveNewProject.style.top = newProjectName.offsetTop + (.5 * newProjectName.offsetHeight - (.5 * saveNewProject.offsetHeight)) + 1 + 'px';
 }
 
+function openProject(task_view, project) {
+    while (task_view.childElementCount > 0) {task_view.children[0].remove();}
+}
+
+function openTask() {
+}
+
 function fetchTaskData() {
     getTasksReq = new XMLHttpRequest();
     getTasksReq.open('POST', 'tasks.cgi', false);
@@ -716,7 +723,7 @@ function tasksToHTML(urgent, normal, secondary, projectsByID, projectHierarchy) 
     setText(urgentHeader, 'ASAP');
 
     urgentHR = document.createElement('hr');
-    urgentHR.className = 'upcoming_divider';
+    urgentHR.className = 'task_divider';
 
     urgentTasks = document.createElement('span');
     for (taskNum = 0; taskNum < urgent.length; taskNum++) {
@@ -750,7 +757,7 @@ function tasksToHTML(urgent, normal, secondary, projectsByID, projectHierarchy) 
             setText(dateHeader, d.toDateString());
 
             dateHR = document.createElement('hr');
-            dateHR.className = 'upcoming_divider';
+            dateHR.className = 'task_divider';
             if (useNightTheme()) {
                 switchToNight(dateHeader, dateHR);
             }
@@ -769,7 +776,7 @@ function tasksToHTML(urgent, normal, secondary, projectsByID, projectHierarchy) 
     setText(secondaryHeader, 'When Possible');
 
     secondaryHR = document.createElement('hr');
-    secondaryHR.className = 'upcoming_divider';
+    secondaryHR.className = 'task_divider';
 
     secondaryTasks = document.createElement('span');
     for (taskNum = 0; taskNum < secondary.length; taskNum++) {
@@ -879,6 +886,15 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel) 
     }
 }
 
+function createProjectLink(project) {
+    projAnchor = document.createElement('a');
+    projAnchor.className = 'normal_text';
+    projAnchor.href = '#';
+    projAnchor.onclick = function() {openProject;};
+    setText(projAnchor, project.name);
+    return projAnchor;
+}
+
 function addTask(task, projectsByID, projectHierarchy, parent, showTime) {
     colors = ['#ED3B83', '#FF1300', '#FF6A00', '#FFA540', '#FFD240', '#9BED00', '#37DB79', '#63ADD0', '#7872D8', '#4B5BD8', '#9A3ED5', '#7F4BA0', '#999'];
     color = 0;
@@ -887,13 +903,16 @@ function addTask(task, projectsByID, projectHierarchy, parent, showTime) {
     } else {
         color = colors[task.priority];
     }
-    projString = projectsByID[task.project].name;
+
+    // Create list of project links
+    projLinks = [createProjectLink(projectsByID[task.project])];
+    projLinks[0].style.color = color;
     projParent = projectHierarchy[task.project];
     while (projParent) {
-        projString = projectsByID[projParent].name + '&nbsp;:&nbsp;' + projString;
+        projLinks.push(createProjectLink(projectsByID[projParent]));
+        projLinks[projLinks.length - 1].style.color = color;
         projParent = projectHierarchy[projParent];
     }
-    projString = '&lt;' + projString + '&gt;';
 
     // If normal, should have a deadline
     taskDate = 0;
@@ -925,11 +944,33 @@ function addTask(task, projectsByID, projectHierarchy, parent, showTime) {
     taskLink.href = '#';
     setText(taskLink, task.name);
     taskProj = document.createElement('p');
-    taskProj.className = 'normal_text';
     taskProj.style.color = color;
     taskProj.style.display = 'inline';
 
-    setText(taskProj, stringFill('\u00a0', 3) + projString);
+    // Turn project list into HTML
+    tmpP = document.createElement('p');
+    tmpP.style.display = 'inline';
+    tmpP.style.color = color;
+    setText(tmpP, '\u00a0\u00a0\u00a0&lt;');
+    taskProj.appendChild(tmpP);
+    for (link = 0; link < projLinks.length; link++) {
+        projLink = projLinks[link];
+        taskProj.appendChild(projLink);
+        // If not on last link
+        if (link != (projLinks.length - 1)) {
+            tmpP = document.createElement('p');
+            tmpP.style.display = 'inline';
+            tmpP.style.color = color;
+            setText(tmpP, '\u00a0:\u00a0');
+            taskProj.appendChild(tmpP);
+        }
+    }
+    tmpP = document.createElement('p');
+    tmpP.style.display = 'inline';
+    tmpP.style.color = color;
+    setText(tmpP, '&gt;');
+    taskProj.appendChild(tmpP);
+
     if (showTime == true) {taskElem.appendChild(taskDate);}
     taskElem.appendChild(taskLink);
     taskElem.appendChild(taskProj);

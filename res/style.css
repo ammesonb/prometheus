@@ -150,7 +150,7 @@ div.project_list {
     overflow: auto;
 }
 
-div.upcoming_tasks {
+div.task_view {
     float: right;
     left: 35%;
     width: 62%;
@@ -160,7 +160,7 @@ div.upcoming_tasks {
     overflow: auto;
 }
 
-div.upcoming_tasks.night {
+div.task_view.night {
     border: 1px solid silver;
     background-color: rgba(0, 0, 0, .3);
 }
@@ -442,7 +442,7 @@ u.note_edit.night {
     color: silver;
 }
 
-hr.upcoming_divider {
+hr.task_divider {
     color: black;
     margin-top: 0px;
     width: 98%;
@@ -450,7 +450,7 @@ hr.upcoming_divider {
     padding-left: 0px;
 }
 
-hr.upcoming_divider.night {
+hr.task_divider.night {
     color: silver;
 }
 
