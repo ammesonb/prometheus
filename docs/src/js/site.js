@@ -671,6 +671,7 @@ function openTasks() {
     addTab(taskPanel, taskTab);
     switchTab(id);
 
+    // Position the new project button
     saveNewProject.style.left = newProjectName.offsetLeft + newProjectName.offsetWidth + 5 + 'px';
     saveNewProject.style.top = newProjectName.offsetTop + (.5 * newProjectName.offsetHeight - (.5 * saveNewProject.offsetHeight)) + 1 + 'px';
 }
@@ -747,7 +748,12 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel) 
     normalTasks = document.createElement('span');
     for (taskNum = 0; taskNum < normal.length; taskNum++) {
         task = normal[taskNum];
-        d = new Date(task.deadline);
+
+        deadline = task.deadline;
+        deadline = deadline.replace('-', '/');
+        deadline = deadline.replace('-', '/');
+        deadline = deadline.split('+')[0];
+        d = new Date(deadline);
         // If date has changed
         if (d.toLocaleDateString() != currentDate) {
             currentDate = d.toLocaleDateString();
@@ -790,6 +796,7 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel) 
         switchToNight(urgentHeader, urgentHR, secondaryHeader, secondaryHR);
     }
 
+    // Add tasks
     if (urgent.length != 0) {
         upcomingPanel.appendChild(urgentHeader);
         upcomingPanel.appendChild(urgentHR);
@@ -803,6 +810,8 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel) 
         upcomingPanel.appendChild(secondaryHR);
         upcomingPanel.appendChild(secondaryTasks);
     }
+
+    // If no tasks in any section
     if (urgent.length == 0 && normal.length == 0 && secondary.length == 0) {
         blank = document.createElement('p');
         blank.className = 'normal_text';
@@ -828,17 +837,22 @@ function addTask(task, projectsByID, projectHierarchy, topPriority, parent, show
 
     // If normal, should have a deadline
     taskDate = 0;
-    if (showTime) {
+    if (showTime == true) {
         taskDate = document.createElement('p');
         taskDate.style.display = 'inline';
         taskDate.style.color = 'hsl(' + h + ', 100%, 65%)';
         if (useNightTheme()) {
             taskDate.style.color = 'hsla(' + h + ', 100%, 65%, .8)';
-            d = new Date(task.deadline);
-            time = d.toGMTString().split(' ')[4].split(':');
-            time = time[0] + ':' + time[1];
-            setText(taskDate, time + stringFill('\u00a0', 2));
         }
+
+        deadline = task.deadline;
+        deadline = deadline.replace('-', '/');
+        deadline = deadline.replace('-', '/');
+        deadline = deadline.split('+')[0];
+        d = new Date(deadline);
+        time = d.toGMTString().split(' ')[4].split(':');
+        time = time[0] + ':' + time[1];
+        setText(taskDate, time + stringFill('\u00a0', 2));
     }
     
     taskElem = document.createElement('p');
@@ -864,7 +878,7 @@ function addTask(task, projectsByID, projectHierarchy, topPriority, parent, show
     taskProj.style.display = 'inline';
 
     setText(taskProj, stringFill('\u00a0', 3) + projString);
-    if (showTime) {taskElem.appendChild(taskDate);}
+    if (showTime == true) {taskElem.appendChild(taskDate);}
     taskElem.appendChild(taskLink);
     taskElem.appendChild(taskProj);
 
