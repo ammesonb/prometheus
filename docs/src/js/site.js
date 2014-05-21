@@ -693,6 +693,93 @@ function fetchTaskData() {
     return getTasksReq.responseText;
 }
 
+function organizeTasks(tasks) {
+    urgent = new Array();
+    secondary = new Array();
+    normal = new Array();
+    for (taskNum = 0; taskNum < tasks.length; taskNum++) {
+        task = tasks[taskNum];
+        if (task.is_urgent) {urgent.push(task);}
+        else if (task.is_secondary) {secondary.push(task);}
+        else {normal.push(task);}
+   }
+    
+    return urgent, secondary, normal;
+}
+
+function tasksToHTML(urgent, normal, secondary, projectsByID, projectHierarchy) {
+    // Create urgent tasks
+    urgentHeader = document.createElement('p');
+    urgentHeader.class = 'normal_section_header';
+    urgentHeader.style.fontWeight = 'bold';
+    urgentHeader.style.marginBottom = '0px';
+    setText(urgentHeader, 'ASAP');
+
+    urgentHR = document.createElement('hr');
+    urgentHR.className = 'upcoming_divider';
+
+    urgentTasks = document.createElement('span');
+    for (taskNum = 0; taskNum < urgent.length; taskNum++) {
+        task = urgent[taskNum];
+        addTask(task, projectsByID, projectHierarchy, urgentTasks, false);
+    }
+
+    // Create tasks with deadlines
+    normal.sort(function(a, b) {
+        return (a.deadline > b.deadline);
+    });
+
+    currentDate = 0;
+    normalTasks = document.createElement('span');
+    for (taskNum = 0; taskNum < normal.length; taskNum++) {
+        task = normal[taskNum];
+
+        deadline = task.deadline;
+        deadline = deadline.replace('-', '/');
+        deadline = deadline.replace('-', '/');
+        deadline = deadline.split('+')[0];
+        d = new Date(deadline);
+        // If date has changed
+        if (d.toLocaleDateString() != currentDate) {
+            currentDate = d.toLocaleDateString();
+
+            dateHeader = document.createElement('p');
+            dateHeader.className = 'normal_section_header';
+            dateHeader.style.fontWeight = 'bold';
+            dateHeader.style.marginBottom = '0px';
+            setText(dateHeader, d.toDateString());
+
+            dateHR = document.createElement('hr');
+            dateHR.className = 'upcoming_divider';
+            if (useNightTheme()) {
+                switchToNight(dateHeader, dateHR);
+            }
+
+            normalTasks.appendChild(dateHeader);
+            normalTasks.appendChild(dateHR);
+        }
+        addTask(task, projectsByID, projectHierarchy, normalTasks, true);
+    };
+
+    // Create secondary tasks
+    secondaryHeader = document.createElement('p');
+    secondaryHeader.class = 'normal_section_header';
+    secondaryHeader.style.fontWeight = 'bold';
+    secondaryHeader.style.marginBottom = '0px';
+    setText(secondaryHeader, 'When Possible');
+
+    secondaryHR = document.createElement('hr');
+    secondaryHR.className = 'upcoming_divider';
+
+    secondaryTasks = document.createElement('span');
+    for (taskNum = 0; taskNum < secondary.length; taskNum++) {
+        task = secondary[taskNum];
+        addTask(task, projectsByID, projectHierarchy, secondaryTasks, false);
+    }
+
+    return urgentHeader, urgentHR, urgentTasks, normalTasks, secondaryHeader, secondaryHR, secondaryTasks;
+}
+
 function parseProjects(projects) {
     // Root projects is a list of project IDs that have no parents
     rootProjects = new Array();
@@ -739,88 +826,25 @@ function populateProjects(projects, projectsList) {
 }
 
 function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel) {
+    // Remove any old elements in the panel besides the title
     while (upcomingPanel.childElementCount > 1) {upcomingPanel.children[1].remove();}
+
     // Sort tasks by urgent, then date, then secondary
-    urgent = new Array();
-    secondary = new Array();
-    normal = new Array();
-    topPriority = -1;
-    for (taskNum = 0; taskNum < tasks.length; taskNum++) {
-        task = tasks[taskNum];
-        if (task.priority > topPriority) {topPriority = task.priority;}
-        if (task.is_urgent) {urgent.push(task);}
-        else if (task.is_secondary) {secondary.push(task);}
-        else {normal.push(task);}
-    }
+    urgent = [];
+    secondary = [];
+    normal = []
+    urgent, secondary, normal = organizeTasks(tasks);
 
-    // Create urgent tasks
-    urgentHeader = document.createElement('p');
-    urgentHeader.class = 'normal_section_header';
-    urgentHeader.style.fontWeight = 'bold';
-    urgentHeader.style.marginBottom = '0px';
-    setText(urgentHeader, 'ASAP');
-
-    urgentHR = document.createElement('hr');
-    urgentHR.className = 'upcoming_divider';
-
-    urgentTasks = document.createElement('span');
-    for (taskNum = 0; taskNum < urgent.length; taskNum++) {
-        task = urgent[taskNum];
-        addTask(task, projectsByID, projectHierarchy, topPriority, urgentTasks, false);
-    }
-
-    // Create tasks with deadlines
-    normal.sort(function(a, b) {
-        return (a.deadline > b.deadline);
-    });
-
-    currentDate = 0;
-    normalTasks = document.createElement('span');
-    for (taskNum = 0; taskNum < normal.length; taskNum++) {
-        task = normal[taskNum];
-
-        deadline = task.deadline;
-        deadline = deadline.replace('-', '/');
-        deadline = deadline.replace('-', '/');
-        deadline = deadline.split('+')[0];
-        d = new Date(deadline);
-        // If date has changed
-        if (d.toLocaleDateString() != currentDate) {
-            currentDate = d.toLocaleDateString();
-
-            dateHeader = document.createElement('p');
-            dateHeader.className = 'normal_section_header';
-            dateHeader.style.fontWeight = 'bold';
-            dateHeader.style.marginBottom = '0px';
-            setText(dateHeader, d.toDateString());
-
-            dateHR = document.createElement('hr');
-            dateHR.className = 'upcoming_divider';
-            if (useNightTheme()) {
-                switchToNight(dateHeader, dateHR);
-            }
-
-            normalTasks.appendChild(dateHeader);
-            normalTasks.appendChild(dateHR);
-        }
-        addTask(task, projectsByID, projectHierarchy, topPriority, normalTasks, true);
-    };
-
-    // Create secondary tasks
-    secondaryHeader = document.createElement('p');
-    secondaryHeader.class = 'normal_section_header';
-    secondaryHeader.style.fontWeight = 'bold';
-    secondaryHeader.style.marginBottom = '0px';
-    setText(secondaryHeader, 'When Possible');
-
-    secondaryHR = document.createElement('hr');
-    secondaryHR.className = 'upcoming_divider';
-
-    secondaryTasks = document.createElement('span');
-    for (taskNum = 0; taskNum < secondary.length; taskNum++) {
-        task = secondary[taskNum];
-        addTask(task, projectsByID, projectHierarchy, topPriority, secondaryTasks, false);
-    }
+    // Create HTML elements from tasks
+    urgentHeader = 0;
+    urgentHR = 0;
+    urgentTasks = 0;
+    normalTasks = 0;
+    secondaryHeader = 0;
+    secondaryHR = 0;
+    secondaryTasks = 0;
+    urgentHeader, urgentHR, urgentTasks, normalTasks,
+        secondaryHeader, secondaryHR, secondaryTasks = tasksToHTML(urgent, normal, secondary, projectsByID, projectHierarchy);
 
     if (useNightTheme()) {
         switchToNight(urgentHeader, urgentHR, secondaryHeader, secondaryHR);
@@ -855,7 +879,7 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel) 
     }
 }
 
-function addTask(task, projectsByID, projectHierarchy, topPriority, parent, showTime) {
+function addTask(task, projectsByID, projectHierarchy, parent, showTime) {
     colors = ['#ED3B83', '#FF1300', '#FF6A00', '#FFA540', '#FFD240', '#9BED00', '#37DB79', '#63ADD0', '#7872D8', '#4B5BD8', '#9A3ED5', '#7F4BA0', '#999'];
     color = 0;
     if (task.priority >= colors.length) {
