@@ -294,7 +294,7 @@ CREATE TABLE users (
     is_admin boolean,
     is_shared boolean,
     disabled boolean DEFAULT false,
-    theme integer DEFAULT 1,
+    theme integer DEFAULT 2,
     domain integer DEFAULT 2
 );
 

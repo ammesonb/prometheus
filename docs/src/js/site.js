@@ -856,7 +856,13 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel) 
 }
 
 function addTask(task, projectsByID, projectHierarchy, topPriority, parent, showTime) {
-    h = 310 * (task.priority/topPriority);
+    colors = ['#ED3B83', '#FF1300', '#FF6A00', '#FFA540', '#FFD240', '#9BED00', '#37DB79', '#63ADD0', '#7872D8', '#4B5BD8', '#9A3ED5', '#7F4BA0', '#999'];
+    color = 0;
+    if (task.priority >= colors.length) {
+        color = colors[colors.length - 1];
+    } else {
+        color = colors[task.priority];
+    }
     projString = projectsByID[task.project].name;
     projParent = projectHierarchy[task.project];
     while (projParent) {
@@ -870,10 +876,7 @@ function addTask(task, projectsByID, projectHierarchy, topPriority, parent, show
     if (showTime == true) {
         taskDate = document.createElement('p');
         taskDate.style.display = 'inline';
-        taskDate.style.color = 'hsl(' + h + ', 100%, 65%)';
-        if (useNightTheme()) {
-            taskDate.style.color = 'hsla(' + h + ', 100%, 65%, .8)';
-        }
+        taskDate.style.color = color;
 
         deadline = task.deadline;
         deadline = deadline.replace('-', '/');
@@ -893,19 +896,13 @@ function addTask(task, projectsByID, projectHierarchy, topPriority, parent, show
     taskElem.style.marginBottom = '5px';
     taskLink = document.createElement('a');
     taskLink.className = 'normal_text';
-    taskLink.style.color = 'hsl(' + h + ', 100%, 65%)';
+    taskLink.style.color = color;
     taskLink.style.fontWeight = 'bold';
-    if (useNightTheme()) {
-        taskLink.style.color = 'hsla(' + h + ', 100%, 65%, .8)';
-    }
     taskLink.href = '#';
     setText(taskLink, task.name);
     taskProj = document.createElement('p');
     taskProj.className = 'normal_text';
-    taskProj.style.color = 'hsl(' + h + ', 100%, 65%)';
-    if (useNightTheme()) {
-        taskProj.style.color = 'hsla(' + h + ', 100%, 65%, .8)';
-    }
+    taskProj.style.color = color;
     taskProj.style.display = 'inline';
 
     setText(taskProj, stringFill('\u00a0', 3) + projString);
