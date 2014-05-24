@@ -554,7 +554,7 @@ function openTasks() {
     upcomingLink.className = 'normal_section_header';
     upcomingLink.href = '#';
     upcomingLink.onclick = function() {
-        this.parentElement.parentElement.parentElement.setAttribute('data-project-id', -1);
+        this.parentElement.parentElement.parentElement.parentElement.setAttribute('data-project-id', -1);
         // First three arguments don't need to be stored, since if they are modified
         // it will be with updated information
         upcoming = this.parentElement.parentElement.parentElement.parentElement.parentElement.children[1];
@@ -685,8 +685,9 @@ function openTasks() {
     saveNewProject.style.top = newProjectName.offsetTop + (.5 * newProjectName.offsetHeight - (.5 * saveNewProject.offsetHeight)) + 1 + 'px';
 }
 
-function openProject(task_view, project) {
-    while (task_view.childElementCount > 0) {task_view.children[0].remove();}
+function openProject(taskView, project) {
+    while (taskView.childElementCount > 0) {taskView.children[0].remove();}
+    taskView.parentElement.children[0].setAttribute('data-project-id', project.id);
 }
 
 function openTask() {
@@ -890,7 +891,12 @@ function createProjectLink(project) {
     projAnchor = document.createElement('a');
     projAnchor.className = 'normal_text';
     projAnchor.href = '#';
-    projAnchor.onclick = function() {openProject;};
+    projAnchor.setAttribute('data-project', JSON.stringify(project));
+    projAnchor.onclick = function() {
+        taskView = this.parentElement.parentElement.parentElement.parentElement;
+        openProj = JSON.parse(this.getAttribute('data-project'));
+        openProject(taskView, openProj);
+    };
     setText(projAnchor, project.name);
     return projAnchor;
 }
@@ -913,6 +919,7 @@ function addTask(task, projectsByID, projectHierarchy, parent, showTime) {
         projLinks[projLinks.length - 1].style.color = color;
         projParent = projectHierarchy[projParent];
     }
+    projLinks.reverse();
 
     // If normal, should have a deadline
     taskDate = 0;
@@ -988,22 +995,25 @@ function addProject(parent, project, level) {
     expandProject.setAttribute('data-level', level);
     setText(expandProject, stringFill('\u00a0', 3 * level) + '~');
 
-    openProject = document.createElement('a');
-    openProject.href = '#';
-    openProject.style.textDecoration = 'none';
-    openProject.onclick = function() {
-        this.parentElement.parentElement.setAttribute('data-project-id', project.id);
+    openProjectLink = document.createElement('a');
+    openProjectLink.href = '#';
+    openProjectLink.style.textDecoration = 'none';
+    openProjectLink.setAttribute('data-project', JSON.stringify(project));
+    openProjectLink.onclick = function() {
+        taskView = this.parentElement.parentElement.parentElement.children[1]
+        openProj = JSON.parse(this.getAttribute('data-project'));
+        openProject(taskView, openProj);
     };
     projectName = document.createElement('p');
     projectName.className = 'project_name';
     setText(projectName, '\u00a0' + project.name);
-    openProject.appendChild(projectName);
+    openProjectLink.appendChild(projectName);
 
     if (useNightTheme()) {switchToNight(projectName);}
-    if (level != 0) {expandProject.style.display = 'none'; openProject.style.display = 'none';}
+    if (level != 0) {expandProject.style.display = 'none'; openProjectLink.style.display = 'none';}
 
     parent.appendChild(expandProject);
-    parent.appendChild(openProject);
+    parent.appendChild(openProjectLink);
     if (level == 0) {parent.appendChild(document.createElement('br'));}
 
     // If there are actually projects to expand
