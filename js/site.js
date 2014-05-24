@@ -1,3 +1,5 @@
+colors = ['#ED3B83', '#FF1300', '#FF6A00', '#FFA540', '#FFD240', '#9BED00', '#37DB79', '#63ADD0', '#7872D8', '#4B5BD8', '#9A3ED5', '#7F4BA0', '#999'];
+
 function login() {
     elems = document.getElementsByTagName('input');
     a = elems[0];
@@ -568,7 +570,7 @@ function openTasks() {
         projectHierarchy = 0;
         rootProjects, subProjects, projectsByID, projectHierarchy = parseProjects(projects);
 
-        populateUpcoming(tasks, projectsByID, projectHierarchy, upcoming);
+        populateUpcoming(tasks, projectsByID, projectHierarchy, upcoming, subProjects);
     }
     setText(upcomingLink, 'Overview');
     upcomingTitle.appendChild(upcomingLink);
@@ -664,8 +666,9 @@ function openTasks() {
     data = JSON.parse(data);
     projectsByID = 0;
     projectHierarchy = 0;
-    projectsByID, projectHierarchy = populateProjects(data[0], projectsList);
-    populateUpcoming(data[1], projectsByID, projectHierarchy, upcoming);
+    subProjects = 0;
+    projectsByID, projectHierarchy, subProjects = populateProjects(data[0], projectsList);
+    populateUpcoming(data[1], projectsByID, projectHierarchy, upcoming, subProjects);
 
     // Add tab and panel
     taskTab = document.createElement('div');
@@ -685,10 +688,16 @@ function openTasks() {
     saveNewProject.style.top = newProjectName.offsetTop + (.5 * newProjectName.offsetHeight - (.5 * saveNewProject.offsetHeight)) + 1 + 'px';
 }
 
-function openProject(taskView, project, projectsByID, projectHierarchy) {
+function openProject(taskView, project, projectsByID, projectHierarchy, subprojects) {
     while (taskView.childElementCount > 0) {taskView.children[0].remove();}
+    taskView.appendChild(document.createElement('br'));
     taskView.parentElement.children[0].setAttribute('data-project-id', project.id);
-    projLinks = createProjLinks(project.id, projectsByID, projectHierarchy);
+    projLinks = createProjectLinks(project.id, 'silver', projectsByID, projectHierarchy, subprojects, 1);
+    addProjectLinks(projLinks, 'silver', taskView);
+
+    for (child = 0; child < taskView.childElementCount; child++) {taskView.children[child].style.fontWeight = 'bold';}
+
+
 }
 
 function openTask() {
@@ -716,7 +725,7 @@ function organizeTasks(tasks) {
     return urgent, secondary, normal;
 }
 
-function tasksToHTML(urgent, normal, secondary, projectsByID, projectHierarchy) {
+function tasksToHTML(urgent, normal, secondary, projectsByID, projectHierarchy, subProjects) {
     // Create urgent tasks
     urgentHeader = document.createElement('p');
     urgentHeader.class = 'normal_section_header';
@@ -730,7 +739,7 @@ function tasksToHTML(urgent, normal, secondary, projectsByID, projectHierarchy) 
     urgentTasks = document.createElement('span');
     for (taskNum = 0; taskNum < urgent.length; taskNum++) {
         task = urgent[taskNum];
-        addTask(task, projectsByID, projectHierarchy, urgentTasks, false);
+        addTask(task, projectsByID, projectHierarchy, subProjects[task.id], urgentTasks, false);
     }
 
     // Create tasks with deadlines
@@ -767,7 +776,7 @@ function tasksToHTML(urgent, normal, secondary, projectsByID, projectHierarchy) 
             normalTasks.appendChild(dateHeader);
             normalTasks.appendChild(dateHR);
         }
-        addTask(task, projectsByID, projectHierarchy, normalTasks, true);
+        addTask(task, projectsByID, projectHierarchy, subProjects[task.id], normalTasks, true);
     };
 
     // Create secondary tasks
@@ -783,7 +792,7 @@ function tasksToHTML(urgent, normal, secondary, projectsByID, projectHierarchy) 
     secondaryTasks = document.createElement('span');
     for (taskNum = 0; taskNum < secondary.length; taskNum++) {
         task = secondary[taskNum];
-        addTask(task, projectsByID, projectHierarchy, secondaryTasks, false);
+        addTask(task, projectsByID, projectHierarchy, subProjects[task.id], secondaryTasks, false);
     }
 
     return urgentHeader, urgentHR, urgentTasks, normalTasks, secondaryHeader, secondaryHR, secondaryTasks;
@@ -828,13 +837,13 @@ function populateProjects(projects, projectsList) {
     // Create project list
     for (project = 0; project < rootProjects.length; project++) {
         currentRoot = rootProjects[project];
-        addProject(projectsList, currentRoot, 0, projectsByID, projectHierarchy);
+        addProject(projectsList, currentRoot, 0, projectsByID, projectHierarchy, subProjects[currentRoot.id]);
     }
 
-    return projectsByID, projectHierarchy;
+    return projectsByID, projectHierarchy, subProjects;
 }
 
-function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel) {
+function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel, subProjects) {
     // Remove any old elements in the panel besides the title
     while (upcomingPanel.childElementCount > 1) {upcomingPanel.children[1].remove();}
 
@@ -853,7 +862,7 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel) 
     secondaryHR = 0;
     secondaryTasks = 0;
     urgentHeader, urgentHR, urgentTasks, normalTasks,
-        secondaryHeader, secondaryHR, secondaryTasks = tasksToHTML(urgent, normal, secondary, projectsByID, projectHierarchy);
+        secondaryHeader, secondaryHR, secondaryTasks = tasksToHTML(urgent, normal, secondary, projectsByID, projectHierarchy, subProjects);
 
     if (useNightTheme()) {
         switchToNight(urgentHeader, urgentHR, secondaryHeader, secondaryHR);
@@ -888,12 +897,12 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel) 
     }
 }
 
-function createProjectLinks(projectID, projectsByID, projectHierarchy) {
-    projLinks = [createProjectLink(projectsByID[projectID], projectsByID, projectHierarchy)];
+function createProjectLinks(projectID, color, projectsByID, projectHierarchy, subprojects, levelsToRoot) {
+    projLinks = [createProjectLink(projectsByID[projectID], projectsByID, projectHierarchy, subprojects, levelsToRoot)];
     projLinks[0].style.color = color;
-    projParent = projectHierarchy[task.project];
+    projParent = projectHierarchy[projectID];
     while (projParent) {
-        projLinks.push(createProjectLink(projectsByID[projParent]));
+        projLinks.push(createProjectLink(projectsByID[projParent], projectsByID, projectHierarchy, subprojects, levelsToRoot));
         projLinks[projLinks.length - 1].style.color = color;
         projParent = projectHierarchy[projParent];
     }
@@ -901,26 +910,55 @@ function createProjectLinks(projectID, projectsByID, projectHierarchy) {
     return projLinks;
 }
 
-function createProjectLink(project, projectsByID, projectHierarchy) {
+function createProjectLink(project, projectsByID, projectHierarchy, subprojects, levelsToRoot) {
     projAnchor = document.createElement('a');
     projAnchor.className = 'normal_text';
     projAnchor.href = '#';
     projAnchor.setAttribute('data-project', JSON.stringify(project));
     projAnchor.setAttribute('data-projects-by-id', JSON.stringify(projectsByID));
     projAnchor.setAttribute('data-project-hierarchy', JSON.stringify(projectHierarchy));
+    projAnchor.setAttribute('data-subprojects', JSON.stringify(subProjects));
+    projAnchor.setAttribute('data-levels-to-root', levelsToRoot);
     projAnchor.onclick = function() {
-        taskView = this.parentElement.parentElement.parentElement.parentElement;
+        levels = parseInt(this.getAttribute('data-levels-to-root'));
+        taskView = this;
+        for (levels = levels; levels > 0; levels--) {taskView = taskView.parentElement;}
         openProj = JSON.parse(this.getAttribute('data-project'));
         pID = JSON.parse(this.getAttribute('data-projects-by-id'));
         pH = JSON.parse(this.getAttribute('data-project-hierarchy'));
-        openProject(taskView, openProj, pID, pH);
+        subps = JSON.parse(this.getAttribute('data-subprojects'));
+        openProject(taskView, openProj, pID, pH, subps);
     };
     setText(projAnchor, project.name);
     return projAnchor;
 }
 
-function addTask(task, projectsByID, projectHierarchy, parent, showTime) {
-    colors = ['#ED3B83', '#FF1300', '#FF6A00', '#FFA540', '#FFD240', '#9BED00', '#37DB79', '#63ADD0', '#7872D8', '#4B5BD8', '#9A3ED5', '#7F4BA0', '#999'];
+function addProjectLinks(projLinks, color, parent) {
+    tmpP = document.createElement('p');
+    tmpP.style.display = 'inline';
+    tmpP.style.color = color;
+    setText(tmpP, '\u00a0\u00a0\u00a0&lt;');
+    parent.appendChild(tmpP);
+    for (link = 0; link < projLinks.length; link++) {
+        projLink = projLinks[link];
+        parent.appendChild(projLink);
+        // If not on last link
+        if (link != (projLinks.length - 1)) {
+            tmpP = document.createElement('p');
+            tmpP.style.display = 'inline';
+            tmpP.style.color = color;
+            setText(tmpP, '\u00a0:\u00a0');
+            parent.appendChild(tmpP);
+        }
+    }
+    tmpP = document.createElement('p');
+    tmpP.style.display = 'inline';
+    tmpP.style.color = color;
+    setText(tmpP, '&gt;');
+    parent.appendChild(tmpP);
+}
+
+function addTask(task, projectsByID, projectHierarchy, subprojects, parent, showTime) {
     color = 0;
     if (task.priority >= colors.length) {
         color = colors[colors.length - 1];
@@ -928,7 +966,7 @@ function addTask(task, projectsByID, projectHierarchy, parent, showTime) {
         color = colors[task.priority];
     }
 
-    projLinks = createProjectLinks(task.project, projectsByID, projectHierarchy);
+    projLinks = createProjectLinks(task.project, color, projectsByID, projectHierarchy, subprojects, 4);
 
     // If normal, should have a deadline
     taskDate = 0;
@@ -963,30 +1001,8 @@ function addTask(task, projectsByID, projectHierarchy, parent, showTime) {
     taskProj.style.color = color;
     taskProj.style.display = 'inline';
 
-    // Turn project list into HTML
-    tmpP = document.createElement('p');
-    tmpP.style.display = 'inline';
-    tmpP.style.color = color;
-    setText(tmpP, '\u00a0\u00a0\u00a0&lt;');
-    taskProj.appendChild(tmpP);
-    for (link = 0; link < projLinks.length; link++) {
-        projLink = projLinks[link];
-        taskProj.appendChild(projLink);
-        // If not on last link
-        if (link != (projLinks.length - 1)) {
-            tmpP = document.createElement('p');
-            tmpP.style.display = 'inline';
-            tmpP.style.color = color;
-            setText(tmpP, '\u00a0:\u00a0');
-            taskProj.appendChild(tmpP);
-        }
-    }
-    tmpP = document.createElement('p');
-    tmpP.style.display = 'inline';
-    tmpP.style.color = color;
-    setText(tmpP, '&gt;');
-    taskProj.appendChild(tmpP);
-
+    addProjectLinks(projLinks, color, taskProj);
+    
     if (showTime == true) {taskElem.appendChild(taskDate);}
     taskElem.appendChild(taskLink);
     taskElem.appendChild(taskProj);
@@ -996,7 +1012,7 @@ function addTask(task, projectsByID, projectHierarchy, parent, showTime) {
     parent.appendChild(taskElem);
 }
 
-function addProject(parent, project, level, projectsByID, projectHierarchy) {
+function addProject(parent, project, level, projectsByID, projectHierarchy, subprojects) {
     // Create and add this project to the list
     expandProject = document.createElement('a');
     expandProject.className = 'open_project';
@@ -1010,12 +1026,18 @@ function addProject(parent, project, level, projectsByID, projectHierarchy) {
     openProjectLink.setAttribute('data-project', JSON.stringify(project));
     openProjectLink.setAttribute('data-projects-by-id', JSON.stringify(projectsByID));
     openProjectLink.setAttribute('data-project-hierarchy', JSON.stringify(projectHierarchy));
+    if (subprojects) {
+        openProjectLink.setAttribute('data-subprojects', JSON.stringify(subprojects));
+    } else {
+        openProjectLink.setAttribute('data-subprojects', '[]');
+    }
     openProjectLink.onclick = function() {
         taskView = this.parentElement.parentElement.parentElement.children[1]
         openProj = JSON.parse(this.getAttribute('data-project'));
         pID = JSON.parse(this.getAttribute('data-projects-by-id'));
         pH = JSON.parse(this.getAttribute('data-project-hierarchy'));
-        openProject(taskView, openProj, pID, pH);
+        subprojects = JSON.parse(this.getAttribute('data-subprojects'));
+        openProject(taskView, openProj, pID, pH, subprojects);
     };
     projectName = document.createElement('p');
     projectName.className = 'project_name';
@@ -1080,7 +1102,8 @@ function addProject(parent, project, level, projectsByID, projectHierarchy) {
 
         for (subp = 0; subp < subProjects[project.id].length; subp++) {
             parent.setAttribute('data-current-sub-' + level, subp);
-            addProject(parent, subProjects[project.id][subp], level + 1, projectsByID, projectHierarchy);
+            subpr = subProjects[project.id][subp];
+            addProject(parent, subpr, level + 1, projectsByID, projectHierarchy, subProjects[subpr.id]);
             subp = parent.getAttribute('data-current-sub-' + level);
         }
     }
