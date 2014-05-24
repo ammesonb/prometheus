@@ -1116,6 +1116,11 @@ function addProject(parent, project, level, projectsByID, projectHierarchy, subP
                         continue;
                     }
                     nextSibling.style.display = 'none';
+                    if (nextSibling.className === 'close_project') {
+                        nextSibling.className = 'open_project';
+                        setText(nextSibling, stringFill('\u00a0', 3 * nextSibling.getAttribute('data-level')) + '+');
+                        nextSibling.setAttribute('data-expanded', 0);
+                    }
                     nextSibling = nextSibling.nextElementSibling;
                 }
             // Expand
@@ -1124,13 +1129,17 @@ function addProject(parent, project, level, projectsByID, projectHierarchy, subP
                 this.className = 'close_project';
                 setText(this, stringFill('\u00a0', 3 * this.getAttribute('data-level')) + '-');
                 count = 0;
-                while (nextSibling.getAttribute('data-level') != this.getAttribute('data-level')) {
-                    if (nextSibling.getAttribute('data-level')) {
-                        while (nextSibling.getAttribute('data-level').toString() !=
-                               (parseInt(this.getAttribute('data-level')) + 1).toString()) {
+                while (nextSibling.getAttribute('data-level') !== this.getAttribute('data-level')) {
+                    nextLevel = nextSibling.getAttribute('data-level');
+                    if (nextLevel) {
+                        while ((!nextLevel) ||
+                            nextLevel.toString() !== (parseInt(this.getAttribute('data-level')) + 1).toString()) {
+                            if (nextLevel && nextLevel.toString() === this.getAttribute('data-level')) {break;}
                             nextSibling = nextSibling.nextElementSibling;
+                            nextLevel = nextSibling.getAttribute('data-level');
                         }
                     }
+                    if (nextSibling.getAttribute('data-level') === this.getAttribute('data-level')) {break;}
                     nextSibling.style.display = 'inline';
                     count++;
                     if (count == 2) {
