@@ -697,9 +697,7 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
     c = 'black';
     if (useNightTheme()) {c = 'silver';}
     projLinks = createProjectLinks(project.id, c, projectsByID, projectHierarchy, subProjects, 1);
-    addProjectLinks(projLinks, c, taskView);
-
-    for (child = 0; child < taskView.childElementCount; child++) {taskView.children[child].style.fontWeight = 'bold';}
+    addProjectLinks(projLinks, c, taskView, true);
 
     // Create subproject list
     subprojectsP = document.createElement('p');
@@ -723,7 +721,9 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
         subpA.className = 'normal_text';
         if (useNightTheme()) {switchToNight(subpA);}
         subpA.href = '#';
+        subpA.setAttribute('data-project', JSON.stringify(subpr));
         subpA.onclick = function() {
+            openProject(taskView, JSON.parse(this.getAttribute('data-project')), projectsByID, projectHierarchy, subProjects);
         };
         setText(subpA, subpr.name);
         subprojectsP.appendChild(subpA);
@@ -940,7 +940,7 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel, 
     }
 }
 
-function createProjectLinks(projectID, color, projectsByID, projectHierarchy, subprojects, levelsToRoot) {
+function createProjectLinks(projectID, color, projectsByID, projectHierarchy, subprojects, levelsToRoot, isTitle) {
     projLinks = [createProjectLink(projectsByID[projectID], projectsByID, projectHierarchy, subprojects, levelsToRoot)];
     projLinks[0].style.color = color;
     projParent = projectHierarchy[projectID];
@@ -976,14 +976,19 @@ function createProjectLink(project, projectsByID, projectHierarchy, subprojects,
     return projAnchor;
 }
 
-function addProjectLinks(projLinks, color, parent) {
-    tmpP = document.createElement('p');
-    tmpP.style.display = 'inline';
-    tmpP.style.color = color;
-    setText(tmpP, '\u00a0\u00a0\u00a0&lt;');
-    parent.appendChild(tmpP);
+function addProjectLinks(projLinks, color, parent, isTitle) {
+    // Add opening bracket
+    if (!isTitle) {
+        tmpP = document.createElement('p');
+        tmpP.style.display = 'inline';
+        tmpP.style.color = color;
+        setText(tmpP, '\u00a0\u00a0\u00a0&lt;');
+        parent.appendChild(tmpP);
+    }
+
     for (link = 0; link < projLinks.length; link++) {
         projLink = projLinks[link];
+        if (isTitle) {projLink.style.fontWeight = 'bold'; projLink.style.fontSize = '115%';}
         parent.appendChild(projLink);
         // If not on last link
         if (link != (projLinks.length - 1)) {
@@ -991,14 +996,19 @@ function addProjectLinks(projLinks, color, parent) {
             tmpP.style.display = 'inline';
             tmpP.style.color = color;
             setText(tmpP, '\u00a0:\u00a0');
+            if (isTitle) {tmpP.style.fontWeight = 'bold'; tmpP.style.fontSize = '115%';}
             parent.appendChild(tmpP);
         }
     }
-    tmpP = document.createElement('p');
-    tmpP.style.display = 'inline';
-    tmpP.style.color = color;
-    setText(tmpP, '&gt;');
-    parent.appendChild(tmpP);
+
+    // Add closing bracket
+    if (!isTitle) {
+        tmpP = document.createElement('p');
+        tmpP.style.display = 'inline';
+        tmpP.style.color = color;
+        setText(tmpP, '&gt;');
+        parent.appendChild(tmpP);
+    }
 }
 
 function addTask(task, projectsByID, projectHierarchy, subprojects, parent, showTime) {
@@ -1044,7 +1054,7 @@ function addTask(task, projectsByID, projectHierarchy, subprojects, parent, show
     taskProj.style.color = color;
     taskProj.style.display = 'inline';
 
-    addProjectLinks(projLinks, color, taskProj);
+    addProjectLinks(projLinks, color, taskProj, false);
     
     if (showTime == true) {taskElem.appendChild(taskDate);}
     taskElem.appendChild(taskLink);
