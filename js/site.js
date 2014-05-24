@@ -1137,7 +1137,8 @@ function addProject(parent, project, level, projectsByID, projectHierarchy, subP
             } else {
                 this.setAttribute('data-expanded', 1);
                 this.className = 'close_project';
-                setText(this, stringFill('\u00a0', 3 * this.getAttribute('data-level') + 1) + '-');
+                numSpaces = 3 * this.getAttribute('data-level');
+                setText(this, stringFill('\u00a0', numSpaces) + '-' + '\u00a0');
                 count = 0;
                 while (nextSibling.getAttribute('data-level') !== this.getAttribute('data-level')) {
                     nextLevel = nextSibling.getAttribute('data-level');
