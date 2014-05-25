@@ -679,7 +679,8 @@ function openTasks() {
     projectsByID = 0;
     projectHierarchy = 0;
     subProjects = 0;
-    projectsByID, projectHierarchy, subProjects = populateProjects(data[0], projectsList, data[1]);
+    tasks = organizeTasks(data[1]);
+    projectsByID, projectHierarchy, subProjects = populateProjects(data[0], projectsList, tasks);
     populateUpcoming(data[1], projectsByID, projectHierarchy, upcoming, subProjects);
 
     // Add tab and panel
@@ -736,7 +737,8 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
             subpA.href = '#';
             subpA.setAttribute('data-project', JSON.stringify(subpr));
             subpA.onclick = function() {
-                openProject(taskView, JSON.parse(this.getAttribute('data-project')), projectsByID, projectHierarchy, subProjects);
+                openProject(taskView, 
+                    JSON.parse(this.getAttribute('data-project')), projectsByID, projectHierarchy, subProjects, tasks);
             };
             setText(subpA, subpr.name);
             subprojectsP.appendChild(subpA);
@@ -776,12 +778,19 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
 
     // Add tasks table
     if (myTasks.length > 0) {
+        taskView.appendChild(document.createElement('br'));
+        // If no subprojects, need an extra line
+        if (!subProjects[project.id]) {
+            taskView.appendChild(document.createElement('br'));
+        }
+
         tasksTable = document.createElement('table');
         tasksTable.className = 'notes';
     
         // Create table header
         tasksHeader = document.createElement('tr');
         tasksTitleCell = document.createElement('th');
+        tasksTitleCell.style.width = '100%';
         setText(tasksTitleCell, 'Task');
         tasksPriCell = document.createElement('th');
         setText(tasksPriCell, 'Priority');
@@ -795,6 +804,46 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
         tasksHeader.appendChild(tasksDelCell);
     
         tasksTable.appendChild(tasksHeader);
+
+        for (taskNum = 0; taskNum < myTasks.length; taskNum++) {
+            task = myTasks[taskNum];
+
+            // Create task row
+            taskRow = document.createElement('tr');
+            taskRow.style.textAlign = 'right';
+            titleCell = document.createElement('td');
+            titleCell.style.textAlign = 'left';
+            setText(titleCell, task.name);
+            priCell = document.createElement('td');
+            priCell.style.paddingRight = '8px';
+            setText(priCell, task.priority);
+            deadText = 0;
+            if (task.is_urgent) {deadText = 'ASAP';}
+            else if (task.is_secondary) {deadText = 'When convenient';}
+            else {deadText = task.deadline.substring(0, task.deadline.length - 6);}
+            deadCell = document.createElement('td');
+            deadCell.style.whiteSpace = 'nowrap';
+            deadCell.style.paddingRight = '8px';
+            setText(deadCell, deadText);
+            delCell = document.createElement('td');
+            delCell.style.paddingRight = '8px';
+            delLink = document.createElement('a');
+            delLink.href = '#';
+            delLink.onclick = function() {
+            };
+            delImg = document.createElement('img');
+            delImg.src = 'images/x.png';
+            delImg.alt = 'Remove task';
+            delLink.appendChild(delImg);
+            delCell.appendChild(delLink);
+
+            taskRow.appendChild(titleCell);
+            taskRow.appendChild(priCell);
+            taskRow.appendChild(deadCell);
+            taskRow.appendChild(delCell);
+
+            tasksTable.appendChild(taskRow);
+        }
 
         if (useNightTheme()) {switchToNight(tasksTable);}
 
