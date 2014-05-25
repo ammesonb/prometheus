@@ -192,7 +192,7 @@ span.error {
 /* table */
 table.notes {
     border-collapse: collapse;
-    width: 100%;
+    width: 99%;
 }
 
 table.notes th {

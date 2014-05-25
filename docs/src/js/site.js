@@ -755,6 +755,51 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
     
         taskView.appendChild(subprojectsP);
     }
+
+    // Order tasks alphabetically then by urgent, normal, secondary
+    myTasks = new Array();
+    myUrgent = tasks[0][project.id];
+    myNormal = tasks[2][project.id];
+    mySecondary = tasks[1][project.id];
+    if (myUrgent) {
+        myUrgent.sort(function(a, b) {return (a.name > b.name);});
+        myUrgent.forEach(function(e) {myTasks.push(e);});
+    }
+    if (myNormal) {
+        myNormal.sort(function(a, b) {return (a.name > b.name);});
+        myNormal.forEach(function(e) {myTasks.push(e);});
+    }
+    if (mySecondary) {
+        mySecondary.sort(function(a, b) {return (a.name > b.name);});
+        mySecondary.forEach(function(e) {myTasks.push(e);});
+    }
+
+    // Add tasks table
+    if (myTasks.length > 0) {
+        tasksTable = document.createElement('table');
+        tasksTable.className = 'notes';
+    
+        // Create table header
+        tasksHeader = document.createElement('tr');
+        tasksTitleCell = document.createElement('th');
+        setText(tasksTitleCell, 'Task');
+        tasksPriCell = document.createElement('th');
+        setText(tasksPriCell, 'Priority');
+        tasksDeadCell = document.createElement('th');
+        setText(tasksDeadCell, 'Deadline');
+        tasksDelCell = document.createElement('th');
+        setText(tasksDelCell, 'Delete');
+        tasksHeader.appendChild(tasksTitleCell);
+        tasksHeader.appendChild(tasksPriCell);
+        tasksHeader.appendChild(tasksDeadCell);
+        tasksHeader.appendChild(tasksDelCell);
+    
+        tasksTable.appendChild(tasksHeader);
+
+        if (useNightTheme()) {switchToNight(tasksTable);}
+
+        taskView.appendChild(tasksTable);
+    }
 }
 
 function openTask() {
