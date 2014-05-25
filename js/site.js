@@ -54,6 +54,17 @@ function stringFill(x, n) {
     return s;
 }
 
+function flatten(arr) {
+    flat = new Array();
+    for (i = 0; i < arr.length; i++) {
+        if (arr[i]) {
+            arr[i].forEach(function(e) {flat.push(e);});
+        }
+    }
+
+    return flat;
+}
+
 function setText(element, text) {
     element.innerText = text;
     element.innerHTML = text;
@@ -700,47 +711,49 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
     addProjectLinks(projLinks, c, taskView, true);
 
     // Create subproject list
-    subprojectsP = document.createElement('p');
-    subprojectsP.style.className = 'normal_text';
-    tmpP = document.createElement('p');
-    tmpP.className = 'normal_text';
-    tmpP.style.fontSize = '120%';
-    tmpP.style.marginBottom = '0px';
-    setText(tmpP, 'Subprojects:');
-    if (useNightTheme()) {switchToNight(tmpP);}
-    subprojectsP.appendChild(tmpP);
-    tmpP = document.createElement('p');
-    tmpP.className = 'normal_text';
-    tmpP.style.fontSize = '120%';
-    tmpP.style.display = 'inline';
-    setText(tmpP, '\u00a0\u00a0\u00a0');
-    subprojectsP.appendChild(tmpP);
-    for (subp = 0; subp < subProjects[project.id].length; subp++) {
-        subpr = subProjects[project.id][subp];
-        subpA = document.createElement('a');
-        subpA.className = 'normal_text';
-        if (useNightTheme()) {switchToNight(subpA);}
-        subpA.href = '#';
-        subpA.setAttribute('data-project', JSON.stringify(subpr));
-        subpA.onclick = function() {
-            openProject(taskView, JSON.parse(this.getAttribute('data-project')), projectsByID, projectHierarchy, subProjects);
-        };
-        setText(subpA, subpr.name);
-        subprojectsP.appendChild(subpA);
-
-        if (subp != (subProjects[project.id].length - 1)) {
-            tmpP = document.createElement('p');
-            tmpP.className = 'normal_text';
-            tmpP.style.display = 'inline';
-            setText(tmpP, ',\u00a0');
-            if (useNightTheme()) {switchToNight(tmpP);}
-            subprojectsP.appendChild(tmpP);
+    if (subProjects[project.id]) {
+        subprojectsP = document.createElement('p');
+        subprojectsP.style.className = 'normal_text';
+        tmpP = document.createElement('p');
+        tmpP.className = 'normal_text';
+        tmpP.style.fontSize = '120%';
+        tmpP.style.marginBottom = '0px';
+        setText(tmpP, 'Subprojects:');
+        if (useNightTheme()) {switchToNight(tmpP);}
+        subprojectsP.appendChild(tmpP);
+        tmpP = document.createElement('p');
+        tmpP.className = 'normal_text';
+        tmpP.style.fontSize = '120%';
+        tmpP.style.display = 'inline';
+        setText(tmpP, '\u00a0\u00a0\u00a0');
+        subprojectsP.appendChild(tmpP);
+        for (subp = 0; subp < subProjects[project.id].length; subp++) {
+            subpr = subProjects[project.id][subp];
+            subpA = document.createElement('a');
+            subpA.className = 'normal_text';
+            if (useNightTheme()) {switchToNight(subpA);}
+            subpA.href = '#';
+            subpA.setAttribute('data-project', JSON.stringify(subpr));
+            subpA.onclick = function() {
+                openProject(taskView, JSON.parse(this.getAttribute('data-project')), projectsByID, projectHierarchy, subProjects);
+            };
+            setText(subpA, subpr.name);
+            subprojectsP.appendChild(subpA);
+    
+            if (subp != (subProjects[project.id].length - 1)) {
+                tmpP = document.createElement('p');
+                tmpP.className = 'normal_text';
+                tmpP.style.display = 'inline';
+                setText(tmpP, ',\u00a0');
+                if (useNightTheme()) {switchToNight(tmpP);}
+                subprojectsP.appendChild(tmpP);
+            }
         }
+    
+        if (useNightTheme()) {switchToNight(subprojectsP);}
+    
+        taskView.appendChild(subprojectsP);
     }
-
-    if (useNightTheme()) {switchToNight(subprojectsP);}
-
-    taskView.appendChild(subprojectsP);
 }
 
 function openTask() {
@@ -759,13 +772,27 @@ function organizeTasks(tasks) {
     secondary = new Array();
     normal = new Array();
     for (taskNum = 0; taskNum < tasks.length; taskNum++) {
+        console.log(normal);
         task = tasks[taskNum];
-        if (task.is_urgent) {urgent.push(task);}
-        else if (task.is_secondary) {secondary.push(task);}
-        else {normal.push(task);}
+        if (task.is_urgent) {
+            if (!urgent[task.project] || urgent[task.project].constructor.name !== 'Array') {
+                urgent[task.project] = new Array();
+            }
+            urgent[task.project].push(task);
+        } else if (task.is_secondary) {
+            if (!secondary[task.project] || secondary[task.project].constructor.name !== 'Array') {
+                secondary[task.project] = new Array();
+            }
+            secondary[task.project].push(task);
+        } else {
+            if (!normal[task.project] || normal[task.project].constructor.name !== 'Array') {
+                normal[task.project] = new Array();
+            }
+            normal[task.project].push(task);
+        }
    }
     
-    return urgent, secondary, normal;
+    return [urgent, secondary, normal];
 }
 
 function tasksToHTML(urgent, normal, secondary, projectsByID, projectHierarchy, subProjects) {
@@ -891,10 +918,16 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel, 
     while (upcomingPanel.childElementCount > 1) {upcomingPanel.children[1].remove();}
 
     // Sort tasks by urgent, then date, then secondary
-    urgent = [];
-    secondary = [];
-    normal = []
-    urgent, secondary, normal = organizeTasks(tasks);
+    // Function returns two-dimensional array, but project is
+    // inconsequential for the Upcoming view, so flatten them
+    sortedTasks = organizeTasks(tasks);
+    console.log(sortedTasks);
+    urgentByID = sortedTasks[0];
+    secondaryByID = sortedTasks[1];
+    normalByID = sortedTasks[2]
+    urgent = flatten(urgentByID);
+    secondary = flatten(secondaryByID);
+    normal = flatten(normalByID);
 
     // Create HTML elements from tasks
     urgentHeader = 0;
