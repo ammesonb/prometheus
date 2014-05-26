@@ -588,11 +588,11 @@ function openTasks() {
         data = JSON.parse(data);
         projects = data[0];
         tasks = data[1];
-        rootProjects = 0;
-        subProjects = 0;
-        projectsByID = 0;
-        projectHierarchy = 0;
-        rootProjects, subProjects, projectsByID, projectHierarchy = parseProjects(projects);
+        out = parseProjects(projects);
+        rootProjects = out[0];
+        subProjects = out[1];
+        projectsByID = out[2];
+        projectHierarchy = out[3]
 
         populateUpcoming(tasks, projectsByID, projectHierarchy, taskView, subProjects);
 
@@ -732,11 +732,11 @@ function openTasks() {
     // Set up project list and upcoming tasks
     data = fetchTaskData();
     data = JSON.parse(data);
-    projectsByID = 0;
-    projectHierarchy = 0;
-    subProjects = 0;
     tasks = organizeTasks(data[1]);
-    projectsByID, projectHierarchy, subProjects = populateProjects(data[0], projectsList, tasks);
+    out = populateProjects(data[0], projectsList, tasks);
+    projectsByID = out[0];
+    projectHierarchy = out[1]
+    subProjects = out[2];
     populateUpcoming(data[1], projectsByID, projectHierarchy, upcoming, subProjects);
 
     // Add tab and panel
@@ -1028,8 +1028,54 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     }
 
     taskView.appendChild(document.createElement('br'));
+    taskView.appendChild(document.createElement('br'));
 
-    
+    // Create task edit GUI
+    titleLabel = document.createElement('p');
+    titleLabel.className = 'normal_text form_label';
+    setText(titleLabel, 'Task\u00a0name:\u00a0')
+    titleInput = document.createElement('input');
+    titleInput.value = task.name;
+
+    descLabel = document.createElement('p');
+    descLabel.className = 'normal_text form_label';
+    setText(descLabel, 'Task\u00a0Description:');
+    descInput = document.createElement('textarea');
+    descInput.value = task.description;
+
+    priLabel = document.createElement('p');
+    priLabel.className = 'normal_text form_label';
+    priLabel.style.display = 'inline';
+    setText(priLabel, 'Task\u00a0Priority\u00a0(High to low):\u00a0\u00a0');
+
+    priInput = document.createElement('select');
+    for (o = 1; o <= 12; o++) {
+        opt = document.createElement('option');
+        setText(opt, o);
+        opt.value = o;
+        priInput.appendChild(opt);
+        if (useNightTheme()) {switchToNight(opt);}
+    }
+
+    if (useNightTheme()) {
+        switchToNight(titleLabel, titleInput, descLabel, descInput, priLabel, priInput);
+    }
+
+    deadlineGroup = document.createElement('fieldset');
+    deadlineLabel = document.createElement('legend');
+    setText(deadlineLabel, 'Deadline');
+
+    deadlineGroup.appendChild(deadlineLabel);
+
+    taskView.appendChild(titleLabel);
+    taskView.appendChild(titleInput);
+    taskView.appendChild(descLabel);
+    taskView.appendChild(descInput);
+    taskView.appendChild(document.createElement('br'));
+    taskView.appendChild(document.createElement('br'));
+    taskView.appendChild(priLabel);
+    taskView.appendChild(priInput);
+    taskView.appendChild(deadlineGroup);
 }
 
 function fetchTaskData() {
@@ -1077,7 +1123,7 @@ function organizeTasks(tasks) {
 function tasksToHTML(urgent, normal, secondary, tasksByID, projectsByID, projectHierarchy, subProjects) {
     // Create urgent tasks
     urgentHeader = document.createElement('p');
-    urgentHeader.class = 'normal_section_header';
+    urgentHeader.className = 'normal_section_header';
     urgentHeader.style.fontWeight = 'bold';
     urgentHeader.style.marginBottom = '0px';
     setText(urgentHeader, 'ASAP');
@@ -1130,7 +1176,7 @@ function tasksToHTML(urgent, normal, secondary, tasksByID, projectsByID, project
 
     // Create secondary tasks
     secondaryHeader = document.createElement('p');
-    secondaryHeader.class = 'normal_section_header';
+    secondaryHeader.className = 'normal_section_header';
     secondaryHeader.style.fontWeight = 'bold';
     secondaryHeader.style.marginBottom = '0px';
     setText(secondaryHeader, 'When Possible');
@@ -1144,7 +1190,7 @@ function tasksToHTML(urgent, normal, secondary, tasksByID, projectsByID, project
         addTask(task, projectsByID, projectHierarchy, subProjects[task.id], tasksByID, secondaryTasks, false);
     }
 
-    return urgentHeader, urgentHR, urgentTasks, normalTasks, secondaryHeader, secondaryHR, secondaryTasks;
+    return [urgentHeader, urgentHR, urgentTasks, normalTasks, secondaryHeader, secondaryHR, secondaryTasks];
 }
 
 function parseProjects(projects) {
@@ -1173,7 +1219,7 @@ function parseProjects(projects) {
     rootProjects.sort(function(p1, p2) {return (p1.name > p2.name);});
     rootProjects.splice(0, 0, defaultProject);
 
-    return rootProjects, subProjects, projectsByID, projectHierarchy;
+    return [rootProjects, subProjects, projectsByID, projectHierarchy];
 }
 
 function populateProjects(projects, projectsList, tasks) {
@@ -1181,7 +1227,11 @@ function populateProjects(projects, projectsList, tasks) {
     subProjects = 0;
     projectsByID = 0;
     projectHierarchy = 0;
-    rootProjects, subProjects, projectsByID, projectHierarchy = parseProjects(projects);
+    out = parseProjects(projects);
+    rootProjects = out[0];
+    subProjects = out[1];
+    projectsByID = out[2];
+    projectHierarchy = out[3]
     
     // Create project list
     for (project = 0; project < rootProjects.length; project++) {
@@ -1189,7 +1239,7 @@ function populateProjects(projects, projectsList, tasks) {
         addProject(projectsList, currentRoot, 0, projectsByID, projectHierarchy, subProjects, tasks);
     }
 
-    return projectsByID, projectHierarchy, subProjects;
+    return [projectsByID, projectHierarchy, subProjects];
 }
 
 function populateUpcoming(tasks, projectsByID, projectHierarchy, taskView, subProjects) {
@@ -1233,17 +1283,15 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, taskView, subPr
     normal = flatten(normalByID);
 
     // Create HTML elements from tasks
-    urgentHeader = 0;
-    urgentHR = 0;
-    urgentTasks = 0;
-    normalTasks = 0;
-    secondaryHeader = 0;
-    secondaryHR = 0;
-    secondaryTasks = 0;
-    urgentHeader, urgentHR, urgentTasks, normalTasks,
-        secondaryHeader, secondaryHR, secondaryTasks = 
-            tasksToHTML(urgent, normal, secondary, sortedTasks,
+    out = tasksToHTML(urgent, normal, secondary, sortedTasks,
                         projectsByID, projectHierarchy, subProjects);
+    urgentHeader = out[0];
+    urgentHR = out[1];
+    urgentTasks = out[2];
+    normalTasks = out[3];
+    secondaryHeader = out[4];
+    secondaryHR = out[5];
+    secondaryTasks = out[6];
 
     if (useNightTheme()) {
         switchToNight(urgentHeader, urgentHR, secondaryHeader, secondaryHR);
