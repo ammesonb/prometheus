@@ -1065,6 +1065,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
         opt = document.createElement('option');
         setText(opt, o);
         opt.value = o;
+        if (o == task.priority) {opt.selected = true;}
         priInput.appendChild(opt);
         if (useNightTheme()) {switchToNight(opt);}
     }
