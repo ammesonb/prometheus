@@ -595,6 +595,49 @@ function openTasks() {
         rootProjects, subProjects, projectsByID, projectHierarchy = parseProjects(projects);
 
         populateUpcoming(tasks, projectsByID, projectHierarchy, taskView, subProjects);
+
+        // Check if task wraps by comparing offsettops through DOM
+        spans = taskView.getElementsByTagName('span');
+        // For each set of tasks (urgent, normal, secondary)
+        for (s = 0; s < spans.length; s++) {
+            span = spans[s];
+            // For each task/header in them
+            for (pNum = 0; pNum < span.childElementCount; pNum++) {
+                p = span.children[pNum];
+                // Eliminate headers
+                if (p.className.search('normal_text') === -1) {continue;}
+                offset = p.children[0].offsetTop;
+                breakLine = 0;
+                // For each of their children
+                for (cNum = 1; cNum < p.childElementCount; cNum++) {
+                    c = p.children[cNum];
+                    childBreakFound = 0
+                    // If it has children (some do, some don't)
+                    if (c.childElementCount) {
+                        for (c2Num = 0; c2Num < c.childElementCount; c2Num++) {
+                            c2 = c.children[c2Num];
+                            if (c2.offsetTop > offset) {
+                                childBreakFound = 1;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (childBreakFound || c.offsetTop > offset) {
+                        breakLine = 1;
+                        break;
+                    }
+                }
+
+                if (breakLine) {
+                    if (span.children[pNum + 1]) {
+                        span.insertBefore(document.createElement('br'), span.children[pNum + 1]);
+                    } else {
+                        span.appendChild(document.createElement('br'));
+                    }
+                }
+            }
+        }
     }
     setText(upcomingLink, 'Overview');
     upcomingTitle.appendChild(upcomingLink);
@@ -712,6 +755,49 @@ function openTasks() {
     newProjectName.style.width = newProject.offsetWidth - saveNewProject.offsetWidth - 10 + 'px';
     saveNewProject.style.left = newProjectName.offsetLeft + newProjectName.offsetWidth + 3 + 'px';
     saveNewProject.style.top = newProjectName.offsetTop + (.5 * newProjectName.offsetHeight - (.5 * saveNewProject.offsetHeight)) + 1 + 'px';
+
+    // Check if task wraps by comparing offsettops through DOM
+    spans = upcoming.getElementsByTagName('span');
+    // For each set of tasks (urgent, normal, secondary)
+    for (s = 0; s < spans.length; s++) {
+        span = spans[s];
+        // For each task/header in them
+        for (pNum = 0; pNum < span.childElementCount; pNum++) {
+            p = span.children[pNum];
+            // Eliminate headers
+            if (p.className.search('normal_text') === -1) {continue;}
+            offset = p.children[0].offsetTop;
+            breakLine = 0;
+            // For each of their children
+            for (cNum = 1; cNum < p.childElementCount; cNum++) {
+                c = p.children[cNum];
+                childBreakFound = 0
+                // If it has children (some do, some don't)
+                if (c.childElementCount) {
+                    for (c2Num = 0; c2Num < c.childElementCount; c2Num++) {
+                        c2 = c.children[c2Num];
+                        if (c2.offsetTop > offset) {
+                            childBreakFound = 1;
+                            break;
+                        }
+                    }
+                }
+
+                if (childBreakFound || c.offsetTop > offset) {
+                    breakLine = 1;
+                    break;
+                }
+            }
+
+            if (breakLine) {
+                if (span.children[pNum + 1]) {
+                    span.insertBefore(document.createElement('br'), span.children[pNum + 1]);
+                } else {
+                    span.appendChild(document.createElement('br'));
+                }
+            }
+        }
+    }
 }
 
 function openProject(taskView, project, projectsByID, projectHierarchy, subProjects, tasks) {
