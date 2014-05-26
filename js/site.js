@@ -908,8 +908,12 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     taskView.parentElement.children[0].setAttribute('data-project-id', task.project);
     c = 'black';
     if (useNightTheme()) {c = 'silver';}
+
+    // Display task path
     projLinks = createProjectLinks(task.project, c, projectsByID, projectHierarchy, subProjects, tasks, 1);
     addProjectLinks(projLinks, c, taskView, true)
+
+    // Add this project
     tmpP = document.createElement('p');
     tmpP.style.display = 'inline';
     tmpP.style.color = c;
@@ -922,9 +926,22 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     tmpP.style.display = 'inline';
     tmpP.style.color = c;
     setText(tmpP, task.name);
+    tmpP.style.whiteSpace = 'nowrap';
     tmpP.style.fontWeight = 'bold';
     tmpP.style.fontSize = '115%';
     taskView.appendChild(tmpP);
+
+    // If task path wraps, indent each new line
+    lastOffset = taskView.children[1].offsetTop;
+    for (p = 2; p < taskView.childElementCount; p++) {
+        e = taskView.children[p];
+        if (e.offsetTop > lastOffset) {
+            lastOffset = e.offsetTop;
+            taskView.insertBefore(document.createTextNode(stringFill('\u00a0', 2)), e);
+        }
+    }
+
+    taskView.appendChild(document.createElement('br'));
 }
 
 function fetchTaskData() {
@@ -1214,6 +1231,7 @@ function createProjectLink(project, projectsByID, projectHierarchy, subprojects,
     projAnchor = document.createElement('a');
     projAnchor.className = 'normal_text';
     projAnchor.href = '#';
+    projAnchor.style.whiteSpace = 'nowrap';
     projAnchor.setAttribute('data-project', JSON.stringify(project));
     projAnchor.setAttribute('data-projects-by-id', JSON.stringify(projectsByID));
     projAnchor.setAttribute('data-project-hierarchy', JSON.stringify(projectHierarchy));
@@ -1252,7 +1270,7 @@ function addProjectLinks(projLinks, color, parent, isTitle) {
             tmpP = document.createElement('p');
             tmpP.style.display = 'inline';
             tmpP.style.color = color;
-            setText(tmpP, '\u00a0:\u00a0');
+            setText(tmpP, '\u00a0: ');
             if (isTitle) {tmpP.style.fontWeight = 'bold'; tmpP.style.fontSize = '115%';}
             parent.appendChild(tmpP);
         }
