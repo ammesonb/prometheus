@@ -70,6 +70,14 @@ function flatten(arr) {
     return flat;
 }
 
+function deleteAllChildren(elem) {
+    if (isIE()) {
+        while (elem.childElementCount > 0) {elem.children[0].removeNode(true);}
+    } else {
+        while (elem.childElementCount > 0) {elem.children[0].remove();}
+    }
+}
+
 function setText(element, text) {
     element.innerText = text;
     element.innerHTML = text;
@@ -707,11 +715,7 @@ function openTasks() {
 }
 
 function openProject(taskView, project, projectsByID, projectHierarchy, subProjects, tasks) {
-    if (isIE()) {
-        while (taskView.childElementCount > 0) {taskView.children[0].removeNode(true);}
-    } else {
-        while (taskView.childElementCount > 0) {taskView.children[0].remove();}
-    }
+    deleteAllChildren(taskView);
     taskView.appendChild(document.createElement('br'));
 
     // Display current project tree
@@ -898,7 +902,29 @@ function deleteProject(projectID, viewMode, tasks, projectsByID, projectHierarch
     if (viewMode === 'project') {populateUpcoming(tasks, projectsByID, projectHierarchy, taskView, subProjects);}
 }
 
-function openTask() {
+function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, tasks) {
+    deleteAllChildren(taskView);
+    taskView.appendChild(document.createElement('br'));
+    taskView.parentElement.children[0].setAttribute('data-project-id', task.project);
+    c = 'black';
+    if (useNightTheme()) {c = 'silver';}
+    projLinks = createProjectLinks(task.project, c, projectsByID, projectHierarchy, subProjects, tasks, 1);
+    addProjectLinks(projLinks, c, taskView, true)
+    tmpP = document.createElement('p');
+    tmpP.style.display = 'inline';
+    tmpP.style.color = c;
+    setText(tmpP, '\u00a0:\u00a0');
+    tmpP.style.fontWeight = 'bold';
+    tmpP.style.fontSize = '115%';
+    taskView.appendChild(tmpP);
+
+    tmpP = document.createElement('p');
+    tmpP.style.display = 'inline';
+    tmpP.style.color = c;
+    setText(tmpP, task.name);
+    tmpP.style.fontWeight = 'bold';
+    tmpP.style.fontSize = '115%';
+    taskView.appendChild(tmpP);
 }
 
 function fetchTaskData() {
@@ -1373,7 +1399,7 @@ function addProject(parent, project, level, projectsByID, projectHierarchy, subP
     }
 }
 
-function addTask(task, projectsByID, projectHierarchy, subprojects, tasks, parent, showTime) {
+function addTask(task, projectsByID, projectHierarchy, subProjects, tasks, parent, showTime) {
     color = 0;
     if (task.priority >= colors.length) {
         color = colors[colors.length - 1];
@@ -1381,7 +1407,7 @@ function addTask(task, projectsByID, projectHierarchy, subprojects, tasks, paren
         color = colors[task.priority];
     }
 
-    projLinks = createProjectLinks(task.project, color, projectsByID, projectHierarchy, subprojects, tasks, 4, false);
+    projLinks = createProjectLinks(task.project, color, projectsByID, projectHierarchy, subProjects, tasks, 4, false);
 
     // If normal, should have a deadline
     taskDate = 0;
@@ -1412,6 +1438,11 @@ function addTask(task, projectsByID, projectHierarchy, subprojects, tasks, paren
     taskLink.style.color = color;
     taskLink.style.fontWeight = 'bold';
     taskLink.href = '#';
+    taskLink.setAttribute('data-task', JSON.stringify(task));
+    taskLink.onclick = function() {
+        taskView = this.parentElement.parentElement.parentElement;
+        openTask(JSON.parse(this.getAttribute('data-task')), taskView, projectsByID, projectHierarchy, subProjects, tasks);
+    };
     setText(taskLink, task.name);
     taskProj = document.createElement('p');
     taskProj.style.color = color;
