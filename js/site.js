@@ -54,6 +54,15 @@ function stringFill(x, n) {
     return s;
 }
 
+function pad(text, length, fill, side) {
+    if (side == 'f') {
+        while (text.length < length) {text = fill + text;}
+    } else if (side == 'b') {
+        while (text.length < length) {text += fill;}
+    }
+    return text;
+}
+
 function isIE() {
     return (css_browser_selector(navigator.userAgent).search('ie') != -1) ||
             (navigator.userAgent.search('\\) like Gecko') != -1);
@@ -1075,7 +1084,6 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
             e = e.nextElementSibling;
         }
 
-        e.value = '';
         e.disabled = true;
     };
     urgentLabel = document.createElement('p');
@@ -1092,7 +1100,6 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
             e = e.nextElementSibling;
         }
 
-        e.value = '';
         e.disabled = true;
     };
     secondaryLabel = document.createElement('p');
@@ -1119,13 +1126,25 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     else if (task.is_secondary) {secondaryRadio.defaultChecked = true; dateInput.disabled = true;}
     else {
         dateRadio.defaultChecked = true;
+        deadline = task.deadline;
+        deadline = deadline.replace('-', '/');
+        deadline = deadline.replace('-', '/');
+        deadline = deadline.split('+')[0];
+        d = new Date(deadline);
+        time = d.toGMTString().split(' ')[4].split(':');
+        time = pad(time[0], 2, '0', 'f') + ':' + pad(time[1], 2, '0', 'f');
+        deadline = d.getUTCFullYear() + '-' +
+                   pad(d.getUTCMonth().toString(), 2, '0', 'f') + '-' +
+                   pad(d.getUTCDate().toString(), 2, '0', 'f') +
+                   'T' + time;
+        dateInput.value = deadline;
     }
     
     // If datetime input type isn't supported
     if (dateInput.type == 'text') {
         if (dateInput.value === '') {
             dateInput.value = 'YYYY-MM-DD HH:MM';
-        }
+        } else {dateInput.value = dateInput.value.replace('T', ' ');}
         dateInput.onchange = function() {
             year = /[0-9]{4}-/;
             month = /(0[1-9]|1[12])-/;
