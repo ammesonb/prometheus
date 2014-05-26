@@ -586,7 +586,7 @@ function openTasks() {
         projectHierarchy = 0;
         rootProjects, subProjects, projectsByID, projectHierarchy = parseProjects(projects);
 
-        populateUpcoming(tasks, projectsByID, projectHierarchy, upcoming, subProjects);
+        populateUpcoming(tasks, projectsByID, projectHierarchy, taskView, subProjects);
     }
     setText(upcomingLink, 'Overview');
     upcomingTitle.appendChild(upcomingLink);
@@ -720,6 +720,26 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
     if (useNightTheme()) {c = 'silver';}
     projLinks = createProjectLinks(project.id, c, projectsByID, projectHierarchy, subProjects, tasks, 1);
     addProjectLinks(projLinks, c, taskView, true);
+
+    // Delete project button
+    removeProjectLink = document.createElement('a');
+    removeProjectLink.className = 'blank';
+    removeProjectLink.href = '#';
+    removeProjectLink.setAttribute('data-project-id', project.id);
+    removeProjectLink.setAttribute('data-project-name', project.name);
+    removeProjectLink.onclick = function() {
+        conf = confirm('Are you sure you want to delete project \'' + this.getAttribute('data-project-name') + '\'?');
+        if (!conf) {return;}
+        deleteProject(this.getAttribute('data-project-id'), 'project', projectsByID, projectHierarchy, taskView, subProjects, tasks);
+    };
+    removeProjectImg = document.createElement('img');
+    removeProjectImg.src = 'images/x.png';
+    removeProjectImg.alt = 'Remove project';
+    removeProjectImg.title = 'Remove project';
+    removeProjectLink.appendChild(document.createTextNode('\u00a0\u00a0'));
+    removeProjectLink.appendChild(removeProjectImg);
+
+    taskView.appendChild(removeProjectLink);
 
     // Create subproject list
     if (subProjects[project.id]) {
@@ -869,6 +889,13 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
 
         taskView.appendChild(tasksTable);
     }
+}
+
+function deleteProject(projectID, viewMode, tasks, projectsByID, projectHierarchy, taskView, subProjects) {
+    // Delete project
+    
+    // Reset view
+    if (viewMode === 'project') {populateUpcoming(tasks, projectsByID, projectHierarchy, taskView, subProjects);}
 }
 
 function openTask() {
@@ -1034,12 +1061,12 @@ function populateProjects(projects, projectsList, tasks) {
     return projectsByID, projectHierarchy, subProjects;
 }
 
-function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel, subProjects) {
+function populateUpcoming(tasks, projectsByID, projectHierarchy, taskView, subProjects) {
     // Remove any old elements in the panel and re-add title
     if (isIE()) {
-        while (upcomingPanel.childElementCount) {upcomingPanel.children[0].removeNode(true);}
+        while (taskView.childElementCount) {taskView.children[0].removeNode(true);}
     } else {
-        while (upcomingPanel.childElementCount) {upcomingPanel.children[0].remove();}
+        while (taskView.childElementCount) {taskView.children[0].remove();}
     }
     upcomingP = document.createElement('p');
     upcomingP.className = 'normal_section_header';
@@ -1048,7 +1075,7 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel, 
 
     if (useNightTheme()) {switchToNight(upcomingP);}
 
-    upcomingPanel.appendChild(upcomingP);
+    taskView.appendChild(upcomingP);
 
     // Add new task button
     newTaskP = document.createElement('p');
@@ -1061,11 +1088,11 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel, 
 
     if (useNightTheme()) {switchToNight(newTaskButton);}
 
-    upcomingPanel.appendChild(newTaskP);
+    taskView.appendChild(newTaskP);
 
     // Sort tasks by urgent, then date, then secondary
     // Function returns two-dimensional array, but project is
-    // inconsequential for the Upcoming view, so flatten them
+    // inconsequential for the task view, so flatten them
     sortedTasks = organizeTasks(tasks);
     urgentByID = sortedTasks[0];
     secondaryByID = sortedTasks[1];
@@ -1094,40 +1121,40 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel, 
     // Add tasks
     if (urgent.length !== 0) {
         urgentHeader.style.cssFloat = 'left';
-        upcomingPanel.appendChild(urgentHeader);
+        taskView.appendChild(urgentHeader);
         if (css_browser_selector(navigator.userAgent).search('ff') !== -1) {
             newTaskP.style.paddingRight = '5px';
             urgentHR.style.marginTop = '2px';
-            upcomingPanel.appendChild(document.createElement('br'));
-            upcomingPanel.appendChild(document.createElement('br'));
+            taskView.appendChild(document.createElement('br'));
+            taskView.appendChild(document.createElement('br'));
         }
-        upcomingPanel.appendChild(urgentHR);
-        upcomingPanel.appendChild(urgentTasks);
+        taskView.appendChild(urgentHR);
+        taskView.appendChild(urgentTasks);
     }
     if (normal.length !== 0) {
         if (urgent.length === 0) {normalTasks.children[0].style.cssFloat = 'left';}
         if (css_browser_selector(navigator.userAgent).search('ff') !== -1 && urgent.length === 0) {
             newTaskP.style.marginRight = '5px';
             normalTasks.children[1].style.marginTop = '8px';
-            upcomingPanel.appendChild(normalTasks.children[0]);
-            upcomingPanel.appendChild(document.createElement('br'));
-            upcomingPanel.appendChild(document.createElement('br'));
-            upcomingPanel.appendChild(normalTasks);
+            taskView.appendChild(normalTasks.children[0]);
+            taskView.appendChild(document.createElement('br'));
+            taskView.appendChild(document.createElement('br'));
+            taskView.appendChild(normalTasks);
         } else {
-            upcomingPanel.appendChild(normalTasks);
+            taskView.appendChild(normalTasks);
         }
     }
     if (secondary.length !== 0) {
         if (urgent.length === 0 && normal.length === 0) {secondaryHeader.style.cssFloat = 'left';}
-        upcomingPanel.appendChild(secondaryHeader);
+        task.appendChild(secondaryHeader);
         if (css_browser_selector(navigator.userAgent).search('ff') != -1 && urgent.length === 0 && normal.length === 0) {
             newTaskP.style.paddingRight = '5px';
             secondaryHR.style.marginTop = '2px';
-            upcomingPanel.appendChild(document.createElement('br'));
-            upcomingPanel.appendChild(document.createElement('br'));
+            taskView.appendChild(document.createElement('br'));
+            taskView.appendChild(document.createElement('br'));
         }
-        upcomingPanel.appendChild(secondaryHR);
-        upcomingPanel.appendChild(secondaryTasks);
+        taskView.appendChild(secondaryHR);
+        taskView.appendChild(secondaryTasks);
     }
 
     // If no tasks in any section
@@ -1140,7 +1167,7 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel, 
 
         if (useNightTheme()) {switchToNight(blank);}
 
-        upcomingPanel.appendChild(blank);
+        taskView.appendChild(blank);
     }
 }
 
@@ -1258,6 +1285,9 @@ function addProject(parent, project, level, projectsByID, projectHierarchy, subP
     removeProjectLink.onclick = function() {
         conf = confirm('Are you sure you want to delete project \'' + this.getAttribute('data-project-name') + '\'?');
         if (!conf) {return;}
+        taskView = this.parentElement
+        // Don't need extra arguments because not resetting view
+        deleteProject(this.getAttribute('data-project-id', 'tree'));
     };
     removeProjectImg = document.createElement('img');
     removeProjectImg.src = 'images/x.png';
