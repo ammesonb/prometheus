@@ -54,6 +54,11 @@ function stringFill(x, n) {
     return s;
 }
 
+function isIE() {
+    return (css_browser_selector(navigator.userAgent).search('ie') != -1) ||
+            (navigator.userAgent.search('\\) like Gecko') != -1);
+}
+
 function flatten(arr) {
     flat = new Array();
     for (i = 0; i < arr.length; i++) {
@@ -702,7 +707,7 @@ function openTasks() {
 }
 
 function openProject(taskView, project, projectsByID, projectHierarchy, subProjects, tasks) {
-    if (css_browser_selector(navigator.userAgent).search('ie') != -1) {
+    if (isIE()) {
         while (taskView.childElementCount > 0) {taskView.children[0].removeNode(true);}
     } else {
         while (taskView.childElementCount > 0) {taskView.children[0].remove();}
@@ -1024,7 +1029,7 @@ function populateProjects(projects, projectsList, tasks) {
 
 function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel, subProjects) {
     // Remove any old elements in the panel and re-add title
-    if (css_browser_selector(navigator.userAgent).search('ie') != -1) {
+    if (isIE()) {
         while (upcomingPanel.childElementCount) {upcomingPanel.children[0].removeNode(true);}
     } else {
         while (upcomingPanel.childElementCount) {upcomingPanel.children[0].remove();}
@@ -1083,7 +1088,9 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel, 
     if (urgent.length !== 0) {
         urgentHeader.style.cssFloat = 'left';
         upcomingPanel.appendChild(urgentHeader);
-        if (css_browser_selector(navigator.userAgent).search('ff') != -1) {
+        if (css_browser_selector(navigator.userAgent).search('ff') !== -1) {
+            newTaskP.style.paddingRight = '5px';
+            urgentHR.style.marginTop = '2px';
             upcomingPanel.appendChild(document.createElement('br'));
             upcomingPanel.appendChild(document.createElement('br'));
         }
@@ -1092,12 +1099,23 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel, 
     }
     if (normal.length !== 0) {
         if (urgent.length === 0) {normalTasks.children[0].style.cssFloat = 'left';}
-        upcomingPanel.appendChild(normalTasks);
+        if (css_browser_selector(navigator.userAgent).search('ff') !== -1 && urgent.length === 0) {
+            newTaskP.style.marginRight = '5px';
+            normalTasks.children[1].style.marginTop = '8px';
+            upcomingPanel.appendChild(normalTasks.children[0]);
+            upcomingPanel.appendChild(document.createElement('br'));
+            upcomingPanel.appendChild(document.createElement('br'));
+            upcomingPanel.appendChild(normalTasks);
+        } else {
+            upcomingPanel.appendChild(normalTasks);
+        }
     }
     if (secondary.length !== 0) {
         if (urgent.length === 0 && normal.length === 0) {secondaryHeader.style.cssFloat = 'left';}
         upcomingPanel.appendChild(secondaryHeader);
-        if (css_browser_selector(navigator.userAgent).search('ff') != -1) {
+        if (css_browser_selector(navigator.userAgent).search('ff') != -1 && urgent.length === 0 && normal.length === 0) {
+            newTaskP.style.paddingRight = '5px';
+            secondaryHR.style.marginTop = '2px';
             upcomingPanel.appendChild(document.createElement('br'));
             upcomingPanel.appendChild(document.createElement('br'));
         }
