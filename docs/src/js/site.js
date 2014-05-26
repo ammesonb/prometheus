@@ -952,7 +952,17 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
             taskRow.style.textAlign = 'center';
             titleCell = document.createElement('td');
             titleCell.style.textAlign = 'left';
-            setText(titleCell, task.name);
+            taskLink = document.createElement('a');
+            taskLink.className = 'normal_text';
+            taskLink.href = '#';
+            taskLink.setAttribute('data-task', JSON.stringify(task));
+            taskLink.onclick = function() {
+                myTask = JSON.parse(this.getAttribute('data-task'));
+                openTask(myTask, taskView, projectsByID, projectHierarchy, subProjects, tasks);
+            };
+            if (useNightTheme()) {switchToNight(taskLink);}
+            setText(taskLink, task.name);
+            titleCell.appendChild(taskLink);
             priCell = document.createElement('td');
             priCell.style.paddingRight = '8px';
             setText(priCell, task.priority);
