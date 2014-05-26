@@ -416,7 +416,7 @@ function populateNotes(data, notesTable, notesEditor, resize) {
         mtime.appendChild(mtimeUnderline);
         a = document.createElement('a');
         a.href = '#';
-        a.style.float = 'right';
+        a.style.cssFloat = 'right';
         a.style.paddingRight = '5px';
         i = document.createElement('img');
         i.src = 'images/x.png';
@@ -702,7 +702,11 @@ function openTasks() {
 }
 
 function openProject(taskView, project, projectsByID, projectHierarchy, subProjects, tasks) {
-    while (taskView.childElementCount > 0) {taskView.children[0].remove();}
+    if (css_browser_selector(navigator.userAgent).search('ie') != -1) {
+        while (taskView.childElementCount > 0) {taskView.children[0].removeNode(true);}
+    } else {
+        while (taskView.childElementCount > 0) {taskView.children[0].remove();}
+    }
     taskView.appendChild(document.createElement('br'));
 
     // Display current project tree
@@ -1019,8 +1023,33 @@ function populateProjects(projects, projectsList, tasks) {
 }
 
 function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel, subProjects) {
-    // Remove any old elements in the panel besides the title
-    while (upcomingPanel.childElementCount > 1) {upcomingPanel.children[1].remove();}
+    // Remove any old elements in the panel and re-add title
+    if (css_browser_selector(navigator.userAgent).search('ie') != -1) {
+        while (upcomingPanel.childElementCount) {upcomingPanel.children[0].removeNode(true);}
+    } else {
+        while (upcomingPanel.childElementCount) {upcomingPanel.children[0].remove();}
+    }
+    upcomingP = document.createElement('p');
+    upcomingP.className = 'normal_section_header';
+    setText(upcomingP, 'Upcoming tasks');
+    upcomingP.style.marginTop = '5px';
+
+    if (useNightTheme()) {switchToNight(upcomingP);}
+
+    upcomingPanel.appendChild(upcomingP);
+
+    // Add new task button
+    newTaskP = document.createElement('p');
+    newTaskP.style.display = 'inline';
+    newTaskP.style.cssFloat = 'right';
+    newTaskP.style.marginBottom = '2px';
+    newTaskButton = document.createElement('button');
+    setText(newTaskButton, 'Create task');
+    newTaskP.appendChild(newTaskButton);
+
+    if (useNightTheme()) {switchToNight(newTaskButton);}
+
+    upcomingPanel.appendChild(newTaskP);
 
     // Sort tasks by urgent, then date, then secondary
     // Function returns two-dimensional array, but project is
@@ -1051,16 +1080,27 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, upcomingPanel, 
     }
 
     // Add tasks
-    if (urgent.length != 0) {
+    if (urgent.length !== 0) {
+        urgentHeader.style.cssFloat = 'left';
         upcomingPanel.appendChild(urgentHeader);
+        if (css_browser_selector(navigator.userAgent).search('ff') != -1) {
+            upcomingPanel.appendChild(document.createElement('br'));
+            upcomingPanel.appendChild(document.createElement('br'));
+        }
         upcomingPanel.appendChild(urgentHR);
         upcomingPanel.appendChild(urgentTasks);
     }
-    if (normal.length != 0) {
+    if (normal.length !== 0) {
+        if (urgent.length === 0) {normalTasks.children[0].style.cssFloat = 'left';}
         upcomingPanel.appendChild(normalTasks);
     }
-    if (secondary.length != 0) {
+    if (secondary.length !== 0) {
+        if (urgent.length === 0 && normal.length === 0) {secondaryHeader.style.cssFloat = 'left';}
         upcomingPanel.appendChild(secondaryHeader);
+        if (css_browser_selector(navigator.userAgent).search('ff') != -1) {
+            upcomingPanel.appendChild(document.createElement('br'));
+            upcomingPanel.appendChild(document.createElement('br'));
+        }
         upcomingPanel.appendChild(secondaryHR);
         upcomingPanel.appendChild(secondaryTasks);
     }
