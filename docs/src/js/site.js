@@ -1047,18 +1047,23 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     c = 'black';
     if (useNightTheme()) {c = 'silver';}
 
-    // Display task path
-    projLinks = createProjectLinks(task.project, c, projectsByID, projectHierarchy, subProjects, tasks, 1);
-    addProjectLinks(projLinks, c, taskView, true)
+    // If task has a project, display path
+    if (task.project != -1) {
+        // Display task path
+        projLinks = createProjectLinks(task.project, c, projectsByID, projectHierarchy, subProjects, tasks, 1);
+        addProjectLinks(projLinks, c, taskView, true)
+    }
 
     // Add this project
-    tmpP = document.createElement('p');
-    tmpP.style.display = 'inline';
-    tmpP.style.color = c;
-    setText(tmpP, '\u00a0:\u00a0');
-    tmpP.style.fontWeight = 'bold';
-    tmpP.style.fontSize = '115%';
-    taskView.appendChild(tmpP);
+    if (task.project !== -1) {
+        tmpP = document.createElement('p');
+        tmpP.style.display = 'inline';
+        tmpP.style.color = c;
+        setText(tmpP, '\u00a0:\u00a0');
+        tmpP.style.fontWeight = 'bold';
+        tmpP.style.fontSize = '115%';
+        taskView.appendChild(tmpP);
+    }
 
     tmpP = document.createElement('p');
     tmpP.style.display = 'inline';
@@ -1083,6 +1088,22 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     taskView.appendChild(document.createElement('br'));
 
     // Create task edit GUI
+    // Project, if none
+    if (task.project === -1) {
+        projectSelect = document.createElement('select');
+        for (root = 0; root < rootProjects.length; root++) {
+            currentRoot = rootProjects[root];
+            opt = document.createElement('option');
+            opt.value = currentRoot.id;
+            setText(opt, currentRoot.name);
+            if (useNightTheme()) {switchToNight(opt);}
+            projectSelect.appendChild(opt);
+        }
+
+        if (useNightTheme()) {switchToNight(projectSelect);}
+        taskView.appendChild(projectSelect);
+    }
+
     // Title
     titleLabel = document.createElement('p');
     titleLabel.className = 'normal_text form_label';
@@ -1662,7 +1683,7 @@ function addProject(parent, project, level, projectsByID, projectHierarchy, subP
         expandProject.setAttribute('data-projects-by-id', JSON.stringify(projectsByID));
         expandProject.setAttribute('data-project-hierarchy', JSON.stringify(projectHierarchy));
         expandProject.onclick = function() {
-            nextSibling = this.nextElementSibling.nextElementSibling.nextElementSibling;
+            nextSibling = this.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling;
             // Collapse
             if (this.getAttribute('data-expanded') == 1) {
                 this.setAttribute('data-expanded', 0);
@@ -1670,7 +1691,7 @@ function addProject(parent, project, level, projectsByID, projectHierarchy, subP
                 setText(this, stringFill('\u00a0', 3 * this.getAttribute('data-level')) + '+');
                 // Make all sub-nodes invisible
                 while (!nextSibling.getAttribute('data-level') || nextSibling.getAttribute('data-level') > this.getAttribute('data-level')) {
-                    // If a br, remove
+                    // If a br, remove it and continue
                     if (nextSibling.tagName == 'BR') {
                         nextSibling = nextSibling.nextElementSibling;
                         nextSibling.previousElementSibling.remove();
@@ -1704,7 +1725,7 @@ function addProject(parent, project, level, projectsByID, projectHierarchy, subP
                     if (nextSibling.getAttribute('data-level') === this.getAttribute('data-level')) {break;}
                     nextSibling.style.display = 'inline';
                     count++;
-                    if (count == 2) {
+                    if (count == 3) {
                         count = 0;
                         parent.insertBefore(document.createElement('br'), nextSibling.nextElementSibling);
                         nextSibling = nextSibling.nextElementSibling;
