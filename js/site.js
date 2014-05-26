@@ -1,4 +1,4 @@
-colors = ['#ED3B83', '#FF1300', '#FF6A00', '#FFA540', '#FFD240', '#9BED00', '#37DB79', '#63ADD0', '#7872D8', '#4B5BD8', '#9A3ED5', '#7F4BA0', '#999'];
+colors = ['#FF1300', '#FF6A00', '#FFA540', '#FFD240', '#9BED00', '#37DB79', '#63ADD0', '#7872D8', '#4B5BD8', '#9A3ED5', '#7F4BA0', '#ED3B83', '#999'];
 
 function login() {
     elems = document.getElementsByTagName('input');
@@ -1023,11 +1023,13 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
         e = taskView.children[p];
         if (e.offsetTop > lastOffset) {
             lastOffset = e.offsetTop;
-            taskView.insertBefore(document.createTextNode(stringFill('\u00a0', 2)), e);
+            taskView.insertBefore(document.createTextNode(stringFill('\u00a0', 4)), e);
         }
     }
 
     taskView.appendChild(document.createElement('br'));
+
+    
 }
 
 function fetchTaskData() {
@@ -1505,10 +1507,10 @@ function addProject(parent, project, level, projectsByID, projectHierarchy, subP
 
 function addTask(task, projectsByID, projectHierarchy, subProjects, tasks, parent, showTime) {
     color = 0;
-    if (task.priority >= colors.length) {
+    if (task.priority > colors.length) {
         color = colors[colors.length - 1];
     } else {
-        color = colors[task.priority];
+        color = colors[task.priority - 1];
     }
 
     projLinks = createProjectLinks(task.project, color, projectsByID, projectHierarchy, subProjects, tasks, 4, false);
