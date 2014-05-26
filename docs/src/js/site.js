@@ -1031,18 +1031,21 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     taskView.appendChild(document.createElement('br'));
 
     // Create task edit GUI
+    // Title
     titleLabel = document.createElement('p');
     titleLabel.className = 'normal_text form_label';
     setText(titleLabel, 'Task\u00a0name:\u00a0')
     titleInput = document.createElement('input');
     titleInput.value = task.name;
 
+    // Description
     descLabel = document.createElement('p');
     descLabel.className = 'normal_text form_label';
     setText(descLabel, 'Task\u00a0Description:');
     descInput = document.createElement('textarea');
     descInput.value = task.description;
 
+    // Priority
     priLabel = document.createElement('p');
     priLabel.className = 'normal_text form_label';
     priLabel.style.display = 'inline';
@@ -1057,16 +1060,126 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
         if (useNightTheme()) {switchToNight(opt);}
     }
 
-    if (useNightTheme()) {
-        switchToNight(titleLabel, titleInput, descLabel, descInput, priLabel, priInput);
-    }
-
+    // Deadline
     deadlineGroup = document.createElement('fieldset');
+    deadlineGroup.style.width = '92%';
     deadlineLabel = document.createElement('legend');
     setText(deadlineLabel, 'Deadline');
+    urgentRadio = document.createElement('input');
+    urgentRadio.name = 'deadline';
+    urgentRadio.type = 'radio';
+    urgentRadio.value = 'u';
+    urgentRadio.onclick = function() {
+        e = this;
+        for (i = 0; i < 6; i++) {
+            e = e.nextElementSibling;
+        }
+
+        e.value = '';
+        e.disabled = true;
+    };
+    urgentLabel = document.createElement('p');
+    urgentLabel.className = 'normal_text';
+    urgentLabel.style.display = 'inline';
+    setText(urgentLabel, 'ASAP');
+    secondaryRadio = document.createElement('input');
+    secondaryRadio.name = 'deadline';
+    secondaryRadio.type = 'radio';
+    secondaryRadio.value = 's';
+    secondaryRadio.onclick = function() {
+        e = this;
+        for (i = 0; i < 4; i++) {
+            e = e.nextElementSibling;
+        }
+
+        e.value = '';
+        e.disabled = true;
+    };
+    secondaryLabel = document.createElement('p');
+    secondaryLabel.className = 'normal_text';
+    secondaryLabel.style.display = 'inline';
+    setText(secondaryLabel, 'Secondary');
+    dateRadio = document.createElement('input');
+    dateRadio.name = 'deadline';
+    dateRadio.type = 'radio';
+    dateRadio.value = 'd';
+    dateRadio.onclick = function() {
+        this.nextElementSibling.nextElementSibling.disabled = false;
+    };
+    dateLabel = document.createElement('p');
+    dateLabel.className = 'normal_text';
+    dateLabel.style.display = 'inline';
+    setText(dateLabel, 'Date\u00a0');
+    dateInput = document.createElement('input');
+    dateInput.className = 'normal_text';
+    dateInput.type = 'datetime-local';
+
+    // Add defaults to deadline fields
+    if (task.is_urgent) {urgentRadio.defaultChecked = true; dateInput.disabled = true;}
+    else if (task.is_secondary) {secondaryRadio.defaultChecked = true; dateInput.disabled = true;}
+    else {
+        dateRadio.defaultChecked = true;
+    }
+    
+    // If datetime input type isn't supported
+    if (dateInput.type == 'text') {
+        if (dateInput.value === '') {
+            dateInput.value = 'YYYY-MM-DD HH:MM';
+        }
+        dateInput.onchange = function() {
+            year = /[0-9]{4}-/;
+            month = /(0[1-9]|1[12])-/;
+            date = /(0[1-9]|[12][0-9]|3[01])-/;
+            hour = / ([01][0-9]|2[0-3]):/;
+            minute = /[0-5][0-9]/;
+            yearValid = 1;
+            monthValid = 1;
+            dateValid = 1;
+            hourValid = 1;
+            minuteValid = 1;
+
+            v = dateInput.value;
+            newValue = '';
+            // Verify date and time validity, reset if invalid otherwise keep
+            if (!year.test(v.substr(0, 5))) {
+                yearValid = 0;
+                newValue += 'YYYY-';
+            } else {newValue += v.substr(0, 5);}
+            if (!month.test(v.substr(5, 3))) {
+                monthValid = 0;
+                newValue += 'MM-';
+            } else {newValue += v.substr(5, 3);}
+            if (!date.test(v.substr(8, 2))) {
+                dateValid = 0;
+                newValue += 'DD';
+            } else {newValue += v.substr(8, 2);}
+            if (!hour.test(v.substr(10, 4))) {
+                hourValid = 0;
+                newValue += ' HH:';
+            } else {newValue += v.substr(10, 4);}
+            if (!minute.test(v.substr(14, 2))) {
+                minuteValid = 0;
+                newValue += 'MM';
+            } else {newValue += v.substr(14, 2);}
+            dateInput.value = newValue;
+        }
+    }
 
     deadlineGroup.appendChild(deadlineLabel);
+    deadlineGroup.appendChild(urgentRadio);
+    deadlineGroup.appendChild(urgentLabel);
+    deadlineGroup.appendChild(secondaryRadio);
+    deadlineGroup.appendChild(secondaryLabel);
+    deadlineGroup.appendChild(dateRadio);
+    deadlineGroup.appendChild(dateLabel);
+    deadlineGroup.appendChild(dateInput);
 
+    if (useNightTheme()) {
+        switchToNight(titleLabel, titleInput, descLabel, descInput, priLabel, priInput,
+            deadlineLabel, urgentLabel, secondaryLabel, dateLabel, dateInput);
+    }
+
+    // Add children
     taskView.appendChild(titleLabel);
     taskView.appendChild(titleInput);
     taskView.appendChild(descLabel);

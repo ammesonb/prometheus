@@ -239,7 +239,7 @@ CREATE TABLE tasks (
     id integer NOT NULL,
     name character varying NOT NULL,
     description character varying,
-    deadline timestamp with time zone,
+    deadline timestamp without time zone,
     priority integer,
     is_urgent boolean DEFAULT false,
     is_secondary boolean DEFAULT false,

@@ -219,6 +219,10 @@ table.notes.night td {
 }
 
 /* inputs */
+legend.night {
+    color: silver;
+}
+
 input {
     padding-left: 2px;
 }
