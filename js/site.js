@@ -565,6 +565,31 @@ function refreshNotes(notes) {
 }
 
 /* Tasks */
+function deadlineToDate(deadline) {
+    deadline = deadline.replace('-', '/');
+    deadline = deadline.replace('-', '/');
+    deadline = deadline.split('+')[0];
+    d = new Date(deadline);
+    return d;
+}
+
+function getTimeFromGMT(dateString) {
+    time = dateString.split(' ')[4].split(':')
+    return time[0] + ':' + time[1]
+}
+
+function makeBlankTask(project) {
+    newTask = new Object();
+    newTask.name = 'New task';
+    newTask.description = null;
+    newTask.priority = null;
+    newTask.project = project;
+    newTask.deadline = null;
+    newTask.is_urgent = true;
+
+    return newTask;
+}
+
 function openTasks() {
     id = 'tasks_' + new Date().getTime();
     taskPanel = document.createElement('div');
@@ -889,6 +914,9 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
     // Show project's tasks
     // Add new task button
     newTaskButton = document.createElement('button');
+    newTaskButton.onclick = function() {
+        openTask(makeBlankTask(project.id), taskView, projectsByID, projectHierarchy, subProjects, tasks);
+    }
     setText(newTaskButton, 'Create task');
 
     if (useNightTheme()) {switchToNight(newTaskButton);}
@@ -969,7 +997,12 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
             deadText = 0;
             if (task.is_urgent) {deadText = 'ASAP';}
             else if (task.is_secondary) {deadText = 'When convenient';}
-            else {deadText = task.deadline.substring(0, task.deadline.length - 6);}
+            else {
+                d = deadlineToDate(task.deadline);
+                time = getTimeFromGMT(d.toGMTString());
+                deadText = d.getUTCFullYear() + '-' + d.getUTCMonth() + '-' +
+                           d.getUTCDate() + ' ' + time;
+            }
             deadCell = document.createElement('td');
             deadCell.style.whiteSpace = 'nowrap';
             deadCell.style.paddingRight = '8px';
@@ -1137,13 +1170,8 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     else if (task.is_secondary) {secondaryRadio.defaultChecked = true; dateInput.disabled = true;}
     else {
         dateRadio.defaultChecked = true;
-        deadline = task.deadline;
-        deadline = deadline.replace('-', '/');
-        deadline = deadline.replace('-', '/');
-        deadline = deadline.split('+')[0];
-        d = new Date(deadline);
-        time = d.toGMTString().split(' ')[4].split(':');
-        time = pad(time[0], 2, '0', 'f') + ':' + pad(time[1], 2, '0', 'f');
+        d = deadlineToDate(task.deadline);
+        time = getTimeFromGMT(d.toGMTString());
         deadline = d.getUTCFullYear() + '-' +
                    pad(d.getUTCMonth().toString(), 2, '0', 'f') + '-' +
                    pad(d.getUTCDate().toString(), 2, '0', 'f') +
@@ -1290,11 +1318,7 @@ function tasksToHTML(urgent, normal, secondary, tasksByID, projectsByID, project
     for (taskNum = 0; taskNum < normal.length; taskNum++) {
         task = normal[taskNum];
 
-        deadline = task.deadline;
-        deadline = deadline.replace('-', '/');
-        deadline = deadline.replace('-', '/');
-        deadline = deadline.split('+')[0];
-        d = new Date(deadline);
+        d = deadlineToDate(task.deadline);
         // If date has changed
         if (d.toLocaleDateString() != currentDate) {
             currentDate = d.toLocaleDateString();
@@ -1407,6 +1431,9 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, taskView, subPr
     newTaskP.style.cssFloat = 'right';
     newTaskP.style.marginBottom = '2px';
     newTaskButton = document.createElement('button');
+    newTaskButton.onclick = function() {
+        openTask(makeBlankTask(-1), taskView, projectsByID, projectHierarchy, subProjects, tasks);
+    }
     setText(newTaskButton, 'Create task');
     newTaskP.appendChild(newTaskButton);
 
@@ -1718,8 +1745,7 @@ function addTask(task, projectsByID, projectHierarchy, subProjects, tasks, paren
         deadline = deadline.replace('-', '/');
         deadline = deadline.split('+')[0];
         d = new Date(deadline);
-        time = d.toGMTString().split(' ')[4].split(':');
-        time = time[0] + ':' + time[1];
+        time = getTimeFromGMT(d.toGMTString());
         setText(taskDate, time + stringFill('\u00a0', 2));
     }
     
