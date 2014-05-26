@@ -1090,17 +1090,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     // Create task edit GUI
     // Project, if none
     if (task.project === -1) {
-        projectSelect = document.createElement('select');
-        for (root = 0; root < rootProjects.length; root++) {
-            currentRoot = rootProjects[root];
-            opt = document.createElement('option');
-            opt.value = currentRoot.id;
-            setText(opt, currentRoot.name);
-            if (useNightTheme()) {switchToNight(opt);}
-            projectSelect.appendChild(opt);
-        }
-
-        if (useNightTheme()) {switchToNight(projectSelect);}
+        projectSelect = projectsToSelect(rootProjects, subProjects);
         taskView.appendChild(projectSelect);
     }
 
@@ -1310,6 +1300,36 @@ function organizeTasks(tasks) {
    }
     
     return [urgent, secondary, normal];
+}
+
+function projectsToSelect(rootProjects, subProjects) {
+   projectSelect = document.createElement('select');
+    for (root = 0; root < rootProjects.length; root++) {
+        currentRoot = rootProjects[root];
+        addOption(currentRoot, 0, projectSelect);
+        if (subProjects[currentRoot.id]) {
+            addOptionTree(subProjects[currentRoot.id], subProjects, 0, projectSelect);
+        }
+    }
+
+    if (useNightTheme()) {switchToNight(projectSelect);}
+    return projectSelect;
+}
+
+function addOptionTree(projects, subProjects, level, select) {
+    for (s = 0; s < projects.length; s++) {
+        p = projects[s];
+        addOption(p, level + 1, select);
+        if (subProjects[p.id]) {addOptionTree(subProjects[p.id], subProjects, level + 1, select);}
+    }
+}
+
+function addOption(project, level, select) {
+    opt = document.createElement('option');
+    opt.value = project.id;
+    setText(opt, stringFill('\u00a0', 3 * level) + project.name);
+    if (useNightTheme()) {switchToNight(opt);}
+    select.appendChild(opt);
 }
 
 function tasksToHTML(urgent, normal, secondary, tasksByID, projectsByID, projectHierarchy, subProjects) {
