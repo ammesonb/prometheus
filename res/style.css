@@ -394,6 +394,10 @@ a.normal_section_header.night {
     color: silver;
 }
 
+a.blank {
+    text-decoration: none;
+}
+
 a.normal_text {
     color: black;
     text-decoration: none;

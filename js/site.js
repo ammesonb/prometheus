@@ -879,6 +879,13 @@ function fetchTaskData() {
     getTasksReq.open('POST', 'tasks.cgi', false);
     getTasksReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
     getTasksReq.send('mode=0');
+    if (getTasksReq.responseText === 'noauth') {
+        alert('Session timed out! Please copy any unsaved changes then refresh the page.');
+        return '[]';
+    } else if (getTasksReq.responseText === 'Bad request!') {
+        alert('Invalid request! Please copy any unsaved changes then refresh the page.');
+        return '[]';
+    }
     return getTasksReq.responseText;
 }
 
@@ -1208,68 +1215,16 @@ function addProjectLinks(projLinks, color, parent, isTitle) {
     }
 }
 
-function addTask(task, projectsByID, projectHierarchy, subprojects, tasks, parent, showTime) {
-    color = 0;
-    if (task.priority >= colors.length) {
-        color = colors[colors.length - 1];
-    } else {
-        color = colors[task.priority];
-    }
-
-    projLinks = createProjectLinks(task.project, color, projectsByID, projectHierarchy, subprojects, tasks, 4, false);
-
-    // If normal, should have a deadline
-    taskDate = 0;
-    if (showTime == true) {
-        taskDate = document.createElement('p');
-        taskDate.style.display = 'inline';
-        taskDate.style.color = color;
-
-        deadline = task.deadline;
-        deadline = deadline.replace('-', '/');
-        deadline = deadline.replace('-', '/');
-        deadline = deadline.split('+')[0];
-        d = new Date(deadline);
-        time = d.toGMTString().split(' ')[4].split(':');
-        time = time[0] + ':' + time[1];
-        setText(taskDate, time + stringFill('\u00a0', 2));
-    }
-    
-    taskElem = document.createElement('p');
-    taskElem.className = 'normal_text';
-    taskElem.appendChild(document.createTextNode(stringFill('\u00a0', 4)));
-    taskElem.style.height = '20px';
-    taskElem.style.marginTop = '0px';
-    taskElem.style.marginBottom = '5px';
-    taskLink = document.createElement('a');
-    taskLink.className = 'normal_text';
-    taskLink.style.color = color;
-    taskLink.style.fontWeight = 'bold';
-    taskLink.href = '#';
-    setText(taskLink, task.name);
-    taskProj = document.createElement('p');
-    taskProj.style.color = color;
-    taskProj.style.display = 'inline';
-
-    addProjectLinks(projLinks, color, taskProj, false);
-    
-    if (showTime == true) {taskElem.appendChild(taskDate);}
-    taskElem.appendChild(taskLink);
-    taskElem.appendChild(taskProj);
-
-    if (useNightTheme()) {switchToNight(taskElem, taskLink, taskProj);}
-
-    parent.appendChild(taskElem);
-}
-
 function addProject(parent, project, level, projectsByID, projectHierarchy, subProjects, tasks) {
     // Create and add this project to the list
+    // Expand project button
     expandProject = document.createElement('a');
     expandProject.className = 'open_project';
     expandProject.setAttribute('data-expanded', 0);
     expandProject.setAttribute('data-level', level);
     setText(expandProject, stringFill('\u00a0', 3 * level) + '~');
 
+    // Open project text
     openProjectLink = document.createElement('a');
     openProjectLink.href = '#';
     openProjectLink.style.textDecoration = 'none';
@@ -1294,12 +1249,31 @@ function addProject(parent, project, level, projectsByID, projectHierarchy, subP
     setText(projectName, '\u00a0' + project.name);
     openProjectLink.appendChild(projectName);
 
+    // Delete project button
+    removeProjectLink = document.createElement('a');
+    removeProjectLink.className = 'blank';
+    removeProjectLink.href = '#';
+    removeProjectLink.setAttribute('data-project-id', project.id);
+    removeProjectLink.setAttribute('data-project-name', project.name);
+    removeProjectLink.onclick = function() {
+        conf = confirm('Are you sure you want to delete project \'' + this.getAttribute('data-project-name') + '\'?');
+        if (!conf) {return;}
+    };
+    removeProjectImg = document.createElement('img');
+    removeProjectImg.src = 'images/x.png';
+    removeProjectImg.alt = 'Remove project';
+    removeProjectImg.title = 'Remove project';
+    removeProjectLink.appendChild(document.createTextNode('\u00a0\u00a0'));
+    removeProjectLink.appendChild(removeProjectImg);
+
     if (useNightTheme()) {switchToNight(projectName);}
-    if (level != 0) {expandProject.style.display = 'none'; openProjectLink.style.display = 'none';}
+    if (level != 0) {expandProject.style.display = 'none'; openProjectLink.style.display = 'none'; removeProjectLink.style.display = 'none';}
 
     parent.appendChild(expandProject);
     parent.appendChild(openProjectLink);
+    parent.appendChild(removeProjectLink);
     if (level == 0) {parent.appendChild(document.createElement('br'));}
+
 
     // If there are actually projects to expand
     if (subProjects[project.id]) {
@@ -1367,6 +1341,61 @@ function addProject(parent, project, level, projectsByID, projectHierarchy, subP
             subp = parent.getAttribute('data-current-sub-' + level);
         }
     }
+}
+
+function addTask(task, projectsByID, projectHierarchy, subprojects, tasks, parent, showTime) {
+    color = 0;
+    if (task.priority >= colors.length) {
+        color = colors[colors.length - 1];
+    } else {
+        color = colors[task.priority];
+    }
+
+    projLinks = createProjectLinks(task.project, color, projectsByID, projectHierarchy, subprojects, tasks, 4, false);
+
+    // If normal, should have a deadline
+    taskDate = 0;
+    if (showTime == true) {
+        taskDate = document.createElement('p');
+        taskDate.style.display = 'inline';
+        taskDate.style.color = color;
+
+        deadline = task.deadline;
+        deadline = deadline.replace('-', '/');
+        deadline = deadline.replace('-', '/');
+        deadline = deadline.split('+')[0];
+        d = new Date(deadline);
+        time = d.toGMTString().split(' ')[4].split(':');
+        time = time[0] + ':' + time[1];
+        setText(taskDate, time + stringFill('\u00a0', 2));
+    }
+    
+    // Create task link
+    taskElem = document.createElement('p');
+    taskElem.className = 'normal_text';
+    taskElem.appendChild(document.createTextNode(stringFill('\u00a0', 4)));
+    taskElem.style.height = '20px';
+    taskElem.style.marginTop = '0px';
+    taskElem.style.marginBottom = '5px';
+    taskLink = document.createElement('a');
+    taskLink.className = 'normal_text';
+    taskLink.style.color = color;
+    taskLink.style.fontWeight = 'bold';
+    taskLink.href = '#';
+    setText(taskLink, task.name);
+    taskProj = document.createElement('p');
+    taskProj.style.color = color;
+    taskProj.style.display = 'inline';
+
+    addProjectLinks(projLinks, color, taskProj, false);
+    
+    if (showTime == true) {taskElem.appendChild(taskDate);}
+    taskElem.appendChild(taskLink);
+    taskElem.appendChild(taskProj);
+
+    if (useNightTheme()) {switchToNight(taskElem, taskLink, taskProj);}
+
+    parent.appendChild(taskElem);
 }
 
 /* Account Management */
