@@ -758,6 +758,21 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
         taskView.appendChild(subprojectsP);
     }
 
+    // Show project's tasks
+    // Add new task button
+    newTaskButton = document.createElement('button');
+    setText(newTaskButton, 'Create task');
+
+    if (useNightTheme()) {switchToNight(newTaskButton);}
+
+    // If no subprojects, need an extra two line
+    if (!subProjects[project.id]) {
+        taskView.appendChild(document.createElement('br'));
+        taskView.appendChild(document.createElement('br'));
+    }
+    taskView.appendChild(newTaskButton);
+    taskView.appendChild(document.createElement('br'));
+
     // Order tasks alphabetically then by urgent, normal, secondary
     myTasks = new Array();
     myUrgent = tasks[0][project.id];
@@ -779,10 +794,6 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
     // Add tasks table
     if (myTasks.length > 0) {
         taskView.appendChild(document.createElement('br'));
-        // If no subprojects, need an extra line
-        if (!subProjects[project.id]) {
-            taskView.appendChild(document.createElement('br'));
-        }
 
         tasksTable = document.createElement('table');
         tasksTable.className = 'notes';
@@ -810,7 +821,7 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
 
             // Create task row
             taskRow = document.createElement('tr');
-            taskRow.style.textAlign = 'right';
+            taskRow.style.textAlign = 'center';
             titleCell = document.createElement('td');
             titleCell.style.textAlign = 'left';
             setText(titleCell, task.name);
