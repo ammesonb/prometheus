@@ -68,5 +68,6 @@ if ($mode == 0) {
     my $inserted = COMMON::insertIntoTable('projects', \@columns, \@values);
     print 'success' if ($inserted == 1);
     print 'fail' if ($inserted == 0);
+} elsif ($mode == 2) {
 }
 exit;
