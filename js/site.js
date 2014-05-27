@@ -1271,6 +1271,28 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     setText(saveButton, 'Save');
     saveButton.onclick = function() {
         errorText = this.nextElementSibling.nextElementSibling;
+        
+        saveTaskReq = new XMLHttpRequest();
+
+        saveTaskReq.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                switch(this.responseText) {
+                    case 'success':
+                        errorText.style.color = 'green';
+                        setText(errorText, 'Saved at ' + getTimeFromGMT(new Date().toGMTString()));
+                    default:
+                        errorText.style.color = 'red';
+                        setText(errorText, 'Save failed!');
+                }
+            }
+        };
+
+        saveTaskReq.open('POST', 'tasks.cgi', true);
+        saveTaskReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        saveTaskReq.send('mode=2&id=' + this.getAttribute('data-task-id') + '&n=' + this.getAttribute('data-task-name') + 
+                         '&pj=' + this.getAttribute('data-task-project') + '&ds=' + this.getAttribute('data-task-desc') + 
+                         '&p=' + this.getAttribute('data-task-priority') + '&d=' + this.getAttribute('data-task-deadline')
+                        );
     }
 
     cancelButton = document.createElement('button');
