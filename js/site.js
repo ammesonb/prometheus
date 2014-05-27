@@ -1276,13 +1276,12 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
 
         saveTaskReq.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
-                switch(this.responseText) {
-                    case 'success':
-                        errorText.style.color = 'green';
-                        setText(errorText, 'Saved at ' + getTimeFromGMT(new Date().toGMTString()));
-                    default:
-                        errorText.style.color = 'red';
-                        setText(errorText, 'Save failed!');
+                if (this.responseText === 'success') {
+                    errorText.style.color = 'green';
+                    setText(errorText, 'Saved at ' + getTimeFromGMT(new Date().toGMTString()));
+                } else {
+                    errorText.style.color = 'red';
+                    setText(errorText, 'Save failed!');
                 }
             }
         };
@@ -1327,10 +1326,8 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     }
 
     descInput.onchange = function() {
-        if (this.value !== '') {
-            saveButton = this.parentElement.getElementsByTagName('button')[0];
-            saveButton.setAttribute('data-task-desc', this.value);
-        }
+        saveButton = this.parentElement.getElementsByTagName('button')[0];
+        saveButton.setAttribute('data-task-desc', this.value);
     }
 
     priInput.onchange = function() {

@@ -238,7 +238,7 @@ ALTER SEQUENCE services_id_seq OWNED BY services.id;
 CREATE TABLE tasks (
     id integer NOT NULL,
     name character varying NOT NULL,
-    description character varying,
+    description character varying DEFAULT ''::character varying,
     deadline timestamp without time zone,
     priority integer,
     is_urgent boolean DEFAULT false,

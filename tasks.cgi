@@ -69,5 +69,43 @@ if ($mode == 0) {
     print 'success' if ($inserted == 1);
     print 'fail' if ($inserted == 0);
 } elsif ($mode == 2) {
+    # Verify parameter integrity
+    my $id = $q->param('id');
+    if (not ($id =~ /^[0-9]+$/)) {print 'baddata'; exit;}
+    my $name = $q->param('n');
+    if (not (COMMON::checkPrintable($name))) {print 'baddata'; exit;}
+    my $desc = $q->param('ds');
+    if (not (COMMON::checkPrintable($desc))) {print 'baddata'; exit;}
+    my $proj = $q->param('pj');
+    if (not ($proj =~ /^[0-9]+$/)) {print 'baddata'; exit;}
+    my $pri = $q->param('p');
+    if (not ($pri =~ /^[0-9]+$/)) {print 'baddata'; exit;}
+    my $deadline = $q->param('d');
+    if (not (COMMON::checkPrintable($deadline))) {print 'baddata'; exit;}
+
+    # needs access control based on user id
+    if ($id == -1) {
+    } else {
+        my @filterCols = ('id');
+        my @filterOps = ('=');
+        my @filterVals = ($id);
+        my @logic = ();
+        my @updateCols = ('name', 'description', 'priority', 'project');
+        my @updateVals = ("'$name'", "'$desc'", $pri, $proj);
+        my $updated = COMMON::updateTable('tasks', \@updateCols, \@updateVals, \@filterCols, \@filterOps, \@filterVals, \@logic);
+        if ($updated == 0) {print 'failed'; exit;}
+        @updateCols = ('is_urgent', 'is_secondary', 'deadline');
+        @updateVals = ();
+        if (($deadline cmp 'u') == 0) {
+            @updateVals = ('true', 'false', 'null');
+        } elsif (($deadline cmp 's') == 0) {
+            @updateVals = ('false', 'true', 'null');
+        } else {
+            @updateVals = ('false', 'false', "'$deadline'");
+        }
+        $updated = COMMON::updateTable('tasks', \@updateCols, \@updateVals, \@filterCols, \@filterOps, \@filterVals, \@logic);
+        if ($updated == 0) {print 'failed'; exit;}
+        print 'success';
+    }
 }
 exit;
