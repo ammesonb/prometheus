@@ -1667,7 +1667,7 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, taskView, subPr
     }
     if (secondary.length !== 0) {
         if (urgent.length === 0 && normal.length === 0) {secondaryHeader.style.cssFloat = 'left';}
-        task.appendChild(secondaryHeader);
+        taskView.appendChild(secondaryHeader);
         if (css_browser_selector(navigator.userAgent).search('ff') != -1 && urgent.length === 0 && normal.length === 0) {
             newTaskP.style.paddingRight = '5px';
             secondaryHR.style.marginTop = '2px';
