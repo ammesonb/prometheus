@@ -1451,7 +1451,7 @@ function tasksToHTML(urgent, normal, secondary, tasksByID, projectsByID, project
     urgentTasks = document.createElement('span');
     for (taskNum = 0; taskNum < urgent.length; taskNum++) {
         task = urgent[taskNum];
-        addTask(task, projectsByID, projectHierarchy, subProjects[task.id], tasksByID, urgentTasks, false);
+        addTask(task, projectsByID, projectHierarchy, subProjects, tasksByID, urgentTasks, false);
     }
 
     // Create tasks with deadlines
@@ -1484,7 +1484,7 @@ function tasksToHTML(urgent, normal, secondary, tasksByID, projectsByID, project
             normalTasks.appendChild(dateHeader);
             normalTasks.appendChild(dateHR);
         }
-        addTask(task, projectsByID, projectHierarchy, subProjects[task.id], tasksByID, normalTasks, true);
+        addTask(task, projectsByID, projectHierarchy, subProjects, tasksByID, normalTasks, true);
     };
 
     // Create secondary tasks
@@ -1500,7 +1500,7 @@ function tasksToHTML(urgent, normal, secondary, tasksByID, projectsByID, project
     secondaryTasks = document.createElement('span');
     for (taskNum = 0; taskNum < secondary.length; taskNum++) {
         task = secondary[taskNum];
-        addTask(task, projectsByID, projectHierarchy, subProjects[task.id], tasksByID, secondaryTasks, false);
+        addTask(task, projectsByID, projectHierarchy, subProjects, tasksByID, secondaryTasks, false);
     }
 
     return [urgentHeader, urgentHR, urgentTasks, normalTasks, secondaryHeader, secondaryHR, secondaryTasks];
