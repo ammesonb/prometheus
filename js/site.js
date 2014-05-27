@@ -1336,20 +1336,20 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     }
 
     urgentRadio.onchange = function() {
-        saveButton = this.parentElement.getElementsByTagName('button')[0];
+        saveButton = this.parentElement.parentElement.getElementsByTagName('button')[0];
         if (this.checked) {saveButton.setAttribute('data-task-deadline', 'u');}
     }
 
     secondaryRadio.onchange = function() {
-        saveButton = this.parentElement.getElementsByTagName('button')[0];
+        saveButton = this.parentElement.parentElement.getElementsByTagName('button')[0];
         if (this.checked) {saveButton.setAttribute('data-task-deadline', 's');}
     }
 
     dateRadio.onchange = function() {
-        saveButton = this.parentElement.getElementsByTagName('button')[0];
+        saveButton = this.parentElement.parentElement.getElementsByTagName('button')[0];
         if (this.checked) {
             input = this.nextElementSibling.nextElementSibling;
-            errorText = this.parentElement.getElementsByClassName('error')[0];
+            errorText = this.parentElement.parentElement.getElementsByClassName('error')[0];
             if (input.value === '') {
                 errorText.style.color = 'red';
                 setText(errorText, 'Invalid deadline');
@@ -1362,7 +1362,8 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     }
 
     dateInput.onchange = function() {
-        saveButton = this.parentElement.getElementsByTagName('button')[0];
+        saveButton = this.parentElement.parentElement.getElementsByTagName('button')[0];
+        errorText = this.parentElement.parentElement.getElementsByClassName('error')[0];
         if (this.value === '') {
             errorText.style.color = 'red';
             setText(errorText, 'Invalid deadline');
