@@ -1294,11 +1294,13 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
             saveButton.setAttribute('data-task-name', this.value);
             if (errorText.innerText === 'Name cannot be blank') {
                 setText(errorText, '\u00a0');
+                saveButton.disabled = false;
             }
         } else {
             errorText = this.parentElement.getElementsByClassName('error')[0];
             errorText.style.color = 'red';
             setText(errorText, 'Name cannot be blank');
+            saveButton.disabled = true;
         }
     }
 
@@ -1332,8 +1334,10 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
             if (input.value === '') {
                 errorText.style.color = 'red';
                 setText(errorText, 'Invalid deadline');
+                saveButton.disabled = true;
             } else if (errorText.innerText === 'Invalid deadline') {
                 setText(errorText, '\u00a0');
+                saveButton.disabled = false;
             }
         }
     }
@@ -1343,8 +1347,10 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
         if (this.value === '') {
             errorText.style.color = 'red';
             setText(errorText, 'Invalid deadline');
+            saveButton.disabled = true;
         } else if (errorText.innerText === 'Invalid deadline') {
             setText(errorText, '\u00a0');
+            saveButton.disabled = false;
         }
     }
     
