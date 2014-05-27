@@ -1091,6 +1091,10 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     // Project, if none
     if (task.project === -1) {
         projectSelect = projectsToSelect(rootProjects, subProjects);
+        projectSelect.onchange = function() {
+            saveButton = this.parentElement.getElementsByTagName('button')[0];
+            saveButton.setAttribute('data-tas-project', this.value);
+        }
         taskView.appendChild(projectSelect);
     }
 
@@ -1248,6 +1252,102 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
             deadlineLabel, urgentLabel, secondaryLabel, dateLabel, dateInput);
     }
 
+    // Create save and cancel buttons
+    errorText = document.createElement('p');
+    errorText.className = 'error';
+    errorText.style.display = 'inline';
+    setText(errorText, '\u00a0');
+    saveButton = document.createElement('button');
+    saveButton.setAttribute('data-task-id', task.id);
+    saveButton.setAttribute('data-task-project', task.project);
+    saveButton.setAttribute('data-task-name', task.name);
+    saveButton.setAttribute('data-task-desc', task.description);
+    saveButton.setAttribute('data-task-priority', task.priority);
+    d = 0;
+    if (task.is_urgent) {d = 'u';}
+    else if (task.is_secondary) {d = 's';}
+    else {d = dateInput.value;}
+    saveButton.setAttribute('data-task-deadline', d);
+    setText(saveButton, 'Save');
+    saveButton.onclick = function() {
+        errorText = this.nextElementSibling.nextElementSibling;
+    }
+
+    cancelButton = document.createElement('button');
+    setText(cancelButton, 'Cancel');
+    cancelButton.onclick = function() {
+        if (task.project != -1) {
+            openProject(taskView, projectsByID[task.project], projectsByID, projectHierarchy, subProjects, tasks);
+        } else {
+            populateUpcoming(tasks, projectsByID, projectHierarchy, taskView, subProjects);
+        }
+    }
+
+    if (useNightTheme()) {
+        switchToNight(saveButton, cancelButton);
+    }
+
+    // Text handlers
+    titleInput.onchange = function() {
+        if (this.value !== '') {
+            saveButton = this.parentElement.getElementsByTagName('button')[0];
+            saveButton.setAttribute('data-task-name', this.value);
+            if (errorText.innerText === 'Name cannot be blank') {
+                setText(errorText, '\u00a0');
+            }
+        } else {
+            errorText = this.parentElement.getElementsByClassName('error')[0];
+            errorText.style.color = 'red';
+            setText(errorText, 'Name cannot be blank');
+        }
+    }
+
+    descInput.onchange = function() {
+        if (this.value !== '') {
+            saveButton = this.parentElement.getElementsByTagName('button')[0];
+            saveButton.setAttribute('data-task-desc', this.value);
+        }
+    }
+
+    priInput.onchange = function() {
+        saveButton = this.parentElement.getElementsByTagName('button')[0];
+        saveButton.setAttribute('data-task-priority', this.value);
+    }
+
+    urgentRadio.onchange = function() {
+        saveButton = this.parentElement.getElementsByTagName('button')[0];
+        if (this.checked) {saveButton.setAttribute('data-task-deadline', 'u');}
+    }
+
+    secondaryRadio.onchange = function() {
+        saveButton = this.parentElement.getElementsByTagName('button')[0];
+        if (this.checked) {saveButton.setAttribute('data-task-deadline', 's');}
+    }
+
+    dateRadio.onchange = function() {
+        saveButton = this.parentElement.getElementsByTagName('button')[0];
+        if (this.checked) {
+            input = this.nextElementSibling.nextElementSibling;
+            errorText = this.parentElement.getElementsByClassName('error')[0];
+            if (input.value === '') {
+                errorText.style.color = 'red';
+                setText(errorText, 'Invalid deadline');
+            } else if (errorText.innerText === 'Invalid deadline') {
+                setText(errorText, '\u00a0');
+            }
+        }
+    }
+
+    dateInput.onchange = function() {
+        saveButton = this.parentElement.getElementsByTagName('button')[0];
+        if (this.value === '') {
+            errorText.style.color = 'red';
+            setText(errorText, 'Invalid deadline');
+        } else if (errorText.innerText === 'Invalid deadline') {
+            setText(errorText, '\u00a0');
+        }
+    }
+    
     // Add children
     taskView.appendChild(titleLabel);
     taskView.appendChild(titleInput);
@@ -1258,6 +1358,11 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     taskView.appendChild(priLabel);
     taskView.appendChild(priInput);
     taskView.appendChild(deadlineGroup);
+    taskView.appendChild(document.createElement('br'));
+    taskView.appendChild(saveButton);
+    taskView.appendChild(cancelButton);
+    taskView.appendChild(document.createTextNode('\u00a0\u00a0'));
+    taskView.appendChild(errorText);
 }
 
 function fetchTaskData() {
