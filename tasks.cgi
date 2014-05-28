@@ -83,8 +83,12 @@ if ($mode == 0) {
     my $deadline = $q->param('d');
     if (not (COMMON::checkPrintable($deadline))) {print 'baddata'; exit;}
 
-    # needs access control based on user id
+    # Create
     if ($id == -1) {
+    
+
+
+    # Modify
     } else {
         my @filterCols = ('id');
         my @filterOps = ('=');

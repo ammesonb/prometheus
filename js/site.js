@@ -565,6 +565,16 @@ function refreshNotes(notes) {
 }
 
 /* Tasks */
+function switchDeadlineTimezone(d) {
+    utc = 0;
+    if (d.toString().search('\\\+') != -1) {
+        utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+    } else {
+        utc = d.getTime() - (d.getTimezoneOffset() * 60000);
+    }
+    return new Date(utc);
+}
+
 function deadlineToDate(deadline) {
     deadline = deadline.replace('-', '/');
     deadline = deadline.replace('-', '/');
@@ -1186,9 +1196,10 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     else {
         dateRadio.defaultChecked = true;
         d = deadlineToDate(task.deadline);
+        d = switchDeadlineTimezone(d);
         time = getTimeFromGMT(d.toGMTString());
-        deadline = d.getUTCFullYear() + '-' +
-                   pad(d.getUTCMonth().toString(), 2, '0', 'f') + '-' +
+        deadline = d.getFullYear() + '-' +
+                   pad((d.getUTCMonth() + 1).toString(), 2, '0', 'f') + '-' +
                    pad(d.getUTCDate().toString(), 2, '0', 'f') +
                    'T' + time;
         dateInput.value = deadline;
@@ -1364,6 +1375,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     dateInput.onchange = function() {
         saveButton = this.parentElement.parentElement.getElementsByTagName('button')[0];
         errorText = this.parentElement.parentElement.getElementsByClassName('error')[0];
+        saveButton.setAttribute('data-task-deadline', this.value);
         if (this.value === '') {
             errorText.style.color = 'red';
             setText(errorText, 'Invalid deadline');
@@ -1482,7 +1494,7 @@ function tasksToHTML(urgent, normal, secondary, tasksByID, projectsByID, project
 
     // Create tasks with deadlines
     normal.sort(function(a, b) {
-        return (a.deadline > b.deadline);
+        return deadlineToDate(a.deadline).getTime() > deadlineToDate(b.deadline).getTime();
     });
 
     currentDate = 0;
@@ -1917,6 +1929,7 @@ function addTask(task, projectsByID, projectHierarchy, subProjects, tasks, paren
         deadline = deadline.replace('-', '/');
         deadline = deadline.split('+')[0];
         d = new Date(deadline);
+        d = switchDeadlineTimezone(d);
         time = getTimeFromGMT(d.toGMTString());
         setText(taskDate, time + stringFill('\u00a0', 2));
     }
