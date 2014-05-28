@@ -71,7 +71,7 @@ if ($mode == 0) {
 } elsif ($mode == 2) {
     # Verify parameter integrity
     my $id = $q->param('id');
-    if (not ($id =~ /^[0-9]+$/)) {print 'baddata'; exit;}
+    if (not ($id =~ /^-?[0-9]+$/)) {print 'baddata'; exit;}
     my $name = $q->param('n');
     if (not (COMMON::checkPrintable($name))) {print 'baddata'; exit;}
     my $desc = $q->param('ds');
@@ -84,10 +84,26 @@ if ($mode == 0) {
     if (not (COMMON::checkPrintable($deadline))) {print 'baddata'; exit;}
 
     # Create
-    if ($id == -1) {
+    if ($id == -1 || (($id cmp "-1") == 0)) {
+        my @createCols = ('name', 'user_id', 'description', 'priority', 'project', 'is_urgent', 'is_secondary', 'deadline');
+        my @createVals = ("'$name'", $session->param('user_id'), "'$desc'", $pri, $proj);
+        if (($deadline cmp 'u') == 0) {
+            push(@createVals, 'true');
+            push(@createVals, 'false');
+            push(@createVals, 'null');
+        } elsif (($deadline cmp 's') == 0) {
+            push(@createVals, 'false');
+            push(@createVals, 'true');
+            push(@createVals, 'null');
+        } else {
+            push(@createVals, 'false');
+            push(@createVals, 'false');
+            push(@createVals, "'$deadline'");
+        }
     
-
-
+        my $rows = COMMON::insertIntoTable('tasks', \@createCols, \@createVals);
+        if ($rows) {print 'success';}
+        else {print 'fail';}
     # Modify
     } else {
         my @filterCols = ('id');

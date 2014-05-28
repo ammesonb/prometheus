@@ -590,6 +590,7 @@ function getTimeFromGMT(dateString) {
 
 function makeBlankTask(project) {
     newTask = new Object();
+    newTask.id = -1;
     newTask.name = 'New task';
     newTask.description = null;
     newTask.priority = null;
@@ -1103,7 +1104,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
         projectSelect = projectsToSelect(rootProjects, subProjects);
         projectSelect.onchange = function() {
             saveButton = this.parentElement.getElementsByTagName('button')[0];
-            saveButton.setAttribute('data-tas-project', this.value);
+            saveButton.setAttribute('data-task-project', this.value);
         }
         taskView.appendChild(projectSelect);
     }
