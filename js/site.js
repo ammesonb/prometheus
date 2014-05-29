@@ -1056,6 +1056,10 @@ function deleteProject(projectID, viewMode, tasks, projectsByID, projectHierarch
     if (viewMode === 'project') {populateUpcoming(tasks, projectsByID, projectHierarchy, taskView, subProjects);}
 }
 
+function deleteTask(task) {
+    
+}
+
 function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, tasks) {
     deleteAllChildren(taskView);
     taskView.appendChild(document.createElement('br'));
@@ -1101,10 +1105,9 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     }
 
     // Delete task button
-    deleteTask = document.createElement('p');
-    deleteTask.style.display = 'inline';
-    setText(deleteTask, '\u00a0\u00a0');
-    taskView.appendChild(deleteTask);
+    deleteTaskElem = document.createElement('p');
+    deleteTaskElem.style.display = 'inline';
+    setText(deleteTaskElem, '\u00a0\u00a0');
     deleteTaskLink = document.createElement('a');
     deleteTaskLink.href = '#';
     deleteTaskLink.setAttribute('data-task', JSON.stringify(task));
@@ -1118,8 +1121,8 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     deleteTaskImg.title = 'Delete task';
     deleteTaskImg.alt = 'Delete task';
     deleteTaskLink.appendChild(deleteTaskImg);
-    deleteTask.appendChild(deleteTaskLink);
-    taskView.appendChild(deleteTask);
+    deleteTaskElem.appendChild(deleteTaskLink);
+    taskView.appendChild(deleteTaskElem);
 
     taskView.appendChild(document.createElement('br'));
     taskView.appendChild(document.createElement('br'));

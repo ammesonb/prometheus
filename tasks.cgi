@@ -131,5 +131,6 @@ if ($mode == 0) {
         if ($updated == 0) {print 'failed'; exit;}
         print 'success';
     }
+} elsif ($mode == 3) {
 }
 exit;
