@@ -31,10 +31,12 @@ sub init {
         d = new Date();
         // Main page
         try {
-            topOffset = document.getElementById('main').offsetTop - 25;
+            main = document.getElementById('main');
+            tabs = document.getElementById('tabs');
+            topOffset = (main.offsetTop - tabs.offsetHeight) + 10;
 
             if (useNightTheme()) {
-                document.getElementById('main').className += ' night';
+                main.className += ' night';
                 tools = document.getElementsByClassName('tool_name')
                 for (t = 0; t < tools.length; t++) {tools[t].className += ' night';}
             }
@@ -44,7 +46,7 @@ sub init {
                 topOffset -= 10;
                 if (css_browser_selector(navigator.userAgent).search('gecko') != -1) {topOffset += 5;}
             }
-            document.getElementById('tabs').style.top = topOffset + 'px';
+            tabs.style.top = topOffset + 'px';
         } catch(e) {}
 
         // Login

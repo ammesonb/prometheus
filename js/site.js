@@ -729,7 +729,7 @@ function openTasks() {
                                 data[1] = organizeTasks(data[1]);
                                 populateProjects(data[0], list, data[1]);
                             }
-                        }
+                        };
 
                         refreshTasksReq.open('POST', 'tasks.cgi', true);
                         refreshTasksReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
@@ -983,6 +983,7 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
     
         tasksTable.appendChild(tasksHeader);
 
+        // Create table rows
         for (taskNum = 0; taskNum < myTasks.length; taskNum++) {
             task = myTasks[taskNum];
 
@@ -1140,6 +1141,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     }
 
     // Deadline
+    // Elements
     deadlineGroup = document.createElement('fieldset');
     deadlineGroup.style.width = '92%';
     deadlineLabel = document.createElement('legend');
@@ -1304,7 +1306,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
                          '&pj=' + this.getAttribute('data-task-project') + '&ds=' + this.getAttribute('data-task-desc') + 
                          '&p=' + this.getAttribute('data-task-priority') + '&d=' + this.getAttribute('data-task-deadline')
                         );
-    }
+    };
 
     cancelButton = document.createElement('button');
     setText(cancelButton, 'Cancel');
@@ -1595,12 +1597,8 @@ function populateProjects(projects, projectsList, tasks) {
 }
 
 function populateUpcoming(tasks, projectsByID, projectHierarchy, taskView, subProjects) {
-    // Remove any old elements in the panel and re-add title
-    if (isIE()) {
-        while (taskView.childElementCount) {taskView.children[0].removeNode(true);}
-    } else {
-        while (taskView.childElementCount) {taskView.children[0].remove();}
-    }
+    deleteAllChildren(taskView);
+
     upcomingP = document.createElement('p');
     upcomingP.className = 'normal_section_header';
     setText(upcomingP, 'Upcoming tasks');
@@ -1839,7 +1837,6 @@ function addProject(parent, project, level, projectsByID, projectHierarchy, subP
     parent.appendChild(removeProjectLink);
     if (level == 0) {parent.appendChild(document.createElement('br'));}
 
-
     // If there are actually projects to expand
     if (subProjects[project.id]) {
         setText(expandProject, stringFill('\u00a0', 3 * level) + '+');
@@ -1878,6 +1875,7 @@ function addProject(parent, project, level, projectsByID, projectHierarchy, subP
                 count = 0;
                 while (nextSibling.getAttribute('data-level') !== this.getAttribute('data-level')) {
                     nextLevel = nextSibling.getAttribute('data-level');
+                    // Make sure that we are still only one level deeper than the expanded element
                     if (nextLevel) {
                         while ((!nextLevel) ||
                             nextLevel.toString() !== (parseInt(this.getAttribute('data-level')) + 1).toString()) {
@@ -1889,6 +1887,7 @@ function addProject(parent, project, level, projectsByID, projectHierarchy, subP
                     if (nextSibling.getAttribute('data-level') === this.getAttribute('data-level')) {break;}
                     nextSibling.style.display = 'inline';
                     count++;
+                    // If at end of elements for this project, add new line
                     if (count == 3) {
                         count = 0;
                         parent.insertBefore(document.createElement('br'), nextSibling.nextElementSibling);
@@ -2062,7 +2061,7 @@ function viewAccount() {
                         setText(document.getElementById(this.getAttribute('data-error-id')),
                                 'Passwords don\'t match');
                     }
-                }
+                };
                 p2.onkeyup = function() {
                     b = document.getElementById(this.getAttribute('data-button-id'));
                     if (this.value.length < 8) {
@@ -2086,7 +2085,7 @@ function viewAccount() {
                         setText(document.getElementById(this.getAttribute('data-error-id')),
                                 'Passwords don\'t match');
                     }
-                }
+                };
 
                 updateButton = document.createElement('button');
                 updateButton.id = 'update_pass_' + id;
@@ -2146,6 +2145,7 @@ function viewAccount() {
 
                 // Theme selection shouldn't be allowed for shared accounts
                 // to avoid conflict
+                // Elements
                 themeP = document.createElement('p');
                 themeP.className = 'normal_text';
                 setText(themeP, 'Night theme: ');
