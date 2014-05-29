@@ -1497,7 +1497,7 @@ function tasksToHTML(urgent, normal, secondary, tasksByID, projectsByID, project
 
     // Create tasks with deadlines
     normal.sort(function(a, b) {
-        return deadlineToDate(a.deadline).getTime() > deadlineToDate(b.deadline).getTime();
+        return ((deadlineToDate(a.deadline).getTime()) > (deadlineToDate(b.deadline).getTime())) ? 1 : -1;
     });
 
     currentDate = 0;
