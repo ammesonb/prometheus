@@ -73,20 +73,24 @@ if ($mode == 0) {
     my $id = $q->param('id');
     if (not ($id =~ /^-?[0-9]+$/)) {print 'baddata'; exit;}
     my $name = $q->param('n');
-    if (not (COMMON::checkPrintable($name))) {print 'baddata'; exit;}
+    if (not (COMMON::checkPrintable($name))) {print 'badname'; exit;}
+    $name =~ s/'/''/g;
     my $desc = $q->param('ds');
-    if (not (COMMON::checkPrintable($desc))) {print 'baddata'; exit;}
+    if (not (COMMON::checkPrintable($desc))) {print 'baddesc'; exit;}
+    $desc =~ s/'/''/g;
+    if ($desc =~ /^['"]*$/) {$desc = 'null';}
+    else {$desc = "'$desc'";}
     my $proj = $q->param('pj');
-    if (not ($proj =~ /^[0-9]+$/)) {print 'baddata'; exit;}
+    if (not ($proj =~ /^[0-9]+$/)) {print 'badproj'; exit;}
     my $pri = $q->param('p');
-    if (not ($pri =~ /^[0-9]+$/)) {print 'baddata'; exit;}
+    if (not ($pri =~ /^[0-9]+$/)) {print 'badpri'; exit;}
     my $deadline = $q->param('d');
-    if (not (COMMON::checkPrintable($deadline))) {print 'baddata'; exit;}
+    if (not (COMMON::checkPrintable($deadline))) {print 'baddead'; exit;}
 
     # Create
     if ($id == -1 || (($id cmp "-1") == 0)) {
         my @createCols = ('name', 'user_id', 'description', 'priority', 'project', 'is_urgent', 'is_secondary', 'deadline');
-        my @createVals = ("'$name'", $session->param('user_id'), "'$desc'", $pri, $proj);
+        my @createVals = ("'$name'", $session->param('user_id'), $desc, $pri, $proj);
         if (($deadline cmp 'u') == 0) {
             push(@createVals, 'true');
             push(@createVals, 'false');
@@ -111,7 +115,7 @@ if ($mode == 0) {
         my @filterVals = ($id);
         my @logic = ();
         my @updateCols = ('name', 'description', 'priority', 'project');
-        my @updateVals = ("'$name'", "'$desc'", $pri, $proj);
+        my @updateVals = ("'$name'", $desc, $pri, $proj);
         my $updated = COMMON::updateTable('tasks', \@updateCols, \@updateVals, \@filterCols, \@filterOps, \@filterVals, \@logic);
         if ($updated == 0) {print 'failed'; exit;}
         @updateCols = ('is_urgent', 'is_secondary', 'deadline');
