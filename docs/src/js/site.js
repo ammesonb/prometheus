@@ -591,8 +591,8 @@ function makeBlankTask(project) {
     newTask = new Object();
     newTask.id = -1;
     newTask.name = 'New task';
-    newTask.description = null;
-    newTask.priority = null;
+    newTask.description = '';
+    newTask.priority = -1;
     newTask.project = project;
     newTask.deadline = null;
     newTask.is_urgent = true;
@@ -1153,6 +1153,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
 
     // Create task edit GUI
     // Project, if none
+    projectSelect = 0;
     if (task.project === -1) {
         projectSelect = projectsToSelect(rootProjects, subProjects);
         projectSelect.onchange = function() {
@@ -1160,7 +1161,6 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
             saveButton.setAttribute('data-task-project', this.value);
         }
         taskView.appendChild(projectSelect);
-        projectSelect.value = projectSelect.children[0].value;
     }
 
     // Title
@@ -1192,7 +1192,6 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
         priInput.appendChild(opt);
         if (useNightTheme()) {switchToNight(opt);}
     }
-    priInput.value = 1;
 
     // Deadline
     // Elements
@@ -1327,10 +1326,18 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     setText(errorText, '\u00a0');
     saveButton = document.createElement('button');
     saveButton.setAttribute('data-task-id', task.id);
-    saveButton.setAttribute('data-task-project', task.project);
+    if (task.project == -1 && projectSelect != 0) {
+        saveButton.setAttribute('data-task-project', projectSelect.value);
+    } else {
+        saveButton.setAttribute('data-task-project', task.project);
+    }
     saveButton.setAttribute('data-task-name', task.name);
     saveButton.setAttribute('data-task-desc', task.description);
-    saveButton.setAttribute('data-task-priority', task.priority);
+    if (task.priority == -1) {
+        saveButton.setAttribute('data-task-priority', priInput.value);
+    } else {
+        saveButton.setAttribute('data-task-priority', task.priority);
+    }
     d = 0;
     if (task.is_urgent) {d = 'u';}
     else if (task.is_secondary) {d = 's';}

@@ -78,7 +78,7 @@ if ($mode == 0) {
     my $desc = $q->param('ds');
     if (not (COMMON::checkPrintable($desc))) {print 'baddesc'; exit;}
     $desc =~ s/'/''/g;
-    if ($desc =~ /^['"]*$/) {$desc = 'null';}
+    if ($desc =~ /^['"]*$/) {$desc = "''";}
     else {$desc = "'$desc'";}
     my $proj = $q->param('pj');
     if (not ($proj =~ /^[0-9]+$/)) {print 'badproj'; exit;}
