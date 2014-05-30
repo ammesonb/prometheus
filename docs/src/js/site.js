@@ -1164,16 +1164,13 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     taskView.appendChild(document.createElement('br'));
 
     // Create task edit GUI
-    // Project, if none
-    projectSelect = 0;
-    if (task.project === -1) {
-        projectSelect = projectsToSelect(rootProjects, subProjects);
-        projectSelect.onchange = function() {
-            saveButton = this.parentElement.getElementsByTagName('button')[0];
-            saveButton.setAttribute('data-task-project', this.value);
-        }
-        taskView.appendChild(projectSelect);
+    // Project
+    projectSelect = projectsToSelect(rootProjects, subProjects, task.project);
+    projectSelect.onchange = function() {
+        saveButton = this.parentElement.getElementsByTagName('button')[0];
+        saveButton.setAttribute('data-task-project', this.value);
     }
+    taskView.appendChild(projectSelect);
 
     // Title
     titleLabel = document.createElement('p');
@@ -1524,13 +1521,13 @@ function organizeTasks(tasks) {
     return [urgent, other, normal];
 }
 
-function projectsToSelect(rootProjects, subProjects) {
+function projectsToSelect(rootProjects, subProjects, projectID) {
    projectSelect = document.createElement('select');
     for (root = 0; root < rootProjects.length; root++) {
         currentRoot = rootProjects[root];
-        addOption(currentRoot, 0, projectSelect);
+        addOption(currentRoot, 0, projectSelect, projectID);
         if (subProjects[currentRoot.id]) {
-            addOptionTree(subProjects[currentRoot.id], subProjects, 0, projectSelect);
+            addOptionTree(subProjects[currentRoot.id], subProjects, 0, projectSelect, projectID);
         }
     }
 
@@ -1538,17 +1535,18 @@ function projectsToSelect(rootProjects, subProjects) {
     return projectSelect;
 }
 
-function addOptionTree(projects, subProjects, level, select) {
+function addOptionTree(projects, subProjects, level, select, projectID) {
     for (s = 0; s < projects.length; s++) {
         p = projects[s];
-        addOption(p, level + 1, select);
-        if (subProjects[p.id]) {addOptionTree(subProjects[p.id], subProjects, level + 1, select);}
+        addOption(p, level + 1, select, projectID);
+        if (subProjects[p.id]) {addOptionTree(subProjects[p.id], subProjects, level + 1, select, projectID);}
     }
 }
 
-function addOption(project, level, select) {
+function addOption(project, level, select, projectID) {
     opt = document.createElement('option');
     opt.value = project.id;
+    if (project.id == projectID) {opt.selected = 'selected';}
     setText(opt, stringFill('\u00a0', 3 * level) + project.name);
     if (useNightTheme()) {switchToNight(opt);}
     select.appendChild(opt);
