@@ -1216,7 +1216,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
             e = e.nextElementSibling;
         }
 
-        e.disabled = true;
+        e.readOnly = true;
     };
     urgentLabel = document.createElement('p');
     urgentLabel.className = 'normal_text';
@@ -1232,7 +1232,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
             e = e.nextElementSibling;
         }
 
-        e.disabled = true;
+        e.readOnly = true;
     };
     secondaryLabel = document.createElement('p');
     secondaryLabel.className = 'normal_text';
@@ -1252,10 +1252,14 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     dateInput = document.createElement('input');
     dateInput.className = 'normal_text';
     dateInput.type = 'datetime-local';
+    dateInput.onclick = function() {
+        this.readOnly = false;
+        this.previousElementSibling.previousElementSibling.checked = true;
+    }
 
     // Add defaults to deadline fields
-    if (task.is_urgent) {urgentRadio.defaultChecked = true; dateInput.disabled = true;}
-    else if (task.is_secondary) {secondaryRadio.defaultChecked = true; dateInput.disabled = true;}
+    if (task.is_urgent) {urgentRadio.defaultChecked = true; dateInput.readOnly = true;}
+    else if (task.is_secondary) {secondaryRadio.defaultChecked = true; dateInput.readOnly = true;}
     else {
         dateRadio.defaultChecked = true;
         d = deadlineToDate(task.deadline);
