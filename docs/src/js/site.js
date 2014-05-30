@@ -857,7 +857,7 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
     taskView.parentElement.children[0].setAttribute('data-project-id', project.id);
     c = 'black';
     if (useNightTheme()) {c = 'silver';}
-    projLinks = createProjectLinks(project.id, c, projectsByID, projectHierarchy, subProjects, tasks, 1);
+    projLinks = createProjectLinks(project.id, c, projectsByID, projectHierarchy, subProjects, tasks, 1, 1);
     addProjectLinks(projLinks, c, taskView, true);
 
     // Delete project button
@@ -1104,7 +1104,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     // If task has a project, display path
     if (task.project != -1) {
         // Display task path
-        projLinks = createProjectLinks(task.project, c, projectsByID, projectHierarchy, subProjects, tasks, 1);
+        projLinks = createProjectLinks(task.project, c, projectsByID, projectHierarchy, subProjects, tasks, 1, 1);
         addProjectLinks(projLinks, c, taskView, true)
     }
 
@@ -1374,7 +1374,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
                     setText(errorText, 'Saved at ' + getTimeFromString(new Date().toString()));
                 } else {
                     errorText.style.color = 'red';
-                    setText(errorText, 'Save failed!');
+                    setText(errorText, 'Save failed - ' + this.responseText);
                 }
             }
         };
@@ -1779,20 +1779,36 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, taskView, subPr
     }
 }
 
-function createProjectLinks(projectID, color, projectsByID, projectHierarchy, subprojects, tasks, levelsToRoot, isTitle) {
-    projLinks = [createProjectLink(projectsByID[projectID], projectsByID, projectHierarchy, subprojects, tasks, levelsToRoot)];
+function createProjectLinks(projectID, color, projectsByID, projectHierarchy, subProjects, tasks, levelsToRoot, isTitle) {
+    projLinks = [createProjectLink(projectsByID[projectID], projectsByID, projectHierarchy, subProjects, tasks, levelsToRoot)];
     projLinks[0].style.color = color;
     projParent = projectHierarchy[projectID];
     while (projParent) {
-        projLinks.push(createProjectLink(projectsByID[projParent], projectsByID, projectHierarchy, subprojects, tasks, levelsToRoot));
+        projLinks.push(createProjectLink(projectsByID[projParent], projectsByID, projectHierarchy, subProjects, tasks, levelsToRoot));
         projLinks[projLinks.length - 1].style.color = color;
         projParent = projectHierarchy[projParent];
     }
+
+    // If this is a title, add an overview link
+    if (isTitle) {
+        overviewLink = document.createElement('a');
+        overviewLink.className = 'normal_text';
+        overviewLink.href = '#';
+        overviewLink.style.whiteSpace = 'nowrap';
+        overviewLink.style.color = color;
+        overviewLink.onclick = function() {
+            data = JSON.parse(fetchTaskData());
+            populateUpcoming(data[1], projectsByID, projectHierarchy, taskView, subProjects);
+        };
+        setText(overviewLink, 'Overview');
+        projLinks.push(overviewLink);
+    }
+
     projLinks.reverse();
     return projLinks;
 }
 
-function createProjectLink(project, projectsByID, projectHierarchy, subprojects, tasks, levelsToRoot) {
+function createProjectLink(project, projectsByID, projectHierarchy, subProjects, tasks, levelsToRoot) {
     projAnchor = document.createElement('a');
     projAnchor.className = 'normal_text';
     projAnchor.href = '#';
