@@ -1023,7 +1023,7 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
             delLink.onclick = function() {
                 t = JSON.parse(this.getAttribute('data-task'));
                 conf = confirm('Are you sure you want to delete task "' + t.name + '"?');
-                if (conf) {deleteTask(this.getAttribute('data-task'), taskView);}
+                if (conf) {deleteTask(this.getAttribute('data-task'), taskView, false);}
             };
             delImg = document.createElement('img');
             delImg.src = 'images/x.png';
@@ -1052,7 +1052,7 @@ function deleteProject(projectID, viewMode, tasks, projectsByID, projectHierarch
     if (viewMode === 'project') {populateUpcoming(tasks, projectsByID, projectHierarchy, taskView, subProjects);}
 }
 
-function deleteTask(task, taskView) {
+function deleteTask(task, taskView, returnToOverview) {
     t = JSON.parse(task);
     deleteTaskReq = createPostReq('tasks.cgi', true);
     deleteTaskReq.send('mode=3&id=' + t.id);
@@ -1072,7 +1072,11 @@ function deleteTask(task, taskView) {
                 tasks = data[1];
                 tasks = organizeTasks(tasks);
     
-                openProject(taskView, projectsByID[t.project], projectsByID, projectHierarchy, subProjects, tasks);
+                if (returnToOverview) {
+                    populateUpcoming(data[1], projectsByID, projectHierarchy, taskView, subProjects);
+                } else {
+                    openProject(taskView, projectsByID[t.project], projectsByID, projectHierarchy, subProjects, tasks);
+                }
             } else {
                 e = taskView.getElementsByClassName('error')[0];
                 e.style.color = 'red';
@@ -1137,7 +1141,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
         deleteTaskLink.onclick = function() {
             t = JSON.parse(this.getAttribute('data-task'));
             conf = confirm('Are you sure you want to delete task "' + t.name + '"?');
-            if (conf) {deleteTask(this.getAttribute('data-task'), taskView);}
+            if (conf) {deleteTask(this.getAttribute('data-task'), taskView, false);}
         };
         deleteTaskImg = document.createElement('img');
         deleteTaskImg.src = 'images/x.png';
@@ -2015,11 +2019,31 @@ function addTask(task, projectsByID, projectHierarchy, subProjects, tasks, paren
 
     addProjectLinks(projLinks, color, taskProj, false);
     
+    delTaskP = document.createElement('p');
+    delTaskP.style.display = 'inline';
+    setText(delTaskP, '\u00a0\u00a0');
+    delTaskImg = document.createElement('img');
+    delTaskImg.src = 'images/x.png';
+    delTaskImg.title = 'Delete task';
+    delTaskImg.alt = 'Delete task';
+    delTaskLink = document.createElement('a');
+    delTaskLink.href = '#';
+    delTaskLink.setAttribute('data-task', JSON.stringify(task));
+    delTaskLink.onclick = function() {
+        t = JSON.parse(this.getAttribute('data-task'));
+        conf = confirm('Are you sure you want to delete task "' + t.name + '"?');
+        if (!conf) {return;}
+        deleteTask(this.getAttribute('data-task'), parent.parentElement, true);
+    };
+    delTaskLink.appendChild(delTaskImg);
+    delTaskP.appendChild(delTaskLink);
+
     if (showTime == true) {taskElem.appendChild(taskDate);}
     taskElem.appendChild(taskLink);
     taskElem.appendChild(taskProj);
+    taskElem.appendChild(delTaskP);
 
-    if (useNightTheme()) {switchToNight(taskElem, taskLink, taskProj);}
+    if (useNightTheme()) {switchToNight(taskElem, taskLink, taskProj, delTaskP, delTaskLink);}
 
     parent.appendChild(taskElem);
 }
