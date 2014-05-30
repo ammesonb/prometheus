@@ -1059,19 +1059,25 @@ function deleteTask(task, taskView) {
 
     deleteTaskReq.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
-            data = fetchTaskData();
-            data = JSON.parse(data);
-            projects = data[0];
-            out = parseProjects(projects);
-            rootProjects = out[0];
-            subProjects = out[1];
-            projectsByID = out[2];
-            projectHierarchy = out[3];
-
-            tasks = data[1];
-            tasks = organizeTasks(tasks);
-
-            openProject(taskView, projectsByID[t.project], projectsByID, projectHierarchy, subProjects, tasks);
+            if (this.responseText == 'success') {
+                data = fetchTaskData();
+                data = JSON.parse(data);
+                projects = data[0];
+                out = parseProjects(projects);
+                rootProjects = out[0];
+                subProjects = out[1];
+                projectsByID = out[2];
+                projectHierarchy = out[3];
+    
+                tasks = data[1];
+                tasks = organizeTasks(tasks);
+    
+                openProject(taskView, projectsByID[t.project], projectsByID, projectHierarchy, subProjects, tasks);
+            } else {
+                e = taskView.getElementsByClassName('error')[0];
+                e.style.color = 'red';
+                setText(e, 'Failed to delete task');
+            }
         }
     };
 }
