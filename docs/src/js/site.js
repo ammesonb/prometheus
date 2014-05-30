@@ -70,6 +70,10 @@ function pad(text, length, fill, side) {
     return text;
 }
 
+function padTime(text) {
+    return pad(text, 2, '0', 'f');
+}
+
 function isIE() {
     return (css_browser_selector(navigator.userAgent).search('ie') != -1) ||
             (navigator.userAgent.search('\\) like Gecko') != -1);
@@ -230,7 +234,7 @@ function openNotes() {
 
                 switch(status) {
                     case 'success':
-                        setText(errorText, 'Saved at ' + new Date().getHours() + ':' + new Date().getMinutes() + ':' + new Date().getSeconds());
+                        setText(errorText, 'Saved at ' + padTime(new Date().getHours()) + ':' + padTime(new Date().getMinutes()) + ':' + padTime(new Date().getSeconds()));
                         break;
                     case 'none':
                         setText(errorText, 'Update failed - no matching note found!');
@@ -434,7 +438,7 @@ function populateNotes(data, notesTable, notesEditor, resize) {
         }
         mtimeText = document.createElement('span');
         mtimeText.className = 'normal';
-        setText(mtimeText, note.mtime);
+        setText(mtimeText, note.mtime.split('\.')[0]);
         mtimeUnderline.appendChild(mtimeText);
         mtime.appendChild(mtimeUnderline);
         a = document.createElement('a');
@@ -582,7 +586,7 @@ function deadlineToDate(deadline) {
     return d;
 }
 
-function getTimeFromGMT(dateString) {
+function getTimeFromString(dateString) {
     time = dateString.split(' ')[4].split(':')
     return time[0] + ':' + time[1]
 }
@@ -1007,7 +1011,7 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
             else if (task.is_secondary) {deadText = 'When convenient';}
             else {
                 d = deadlineToDate(task.deadline);
-                time = getTimeFromGMT(d.toGMTString());
+                time = getTimeFromString(d.toString());
                 deadText = d.getUTCFullYear() + '-' + d.getUTCMonth() + '-' +
                            d.getUTCDate() + ' ' + time;
             }
@@ -1263,8 +1267,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     else {
         dateRadio.defaultChecked = true;
         d = deadlineToDate(task.deadline);
-        d = switchDeadlineTimezone(d);
-        time = getTimeFromGMT(d.toGMTString());
+        time = getTimeFromString(d.toString());
         deadline = d.getFullYear() + '-' +
                    pad((d.getUTCMonth() + 1).toString(), 2, '0', 'f') + '-' +
                    pad(d.getUTCDate().toString(), 2, '0', 'f') +
@@ -1364,7 +1367,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
             if (this.readyState == 4 && this.status == 200) {
                 if (this.responseText === 'success') {
                     errorText.style.color = 'green';
-                    setText(errorText, 'Saved at ' + getTimeFromGMT(new Date().toGMTString()));
+                    setText(errorText, 'Saved at ' + getTimeFromString(new Date().toString()));
                 } else {
                     errorText.style.color = 'red';
                     setText(errorText, 'Save failed!');
@@ -1998,8 +2001,7 @@ function addTask(task, projectsByID, projectHierarchy, subProjects, tasks, paren
         deadline = deadline.replace('-', '/');
         deadline = deadline.split('+')[0];
         d = new Date(deadline);
-        d = switchDeadlineTimezone(d);
-        time = getTimeFromGMT(d.toGMTString());
+        time = getTimeFromString(d.toString());
         setText(taskDate, time + stringFill('\u00a0', 2));
     }
     

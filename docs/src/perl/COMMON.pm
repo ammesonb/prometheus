@@ -177,7 +177,9 @@ sub checkSession {
 }
 
 sub connectToDB {
-    return DBI->connect("DBI:Pg:dbname=prometheus", "root");
+    my $dbh = DBI->connect("DBI:Pg:dbname=prometheus", "root");
+    $dbh->do("SET timezone='US/Eastern'");
+    return $dbh;
 }
 
 sub getTable {
