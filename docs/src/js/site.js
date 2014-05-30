@@ -1,5 +1,12 @@
 colors = ['#FF1300', '#FF6A00', '#FFA540', '#FFD240', '#9BED00', '#37DB79', '#63ADD0', '#7872D8', '#4B5BD8', '#9A3ED5', '#7F4BA0', '#ED3B83', '#999'];
 
+function createPostReq(url, mode) {
+    req = new XMLHttpRequest();
+    req.open('POST', url, mode);
+    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    return req;
+}
+
 function login() {
     elems = document.getElementsByTagName('input');
     a = elems[0];
@@ -212,7 +219,7 @@ function openNotes() {
             return;
         }
 
-        saveNoteReq = new XMLHttpRequest();
+        saveNoteReq = createPostReq('notes.cgi', false);
 
         saveNoteReq.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
@@ -250,8 +257,6 @@ function openNotes() {
             }
         };
 
-        saveNoteReq.open('POST', 'notes.cgi', false);
-        saveNoteReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
         saveNoteReq.send('mode=1&note_id=' + noteID +
                      '&note_title=' + encodeURIComponent(noteTitle) + '&note_text=' + encodeURIComponent(noteText));
 
@@ -259,14 +264,12 @@ function openNotes() {
 
         // Delay update for one second
         setTimeout(function() {
-            updateNoteReq = new XMLHttpRequest();
+            updateNoteReq = createPostReq('notes.cgi', true);
     
             updateNoteReq.onreadystatechange = function() {
                 if (this.readyState == 4 && this.status == 200) {refreshNotes(this.responseText);}
             };
     
-            updateNoteReq.open('POST', 'notes.cgi', true);
-            updateNoteReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
             updateNoteReq.send('mode=0');
         }, 1000);
     };
@@ -334,14 +337,12 @@ function openNotes() {
     notesEditor.appendChild(createButton);
 
     // Fetch notes
-    req = new XMLHttpRequest();
+    req = createPostReq('notes.cgi', true);
 
     req.onreadystatechange = function() {
         if (req.readyState == 4 && req.status == 200) {populateNotes(req.responseText, notesTable, notesEditor, 1);}
     };
 
-    req.open('POST', 'notes.cgi', true);
-    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
     req.send('mode=0');
 
     // Create actual note tab
@@ -451,7 +452,7 @@ function populateNotes(data, notesTable, notesEditor, resize) {
             confirmDelete = confirm('Are you sure you want to delete note \'' + this.getAttribute('data-note-title') + '\'?');
             if (!confirmDelete) {return;}
             deletedNoteID = this.getAttribute('data-note-id');
-            deleteNoteReq = new XMLHttpRequest();
+            deleteNoteReq = createPostReq('notes.cgi', true);
             
             deleteNoteReq.onreadystatechange = function() {
                 if (this.readyState == 4 && this.status == 200) {
@@ -470,8 +471,6 @@ function populateNotes(data, notesTable, notesEditor, resize) {
                         }
                     }
 
-                    refreshNotesReq.open('POST', 'notes.cgi', true);
-                    refreshNotesReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
                     refreshNotesReq.send('mode=0');
                 }
             };
@@ -710,17 +709,18 @@ function openTasks() {
     saveNewProject.className = 'save_project';
     saveNewProject.href = '#';
     saveNewProject.onclick = function() {
-        saveProjReq = new XMLHttpRequest();
         list = this.parentElement.parentElement.getElementsByClassName('project_list')[0];
         nameElem = this.previousSibling;
         if (name === 'Enter new project name') {return;}
+
+        saveProjReq = createPostReq('tasks.cgi', true);
 
         saveProjReq.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
                 switch(this.responseText) {
                     case 'success':
                         nameElem.value = 'Enter new project name';
-                        refreshTasksReq = new XMLHttpRequest();
+                        refreshTasksReq = createPostReq('tasks.cgi', true);
 
                         refreshTasksReq.onreadystatechange = function() {
                             if (this.readyState ==4 && this.status == 200) {
@@ -731,8 +731,6 @@ function openTasks() {
                             }
                         };
 
-                        refreshTasksReq.open('POST', 'tasks.cgi', true);
-                        refreshTasksReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
                         refreshTasksReq.send('mode=0');
                         break;
                     default:
@@ -742,8 +740,6 @@ function openTasks() {
             }
         };
 
-        saveProjReq.open('POST', 'tasks.cgi', true);
-        saveProjReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
         saveProjReq.send('mode=1&name=' + nameElem.value + '&parent=' + projectsPanel.getAttribute('data-project-id'));
     };
     setText(saveNewProject, '+');
@@ -1027,7 +1023,7 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
             delLink.onclick = function() {
                 t = JSON.parse(this.getAttribute('data-task'));
                 conf = confirm('Are you sure you want to delete task "' + t.name + '"?');
-                if (conf) {deleteTask(this.getAttribute('data-task-id'));}
+                if (conf) {deleteTask(this.getAttribute('data-task-id'), taskView);}
             };
             delImg = document.createElement('img');
             delImg.src = 'images/x.png';
@@ -1056,8 +1052,28 @@ function deleteProject(projectID, viewMode, tasks, projectsByID, projectHierarch
     if (viewMode === 'project') {populateUpcoming(tasks, projectsByID, projectHierarchy, taskView, subProjects);}
 }
 
-function deleteTask(task) {
-    
+function deleteTask(task, taskView) {
+    t = JSON.parse(task);
+    deleteTaskReq = createPostReq('tasks.cgi', true);
+    deleteTaskReq.send('mode=3&id=' + t.id);
+
+    deleteTaskReq.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            data = fetchTaskData();
+            data = JSON.parse(data);
+            projects = data[0];
+            out = parseProjects(projects);
+            rootProjects = out[0];
+            subProjects = out[1];
+            projectsByID = out[2];
+            projectHierarchy = out[3];
+
+            tasks = data[1];
+            tasks = organizeTasks(tasks);
+
+            openProject(taskView, projectsByID[t.project], projectsByID, projectHierarchy, subProjects, tasks);
+        }
+    };
 }
 
 function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, tasks) {
@@ -1104,25 +1120,27 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
         }
     }
 
-    // Delete task button
-    deleteTaskElem = document.createElement('p');
-    deleteTaskElem.style.display = 'inline';
-    setText(deleteTaskElem, '\u00a0\u00a0');
-    deleteTaskLink = document.createElement('a');
-    deleteTaskLink.href = '#';
-    deleteTaskLink.setAttribute('data-task', JSON.stringify(task));
-    deleteTaskLink.onclick = function() {
-        t = JSON.parse(this.getAttribute('data-task'));
-        conf = confirm('Are you sure you want to delete task "' + t.name + '"?');
-        if (conf) {deleteTask(this.getAttribute('data-task'));}
-    };
-    deleteTaskImg = document.createElement('img');
-    deleteTaskImg.src = 'images/x.png';
-    deleteTaskImg.title = 'Delete task';
-    deleteTaskImg.alt = 'Delete task';
-    deleteTaskLink.appendChild(deleteTaskImg);
-    deleteTaskElem.appendChild(deleteTaskLink);
-    taskView.appendChild(deleteTaskElem);
+    // Delete task button, if not new
+    if (task.id != -1) {
+        deleteTaskElem = document.createElement('p');
+        deleteTaskElem.style.display = 'inline';
+        setText(deleteTaskElem, '\u00a0\u00a0');
+        deleteTaskLink = document.createElement('a');
+        deleteTaskLink.href = '#';
+        deleteTaskLink.setAttribute('data-task', JSON.stringify(task));
+        deleteTaskLink.onclick = function() {
+            t = JSON.parse(this.getAttribute('data-task'));
+            conf = confirm('Are you sure you want to delete task "' + t.name + '"?');
+            if (conf) {deleteTask(this.getAttribute('data-task'), taskView);}
+        };
+        deleteTaskImg = document.createElement('img');
+        deleteTaskImg.src = 'images/x.png';
+        deleteTaskImg.title = 'Delete task';
+        deleteTaskImg.alt = 'Delete task';
+        deleteTaskLink.appendChild(deleteTaskImg);
+        deleteTaskElem.appendChild(deleteTaskLink);
+        taskView.appendChild(deleteTaskElem);
+    }
 
     taskView.appendChild(document.createElement('br'));
     taskView.appendChild(document.createElement('br'));
@@ -1314,7 +1332,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     saveButton.onclick = function() {
         errorText = this.nextElementSibling.nextElementSibling;
         
-        saveTaskReq = new XMLHttpRequest();
+        saveTaskReq = createPostReq('tasks.cgi', true);
 
         saveTaskReq.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
@@ -1328,8 +1346,6 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
             }
         };
 
-        saveTaskReq.open('POST', 'tasks.cgi', true);
-        saveTaskReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
         saveTaskReq.send('mode=2&id=' + this.getAttribute('data-task-id') + '&n=' + this.getAttribute('data-task-name') + 
                          '&pj=' + this.getAttribute('data-task-project') + '&ds=' + this.getAttribute('data-task-desc') + 
                          '&p=' + this.getAttribute('data-task-priority') + '&d=' + this.getAttribute('data-task-deadline')
@@ -1435,9 +1451,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
 }
 
 function fetchTaskData() {
-    getTasksReq = new XMLHttpRequest();
-    getTasksReq.open('POST', 'tasks.cgi', false);
-    getTasksReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    getTasksReq = createPostReq('tasks.cgi', false);
     getTasksReq.send('mode=0');
     if (getTasksReq.responseText === 'noauth') {
         alert('Session timed out! Please copy any unsaved changes then refresh the page.');
@@ -2001,7 +2015,7 @@ function viewAccount() {
     accountPanel = document.createElement('div');
     accountPanel.id = id;
 
-    privilegesReq = new XMLHttpRequest();
+    privilegesReq = createPostReq('account.cgi', false);
 
     privilegesReq.onreadystatechange = function() {
         if (privilegesReq.readyState == 4 && privilegesReq.status == 200) {
@@ -2238,8 +2252,6 @@ function viewAccount() {
         }
     };
 
-    privilegesReq.open('POST', 'account.cgi', false);
-    privilegesReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
     privilegesReq.send('mode=0');
 
     // Create tab and display panel
