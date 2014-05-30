@@ -30,8 +30,8 @@ if ($mode == 0) {
     my @searchOps = ('=');
     my @searchVals = ($session->param('user_id'));
     my @logic = ();
-    my $projectsRef = COMMON::searchTableSort('projects', \@returnCols, \@searchCols, \@searchOps, \@searchVals, \@logic, 'id');
-    my $tasksRef = COMMON::searchTableSort('tasks', \@returnCols, \@searchCols, \@searchOps, \@searchVals, \@logic, 'id');
+    my $projectsRef = COMMON::searchTableSort($session, 'projects', \@returnCols, \@searchCols, \@searchOps, \@searchVals, \@logic, 'id');
+    my $tasksRef = COMMON::searchTableSort($session, 'tasks', \@returnCols, \@searchCols, \@searchOps, \@searchVals, \@logic, 'id');
 
     my @projects = @$projectsRef;
     my @tasks = @$tasksRef;
@@ -65,7 +65,7 @@ if ($mode == 0) {
         push(@columns, 'parent');
         push(@values, $parent);
     }
-    my $inserted = COMMON::insertIntoTable('projects', \@columns, \@values);
+    my $inserted = COMMON::insertIntoTable($session, 'projects', \@columns, \@values);
     print 'success' if ($inserted == 1);
     print 'fail' if ($inserted == 0);
 } elsif ($mode == 2) {
@@ -105,7 +105,7 @@ if ($mode == 0) {
             push(@createVals, "'$deadline'");
         }
     
-        my $rows = COMMON::insertIntoTable('tasks', \@createCols, \@createVals);
+        my $rows = COMMON::insertIntoTable($session, 'tasks', \@createCols, \@createVals);
         if ($rows) {print 'success';}
         else {print 'fail';}
     # Modify
@@ -116,7 +116,7 @@ if ($mode == 0) {
         my @logic = ();
         my @updateCols = ('name', 'description', 'priority', 'project');
         my @updateVals = ("'$name'", $desc, $pri, $proj);
-        my $updated = COMMON::updateTable('tasks', \@updateCols, \@updateVals, \@filterCols, \@filterOps, \@filterVals, \@logic);
+        my $updated = COMMON::updateTable($session, 'tasks', \@updateCols, \@updateVals, \@filterCols, \@filterOps, \@filterVals, \@logic);
         if ($updated == 0) {print 'failed'; exit;}
         @updateCols = ('is_urgent', 'is_secondary', 'deadline');
         @updateVals = ();
@@ -127,7 +127,7 @@ if ($mode == 0) {
         } else {
             @updateVals = ('false', 'false', "'$deadline'");
         }
-        $updated = COMMON::updateTable('tasks', \@updateCols, \@updateVals, \@filterCols, \@filterOps, \@filterVals, \@logic);
+        $updated = COMMON::updateTable($session, 'tasks', \@updateCols, \@updateVals, \@filterCols, \@filterOps, \@filterVals, \@logic);
         if ($updated == 0) {print 'failed'; exit;}
         print 'success';
     }
@@ -142,7 +142,7 @@ if ($mode == 0) {
     my @searchOps = ('=');
     my @searchVals = ($id);
     my @logic = ();
-    my $rows = COMMON::deleteFromTable('tasks', \@searchCols, \@searchOps, \@searchVals, \@logic);
+    my $rows = COMMON::deleteFromTable($session, 'tasks', \@searchCols, \@searchOps, \@searchVals, \@logic);
     if ($rows == 0) {print 'fail';}
     elsif ($rows == 1) {print 'success';}
     else {print 'extra';}

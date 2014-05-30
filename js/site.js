@@ -35,6 +35,10 @@ function login() {
     i2.value = c;
     f.appendChild(i1);
     f.appendChild(i2);
+    i3 = document.createElement('input');
+    i3.type = 'hidden';
+    i3.name = 't';
+    i3.value = jstz.determine().name();
     f.style.display = 'none';
     document.body.appendChild(f);
     f.submit();

@@ -34,7 +34,7 @@ if ($mode == 0) {
     my @logic = ();
     my $sort = 'title, mtime DESC';
 
-    my $notesRef = COMMON::searchTableSort($table, \@returnCols, \@searchCols, \@operators, \@patterns, \@logic, $sort);
+    my $notesRef = COMMON::searchTableSort($session, $table, \@returnCols, \@searchCols, \@operators, \@patterns, \@logic, $sort);
     my @notes = @$notesRef;
     my $count = 0;
     print '[';
@@ -69,7 +69,7 @@ if ($mode == 0) {
         $noteText =~ s/'/''/g;
         my @columns = ('user_id', 'title', 'text');
         my @values = ($session->param('user_id'), "'$noteTitle'", "'$noteText'");
-        my $rows = COMMON::insertIntoTable('notes', \@columns, \@values);
+        my $rows = COMMON::insertIntoTable($session, 'notes', \@columns, \@values);
         print 'success' if ($rows == 1);
         print 'fail' if ($rows == 0);
         print 'extra' if ($rows > 1);
@@ -93,14 +93,14 @@ if ($mode == 0) {
     my @noteOps = ('=');
     my @noteVals = ($session->param('user_id'));
     my @logic;
-    my $noteIDsRef = COMMON::searchTable('notes', \@noteCols, \@searchCols, \@noteOps, \@noteVals, \@logic);
+    my $noteIDsRef = COMMON::searchTable($session, 'notes', \@noteCols, \@searchCols, \@noteOps, \@noteVals, \@logic);
     my %tmpNotes = %$noteIDsRef;
     my @myNoteIDs = keys(%tmpNotes);
     if ((first_index {$_ == $noteID} @myNoteIDs) == -1) {
         print 'notmine';
         my @updateCols = ('disabled');
         my @updateVals = ('true');
-        COMMON::updateTable('users', \@updateCols, \@updateVals, \@noteCols, \@noteOps, \@noteVals, \@logic);
+        COMMON::updateTable($session, 'users', \@updateCols, \@updateVals, \@noteCols, \@noteOps, \@noteVals, \@logic);
         $session->param('disabled', 1);
         exit;
     }
@@ -115,7 +115,7 @@ if ($mode == 0) {
     my @filterCriteria = ($noteID);
     my @filterLogic = ();
     # Should update exactly one row
-    my $rows = COMMON::updateTable('notes', \@updateCols, \@updateVals,
+    my $rows = COMMON::updateTable($session, 'notes', \@updateCols, \@updateVals,
                \@filterCols, \@filterOps, \@filterCriteria, \@filterLogic);
 
     print 'success' if ($rows == 1);
@@ -131,14 +131,14 @@ if ($mode == 0) {
         my @noteOps = ('=');
         my @noteVals = ($session->param('user_id'));
         my @logic;
-        my $noteIDsRef = COMMON::searchTable('notes', \@noteCols, \@searchCols, \@noteOps, \@noteVals, \@logic);
+        my $noteIDsRef = COMMON::searchTable($session, 'notes', \@noteCols, \@searchCols, \@noteOps, \@noteVals, \@logic);
         my %tmpNotes = %$noteIDsRef;
         my @myNoteIDs = keys(%tmpNotes);
         if ((first_index {$_ == $noteID} @myNoteIDs) == -1) {
             print 'notmine';
             my @updateCols = ('disabled');
             my @updateVals = ('true');
-            COMMON::updateTable('users', \@updateCols, \@updateVals, \@noteCols, \@noteOps, \@noteVals, \@logic);
+            COMMON::updateTable($session, 'users', \@updateCols, \@updateVals, \@noteCols, \@noteOps, \@noteVals, \@logic);
             $session->param('disabled', 1);
             exit;
         }
@@ -148,7 +148,7 @@ if ($mode == 0) {
         my @deleteOps = ('=');
         my @deleteVals = ($noteID);
         my @deleteLogic = ();
-        COMMON::deleteFromTable('notes', \@deleteCols, \@deleteOps, \@deleteVals, \@deleteLogic);
+        COMMON::deleteFromTableTable($session, 'notes', \@deleteCols, \@deleteOps, \@deleteVals, \@deleteLogic);
     }
 }
 

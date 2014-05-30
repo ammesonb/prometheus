@@ -40,7 +40,7 @@ if ($mode == 0) {
     my @searchOps = ('=');
     my @searchVals = ($userID);
     my @logic = ();
-    my $rows = COMMON::updateTable('users', \@updateCols, \@updateVals, \@searchCols, \@searchOps, \@searchVals, \@logic);
+    my $rows = COMMON::updateTable($session, 'users', \@updateCols, \@updateVals, \@searchCols, \@searchOps, \@searchVals, \@logic);
     print 'none' if ($rows == 0);
     print 'success' if ($rows == 1);
     print 'extra' if ($rows > 1);
@@ -53,7 +53,7 @@ if ($mode == 0) {
     my @searchOps = ('=');
     my @searchVals = ($session->param('user_id'));
     my @logic = ();
-    my $rows = COMMON::updateTable('users', \@updateCols, \@updateVals, \@searchCols, \@searchOps, \@searchVals, \@logic);
+    my $rows = COMMON::updateTable($session, 'users', \@updateCols, \@updateVals, \@searchCols, \@searchOps, \@searchVals, \@logic);
     if ($rows >= 1) {$session->param('night_theme', $theme);}
     print 'success' if ($rows == 1);
     print 'none' if ($rows == 0);

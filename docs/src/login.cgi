@@ -34,12 +34,12 @@ my @searchCols = ('username');
 my @operators = ('=');
 my @patterns = ("'" . $q->param('a') . "'");
 my @logic = ();
-my $userRef = COMMON::searchTable('users', \@returnCols, \@searchCols, \@operators,\@patterns, \@logic);
+my $userRef = COMMON::searchTable($session, 'users', \@returnCols, \@searchCols, \@operators,\@patterns, \@logic);
 my %userData = %$userRef;
 my @userIDs = keys %userData;
 my $userID = $userIDs[0];
 
-my $response = COMMON::attempt_login($q->param('a'), $q->param('c'), $userData{$userID}{'domain'});
+my $response = COMMON::attempt_login($session, $q->param('a'), $q->param('c'), $userData{$userID}{'domain'});
 
 # Set session parameters
 $session->param('attempt_login', 1);
@@ -52,6 +52,8 @@ $session->param('user_id', $userID);
 $session->expire('user_id', '+30m');
 $session->param('logged_in', 0);
 $session->expire('logged_in', '+30m');
+$session->param('timezone', $q->param('t'));
+$session->expire('timezone', '+30m');
 $session->param('blocked', 0);
 $session->expire('blocked', '+30m');
 $session->param('is_admin', $userData{$userID}{'is_admin'});

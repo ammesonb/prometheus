@@ -23,6 +23,7 @@ sub init {
     $html .= "<head>\n";
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/sha512.js\"></script>\n";
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/css_browser_selector.js\"></script>\n";
+    $html .= $indent . "<script type=\"text/javascript\" src=\"js/jstz.js\"></script>\n";
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/site.js\"></script>\n";
     $html .= $indent . "<script type=\"text/javascript\">
     window.onload = function() {
@@ -131,7 +132,7 @@ sub init {
         my @searchVals = ($session->param('user_id'));
         my @logic = ();
         my @groupBy = ('user_id');
-        my $servicesRef = searchTable('user_services', \@returnCols, \@searchCols, \@searchOps, \@searchVals, \@logic, 1, \@groupBy, 'user_id');
+        my $servicesRef = searchTable($session, 'user_services', \@returnCols, \@searchCols, \@searchOps, \@searchVals, \@logic, 1, \@groupBy, 'user_id');
         my %services = %$servicesRef;
         my @serviceKeys = keys(%services);
         $servicesRef = $services{$serviceKeys[0]};
@@ -141,7 +142,7 @@ sub init {
         $servicesRef = $services[0];
         my @serviceIDs = @$servicesRef;
 
-        my $toolsRef = getSortedTable("services", "row_order");
+        my $toolsRef = getSortedTable($session, "services", "row_order");
         my @tools = @$toolsRef;
         @services = ();
         foreach (@tools) {
@@ -177,27 +178,30 @@ sub checkSession {
 }
 
 sub connectToDB {
+    my $session = shift;
     my $dbh = DBI->connect("DBI:Pg:dbname=prometheus", "root");
-    $dbh->do("SET timezone='$ENV{'TZ'}'");
+    $dbh->do("SET timezone='" . $session->param('timezone') . "'");
     return $dbh;
 }
 
 sub getTable {
+    my $session = shift;
     my $tableName = shift;
-    my $dbh = connectToDB();
+    my $dbh = connectToDB($session);
     my $tableRef = $dbh->selectall_hashref("SELECT * FROM $tableName", ["id"]);
     $dbh->disconnect();
     return $tableRef;
 }
 
 sub getSortedTable {
+    my $session = shift;
     my $tableName = shift;
     my $sortBy = shift;
     my $direction = shift;
     
     my $dir = "";
     $dir = " $direction" if ($direction);
-    my $dbh = connectToDB();
+    my $dbh = connectToDB($session);
     my $sth = $dbh->prepare("SELECT * FROM $tableName ORDER BY $sortBy$dir");
     $sth->execute();
     my @rows;
@@ -210,6 +214,7 @@ sub getSortedTable {
 
 sub searchTable {
     # Get arguments
+    my $session = shift;
     my $tableName = shift;
     my $colsRef = shift;
     my @columns = @$colsRef;
@@ -229,7 +234,7 @@ sub searchTable {
     }
     my $idCol = shift;
 
-    my $dbh = connectToDB();
+    my $dbh = connectToDB($session);
 
     # Create query
     my $query = "SELECT " . join(', ', @columns) . " FROM $tableName WHERE ";
@@ -252,6 +257,7 @@ sub searchTable {
 
 sub searchTableSort {
     # Get arguments
+    my $session = shift;
     my $tableName = shift;
     my $colsRef = shift;
     my @columns = @$colsRef;
@@ -265,7 +271,7 @@ sub searchTableSort {
     my @logic = @$logicRef;
     my $sort = shift;
 
-    my $dbh = connectToDB();
+    my $dbh = connectToDB($session);
 
     # Create query
     my $query = "SELECT " . join(', ', @columns) . " FROM $tableName WHERE ";
@@ -289,13 +295,14 @@ sub searchTableSort {
 
 sub insertIntoTable {
     # Get parameters
+    my $session = shift;
     my $tableName = shift;
     my $insertColsRef = shift;
     my @insertColumns = @$insertColsRef;
     my $insertValsRef = shift;
     my @insertValues = @$insertValsRef;
 
-    my $dbh = connectToDB();
+    my $dbh = connectToDB($session);
 
     # Create query
     my $query = "INSERT INTO $tableName (" . join(', ', @insertColumns) . ') VALUES (' . join(', ', @insertValues) . ')';
@@ -307,6 +314,7 @@ sub insertIntoTable {
 
 sub updateTable {
     # Get parameters
+    my $session = shift;
     my $tableName = shift;
     my $updateColsRef = shift;
     my @updateCols = @$updateColsRef;
@@ -332,7 +340,7 @@ sub updateTable {
     }
     $query .= "$filterCols[$#filterCols] $filterOperators[$#filterOperators] $filterCriteria[$#filterCriteria]";
 
-    my $dbh = connectToDB();
+    my $dbh = connectToDB($session);
     my $rowsChanged = $dbh->do($query);
     $dbh->disconnect;
     return $rowsChanged;
@@ -340,6 +348,7 @@ sub updateTable {
 
 sub deleteFromTable {
     # Get parameters
+    my $session = shift;
     my $tableName = shift;
     my $deleteColsRef = shift;
     my @deleteCols = @$deleteColsRef;
@@ -350,7 +359,7 @@ sub deleteFromTable {
     my $deleteLogicRef = shift;
     my @deleteLogic = @$deleteLogicRef;
 
-    my $dbh = connectToDB();
+    my $dbh = connectToDB($session);
 
     # Create query
     my $query = "DELETE FROM $tableName * WHERE ";
@@ -366,6 +375,7 @@ sub deleteFromTable {
 }
 
 sub attempt_login {
+    my $session = shift;
     my $username = shift;
     my $pass = shift;
     my $domainID = shift;
@@ -375,11 +385,11 @@ sub attempt_login {
     my @searchOps = ('=');
     my @searchVals = ($domainID);
     my @logic = ();
-    my $domainRegexRef = searchTable('domains', \@domainCols, \@searchCols, \@searchOps, \@searchVals, \@logic);
+    my $domainRegexRef = searchTable($session, 'domains', \@domainCols, \@searchCols, \@searchOps, \@searchVals, \@logic);
     my %domainRegex = %$domainRegexRef;
     my $domainRegex = $domainRegex{$domainID}{'regex'};
 
-    my $usersRef = getTable("users");
+    my $usersRef = getTable($session, "users");
     my %usersHash = %$usersRef;
 
     foreach(keys %usersHash) {
@@ -453,6 +463,8 @@ Returns boolean for user being logged in
 =head2 connectToDB
 
 =pod
+
+Takes a CGI session variable for reference to user's timezone.
 
 Returns a handle to the local database, connected as user 'root'
 
