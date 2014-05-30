@@ -1464,6 +1464,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     taskView.appendChild(deadlineGroup);
     taskView.appendChild(document.createElement('br'));
     taskView.appendChild(saveButton);
+    taskView.appendChild(document.createTextNode('\u00a0\u00a0'));
     taskView.appendChild(cancelButton);
     taskView.appendChild(document.createTextNode('\u00a0\u00a0'));
     taskView.appendChild(errorText);
