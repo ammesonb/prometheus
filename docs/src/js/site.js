@@ -1023,7 +1023,7 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
             delLink.onclick = function() {
                 t = JSON.parse(this.getAttribute('data-task'));
                 conf = confirm('Are you sure you want to delete task "' + t.name + '"?');
-                if (conf) {deleteTask(this.getAttribute('data-task-id'), taskView);}
+                if (conf) {deleteTask(this.getAttribute('data-task'), taskView);}
             };
             delImg = document.createElement('img');
             delImg.src = 'images/x.png';
@@ -1160,6 +1160,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
             saveButton.setAttribute('data-task-project', this.value);
         }
         taskView.appendChild(projectSelect);
+        projectSelect.value = projectSelect.children[0].value;
     }
 
     // Title
@@ -1191,6 +1192,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
         priInput.appendChild(opt);
         if (useNightTheme()) {switchToNight(opt);}
     }
+    priInput.value = 1;
 
     // Deadline
     // Elements
