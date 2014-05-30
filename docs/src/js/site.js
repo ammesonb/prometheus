@@ -627,7 +627,7 @@ function openTasks() {
         this.parentElement.parentElement.parentElement.parentElement.setAttribute('data-project-id', -1);
         // First three arguments don't need to be stored, since if they are modified
         // it will be with updated information
-        upcoming = this.parentElement.parentElement.parentElement.parentElement.parentElement.children[1];
+        taskView = this.parentElement.parentElement.parentElement.parentElement.parentElement.children[1];
         data = fetchTaskData();
         data = JSON.parse(data);
         projects = data[0];
@@ -1172,6 +1172,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     titleLabel.className = 'normal_text form_label';
     setText(titleLabel, 'Task\u00a0name:\u00a0')
     titleInput = document.createElement('input');
+    titleInput.style.width = '75%';
     titleInput.value = task.name;
 
     // Description
@@ -1179,6 +1180,8 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     descLabel.className = 'normal_text form_label';
     setText(descLabel, 'Task\u00a0Description:');
     descInput = document.createElement('textarea');
+    descInput.style.width = '90%';
+    descInput.style.height = '30%';
     descInput.value = task.description;
 
     // Priority
