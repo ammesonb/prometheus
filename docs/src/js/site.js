@@ -650,7 +650,7 @@ function openTasks() {
 
         // Check if task wraps by comparing offsettops through DOM
         spans = taskView.getElementsByTagName('span');
-        // For each set of tasks (urgent, normal, secondary)
+        // For each set of tasks (urgent, normal, other)
         for (s = 0; s < spans.length; s++) {
             span = spans[s];
             // For each task/header in them
@@ -807,7 +807,7 @@ function openTasks() {
 
     // Check if task wraps by comparing offsettops through DOM
     spans = upcoming.getElementsByTagName('span');
-    // For each set of tasks (urgent, normal, secondary)
+    // For each set of tasks (urgent, normal, other)
     for (s = 0; s < spans.length; s++) {
         span = spans[s];
         // For each task/header in them
@@ -944,11 +944,11 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
     taskView.appendChild(newTaskButton);
     taskView.appendChild(document.createElement('br'));
 
-    // Order tasks alphabetically then by urgent, normal, secondary
+    // Order tasks alphabetically then by urgent, normal, other
     myTasks = new Array();
     myUrgent = tasks[0][project.id];
     myNormal = tasks[2][project.id];
-    mySecondary = tasks[1][project.id];
+    myOther = tasks[1][project.id];
     if (myUrgent) {
         myUrgent.sort(function(a, b) {return (a.name > b.name);});
         myUrgent.forEach(function(e) {myTasks.push(e);});
@@ -957,9 +957,9 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
         myNormal.sort(function(a, b) {return (a.name > b.name);});
         myNormal.forEach(function(e) {myTasks.push(e);});
     }
-    if (mySecondary) {
-        mySecondary.sort(function(a, b) {return (a.name > b.name);});
-        mySecondary.forEach(function(e) {myTasks.push(e);});
+    if (myOther) {
+        myOther.sort(function(a, b) {return (a.name > b.name);});
+        myOther.forEach(function(e) {myTasks.push(e);});
     }
 
     // Add tasks table
@@ -1012,7 +1012,7 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
             setText(priCell, task.priority);
             deadText = 0;
             if (task.is_urgent) {deadText = 'ASAP';}
-            else if (task.is_secondary) {deadText = 'When convenient';}
+            else if (task.is_other) {deadText = 'When convenient';}
             else {
                 d = deadlineToDate(task.deadline);
                 time = getTimeFromString(d.toString());
@@ -1230,11 +1230,11 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     urgentLabel.className = 'normal_text';
     urgentLabel.style.display = 'inline';
     setText(urgentLabel, 'ASAP');
-    secondaryRadio = document.createElement('input');
-    secondaryRadio.name = 'deadline';
-    secondaryRadio.type = 'radio';
-    secondaryRadio.value = 's';
-    secondaryRadio.onclick = function() {
+    otherRadio = document.createElement('input');
+    otherRadio.name = 'deadline';
+    otherRadio.type = 'radio';
+    otherRadio.value = 's';
+    otherRadio.onclick = function() {
         e = this;
         for (i = 0; i < 4; i++) {
             e = e.nextElementSibling;
@@ -1242,10 +1242,10 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
 
         e.readOnly = true;
     };
-    secondaryLabel = document.createElement('p');
-    secondaryLabel.className = 'normal_text';
-    secondaryLabel.style.display = 'inline';
-    setText(secondaryLabel, 'Secondary');
+    otherLabel = document.createElement('p');
+    otherLabel.className = 'normal_text';
+    otherLabel.style.display = 'inline';
+    setText(otherLabel, 'No deadline');
     dateRadio = document.createElement('input');
     dateRadio.name = 'deadline';
     dateRadio.type = 'radio';
@@ -1267,7 +1267,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
 
     // Add defaults to deadline fields
     if (task.is_urgent) {urgentRadio.defaultChecked = true; dateInput.readOnly = true;}
-    else if (task.is_secondary) {secondaryRadio.defaultChecked = true; dateInput.readOnly = true;}
+    else if (task.is_other) {otherRadio.defaultChecked = true; dateInput.readOnly = true;}
     else {
         dateRadio.defaultChecked = true;
         d = deadlineToDate(task.deadline);
@@ -1326,15 +1326,15 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     deadlineGroup.appendChild(deadlineLabel);
     deadlineGroup.appendChild(urgentRadio);
     deadlineGroup.appendChild(urgentLabel);
-    deadlineGroup.appendChild(secondaryRadio);
-    deadlineGroup.appendChild(secondaryLabel);
+    deadlineGroup.appendChild(otherRadio);
+    deadlineGroup.appendChild(otherLabel);
     deadlineGroup.appendChild(dateRadio);
     deadlineGroup.appendChild(dateLabel);
     deadlineGroup.appendChild(dateInput);
 
     if (useNightTheme()) {
         switchToNight(titleLabel, titleInput, descLabel, descInput, priLabel, priInput,
-            deadlineLabel, urgentLabel, secondaryLabel, dateLabel, dateInput);
+            deadlineLabel, urgentLabel, otherLabel, dateLabel, dateInput);
     }
 
     // Create save and cancel buttons
@@ -1358,7 +1358,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
     }
     d = 0;
     if (task.is_urgent) {d = 'u';}
-    else if (task.is_secondary) {d = 's';}
+    else if (task.is_other) {d = 's';}
     else {d = dateInput.value;}
     saveButton.setAttribute('data-task-deadline', d);
     setText(saveButton, 'Save');
@@ -1431,7 +1431,7 @@ function openTask(task, taskView, projectsByID, projectHierarchy, subProjects, t
         if (this.checked) {saveButton.setAttribute('data-task-deadline', 'u');}
     }
 
-    secondaryRadio.onchange = function() {
+    otherRadio.onchange = function() {
         saveButton = this.parentElement.parentElement.getElementsByTagName('button')[0];
         if (this.checked) {saveButton.setAttribute('data-task-deadline', 's');}
     }
@@ -1499,7 +1499,7 @@ function fetchTaskData() {
 
 function organizeTasks(tasks) {
     urgent = new Array();
-    secondary = new Array();
+    other = new Array();
     normal = new Array();
     for (taskNum = 0; taskNum < tasks.length; taskNum++) {
         task = tasks[taskNum];
@@ -1508,11 +1508,11 @@ function organizeTasks(tasks) {
                 urgent[task.project] = new Array();
             }
             urgent[task.project].push(task);
-        } else if (task.is_secondary) {
-            if (!secondary[task.project] || secondary[task.project].constructor.name !== 'Array') {
-                secondary[task.project] = new Array();
+        } else if (task.is_other) {
+            if (!other[task.project] || other[task.project].constructor.name !== 'Array') {
+                other[task.project] = new Array();
             }
-            secondary[task.project].push(task);
+            other[task.project].push(task);
         } else {
             if (!normal[task.project] || normal[task.project].constructor.name !== 'Array') {
                 normal[task.project] = new Array();
@@ -1521,7 +1521,7 @@ function organizeTasks(tasks) {
         }
    }
     
-    return [urgent, secondary, normal];
+    return [urgent, other, normal];
 }
 
 function projectsToSelect(rootProjects, subProjects) {
@@ -1554,7 +1554,7 @@ function addOption(project, level, select) {
     select.appendChild(opt);
 }
 
-function tasksToHTML(urgent, normal, secondary, tasksByID, projectsByID, projectHierarchy, subProjects) {
+function tasksToHTML(urgent, normal, other, tasksByID, projectsByID, projectHierarchy, subProjects) {
     // Create urgent tasks
     urgentHeader = document.createElement('p');
     urgentHeader.className = 'normal_section_header';
@@ -1604,23 +1604,23 @@ function tasksToHTML(urgent, normal, secondary, tasksByID, projectsByID, project
         addTask(task, projectsByID, projectHierarchy, subProjects, tasksByID, normalTasks, true);
     };
 
-    // Create secondary tasks
-    secondaryHeader = document.createElement('p');
-    secondaryHeader.className = 'normal_section_header';
-    secondaryHeader.style.fontWeight = 'bold';
-    secondaryHeader.style.marginBottom = '0px';
-    setText(secondaryHeader, 'When Possible');
+    // Create other tasks
+    otherHeader = document.createElement('p');
+    otherHeader.className = 'normal_section_header';
+    otherHeader.style.fontWeight = 'bold';
+    otherHeader.style.marginBottom = '0px';
+    setText(otherHeader, 'When Possible');
 
-    secondaryHR = document.createElement('hr');
-    secondaryHR.className = 'task_divider';
+    otherHR = document.createElement('hr');
+    otherHR.className = 'task_divider';
 
-    secondaryTasks = document.createElement('span');
-    for (taskNum = 0; taskNum < secondary.length; taskNum++) {
-        task = secondary[taskNum];
-        addTask(task, projectsByID, projectHierarchy, subProjects, tasksByID, secondaryTasks, false);
+    otherTasks = document.createElement('span');
+    for (taskNum = 0; taskNum < other.length; taskNum++) {
+        task = other[taskNum];
+        addTask(task, projectsByID, projectHierarchy, subProjects, tasksByID, otherTasks, false);
     }
 
-    return [urgentHeader, urgentHR, urgentTasks, normalTasks, secondaryHeader, secondaryHR, secondaryTasks];
+    return [urgentHeader, urgentHR, urgentTasks, normalTasks, otherHeader, otherHR, otherTasks];
 }
 
 function parseProjects(projects) {
@@ -1700,30 +1700,30 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, taskView, subPr
 
     taskView.appendChild(newTaskP);
 
-    // Sort tasks by urgent, then date, then secondary
+    // Sort tasks by urgent, then date, then other
     // Function returns two-dimensional array, but project is
     // inconsequential for the task view, so flatten them
     sortedTasks = organizeTasks(tasks);
     urgentByID = sortedTasks[0];
-    secondaryByID = sortedTasks[1];
+    otherByID = sortedTasks[1];
     normalByID = sortedTasks[2]
     urgent = flatten(urgentByID);
-    secondary = flatten(secondaryByID);
+    other = flatten(otherByID);
     normal = flatten(normalByID);
 
     // Create HTML elements from tasks
-    out = tasksToHTML(urgent, normal, secondary, sortedTasks,
+    out = tasksToHTML(urgent, normal, other, sortedTasks,
                         projectsByID, projectHierarchy, subProjects);
     urgentHeader = out[0];
     urgentHR = out[1];
     urgentTasks = out[2];
     normalTasks = out[3];
-    secondaryHeader = out[4];
-    secondaryHR = out[5];
-    secondaryTasks = out[6];
+    otherHeader = out[4];
+    otherHR = out[5];
+    otherTasks = out[6];
 
     if (useNightTheme()) {
-        switchToNight(urgentHeader, urgentHR, secondaryHeader, secondaryHR);
+        switchToNight(urgentHeader, urgentHR, otherHeader, otherHR);
     }
 
     // Add tasks
@@ -1752,21 +1752,21 @@ function populateUpcoming(tasks, projectsByID, projectHierarchy, taskView, subPr
             taskView.appendChild(normalTasks);
         }
     }
-    if (secondary.length !== 0) {
-        if (urgent.length === 0 && normal.length === 0) {secondaryHeader.style.cssFloat = 'left';}
-        taskView.appendChild(secondaryHeader);
+    if (other.length !== 0) {
+        if (urgent.length === 0 && normal.length === 0) {otherHeader.style.cssFloat = 'left';}
+        taskView.appendChild(otherHeader);
         if (css_browser_selector(navigator.userAgent).search('ff') != -1 && urgent.length === 0 && normal.length === 0) {
             newTaskP.style.paddingRight = '5px';
-            secondaryHR.style.marginTop = '2px';
+            otherHR.style.marginTop = '2px';
             taskView.appendChild(document.createElement('br'));
             taskView.appendChild(document.createElement('br'));
         }
-        taskView.appendChild(secondaryHR);
-        taskView.appendChild(secondaryTasks);
+        taskView.appendChild(otherHR);
+        taskView.appendChild(otherTasks);
     }
 
     // If no tasks in any section
-    if (urgent.length == 0 && normal.length == 0 && secondary.length == 0) {
+    if (urgent.length == 0 && normal.length == 0 && other.length == 0) {
         blank = document.createElement('p');
         blank.className = 'normal_text';
         blank.style.marginTop = '0px';
