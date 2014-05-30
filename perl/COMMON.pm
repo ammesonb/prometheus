@@ -68,12 +68,12 @@ sub init {
     if ($authorized == 2) {
         $html .= "<div id=\"login\">\n";
         $html .= "<img src=\"images/prometheus.png\" alt=\"Prometheus\">\n";
-        $html .= "<p><strong>You are not allowed to access this from your current location.<br/>Please contact me at ammesonb\@gmail.com.</strong></p>\n";
+        $html .= "<p><strong>You are not allowed to access this from your current location.<br>Please contact me at ammesonb\@gmail.com.</strong></p>\n";
         $html .= "</div>\n";
     } elsif ($authorized == 3) {
         $html .= "<div id=\"login\">\n";
         $html .= "<img src=\"images/prometheus.png\" alt=\"Prometheus\">\n";
-        $html .= "<p><strong>This account has been disabled.<br/>Please contact me at ammesonb\@gmail.com.</strong></p>\n";
+        $html .= "<p><strong>This account has been disabled.<br>Please contact me at ammesonb\@gmail.com.</strong></p>\n";
     } elsif ($authorized == 1) {
         $html .= "<div id=\"login\">\n";
         $html .= $indent . "<a href=\"/\"><img src=\"images/prometheus.png\" alt=\"Prometheus\"></a>\n";
@@ -85,9 +85,9 @@ sub init {
         }
         $html .= $indent . "<p id=\"error\">$error</p>\n";
         $html .= $indent . "Username:&nbsp;&nbsp;<input type=\"text\">\n";
-        $html .= $indent . "<br/><br/>\n";
+        $html .= $indent . "<br><br>\n";
         $html .= $indent . "&nbsp;Password:&nbsp;&nbsp;&nbsp;<input type=\"password\">\n";
-        $html .= $indent . "<br/><br/>\n";
+        $html .= $indent . "<br><br>\n";
         $html .= $indent . "<button onclick=\"login()\">Log In</button>\n";
         $html .= $indent . "<script type=\"text/javascript\">
     document.getElementsByTagName('input')[0].focus();
@@ -107,7 +107,7 @@ sub init {
     } else {
         $html .= "<img src=\"images/prometheus.png\" alt=\"Prometheus\" style=\"margin-top: -.5%;\">\n";
         my $user = $session->param('user');
-        $html .= "<p id=\"userinfo\">Logged in as $user<br/><a href=\"logout.cgi\">Log Out</a></p>\n";
+        $html .= "<p id=\"userinfo\">Logged in as $user<br><a href=\"logout.cgi\">Log Out</a></p>\n";
         $html .= "<div id=\"tabs\">\n";
         $html .= $indent . "<a href=\"#\"><div class=\"tab\" onclick=\"switchTab('home');\">Home</div></a>\n";
         $html .= "</div>\n";
