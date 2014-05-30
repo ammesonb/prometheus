@@ -132,5 +132,19 @@ if ($mode == 0) {
         print 'success';
     }
 } elsif ($mode == 3) {
+    my $id = $q->param('id');
+    if (not ($id =~ /^[0-9]+$/)) {
+        print 'badid';
+        exit;
+    }
+
+    my @searchCols = ('id');
+    my @searchOps = ('=');
+    my @searchVals = ($id);
+    my @logic = ();
+    my $rows = COMMON::deleteFromTable('tasks', \@searchCols, \@searchOps, \@searchVals, \@logic);
+    if ($rows == 0) {print 'fail';}
+    elsif ($rows == 1) {print 'success';}
+    else {print 'extra';}
 }
 exit;
