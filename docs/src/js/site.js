@@ -1798,7 +1798,7 @@ function createProjectLink(project, levelsToRoot) {
     projAnchor.setAttribute('data-project', JSON.stringify(project));
     projAnchor.onclick = function() {
         levels = parseInt(this.getAttribute('data-levels-to-root'), 10);
-        taskView = this;
+        taskView = this.parentElement.parentElement.parentElement.parentElement;
         for (levels = levels; levels > 0; levels--) {taskView = taskView.parentElement;}
         openProj = JSON.parse(this.getAttribute('data-project'));
         openProject(taskView, openProj);
