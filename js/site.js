@@ -1031,7 +1031,7 @@ function openTask(task, taskView) {
         addProjectLinks(projLinks, c, taskView, true)
     }
 
-    // Add this project
+    // Add this task
     if (task.project !== -1) {
         tmpP = document.createElement('p');
         tmpP.style.display = 'inline';
@@ -1802,9 +1802,10 @@ function createProjectLink(project, levelsToRoot) {
     projAnchor.href = '#';
     projAnchor.style.whiteSpace = 'nowrap';
     projAnchor.setAttribute('data-project', JSON.stringify(project));
+    projAnchor.setAttribute('data-levels-to-root', levelsToRoot);
     projAnchor.onclick = function() {
         levels = parseInt(this.getAttribute('data-levels-to-root'), 10);
-        taskView = this.parentElement.parentElement.parentElement.parentElement;
+        taskView = this;
         for (levels = levels; levels > 0; levels--) {taskView = taskView.parentElement;}
         openProj = JSON.parse(this.getAttribute('data-project'));
         openProject(taskView, openProj);
