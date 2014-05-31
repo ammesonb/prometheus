@@ -1086,6 +1086,7 @@ function openTask(task, taskView) {
     projectSelect.onchange = function() {
         saveButton = this.parentElement.getElementsByTagName('button')[0];
         saveButton.setAttribute('data-task-project', this.value);
+        saveButton.setAttribute('data-project', JSON.stringify(projectsByID[this.value]));
     }
     taskView.appendChild(projectSelect);
 
@@ -1258,10 +1259,12 @@ function openTask(task, taskView) {
     setText(errorText, '\u00a0');
     saveButton = document.createElement('button');
     saveButton.setAttribute('data-task-id', task.id);
-    if (task.project === -1 && projectSelect !== 0) {
+    if (task.project == -1) {
         saveButton.setAttribute('data-task-project', projectSelect.value);
+        saveButton.setAttribute('data-project', JSON.stringify(projectsByID[projectSelect.value]));
     } else {
         saveButton.setAttribute('data-task-project', task.project);
+        saveButton.setAttribute('data-project', JSON.stringify(projectsByID[task.project]));
     }
     saveButton.setAttribute('data-task-name', task.name);
     saveButton.setAttribute('data-task-desc', task.description);
@@ -1278,6 +1281,7 @@ function openTask(task, taskView) {
     setText(saveButton, 'Save');
     saveButton.onclick = function() {
         errorText = this.nextElementSibling.nextElementSibling;
+        sB = this;
         
         saveTaskReq = createPostReq('tasks.cgi', true);
 
@@ -1286,6 +1290,11 @@ function openTask(task, taskView) {
                 if (this.responseText === 'success') {
                     errorText.style.color = 'green';
                     setText(errorText, 'Saved at ' + getTimeFromString(new Date().toString()));
+
+                    fetchTaskData();
+                    if (sB.getAttribute('data-task-id') == -1) {
+                        openProject(taskView, JSON.parse(sB.getAttribute('data-project')));
+                    }
                 } else {
                     errorText.style.color = 'red';
                     setText(errorText, 'Save failed - ' + this.responseText);
@@ -1665,7 +1674,7 @@ function populateUpcoming(taskView) {
     newTaskP.style.marginBottom = '2px';
     newTaskButton = document.createElement('button');
     newTaskButton.onclick = function() {
-        openTask(makeBlankTask(-1), taskView);
+        openTask(makeBlankTask('-1'), taskView);
     }
     setText(newTaskButton, 'Create task');
     newTaskP.appendChild(newTaskButton);
