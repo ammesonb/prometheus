@@ -89,7 +89,7 @@ if ($mode == 0) {
 
     # Create
     if ($id == -1 || (($id cmp "-1") == 0)) {
-        my @createCols = ('name', 'user_id', 'description', 'priority', 'project', 'is_urgent', 'is_secondary', 'deadline');
+        my @createCols = ('name', 'user_id', 'description', 'priority', 'project', 'is_urgent', 'is_other', 'deadline');
         my @createVals = ("'$name'", $session->param('user_id'), $desc, $pri, $proj);
         if (($deadline cmp 'u') == 0) {
             push(@createVals, 'true');
@@ -118,7 +118,7 @@ if ($mode == 0) {
         my @updateVals = ("'$name'", $desc, $pri, $proj);
         my $updated = COMMON::updateTable($session, 'tasks', \@updateCols, \@updateVals, \@filterCols, \@filterOps, \@filterVals, \@logic);
         if ($updated == 0) {print 'failed'; exit;}
-        @updateCols = ('is_urgent', 'is_secondary', 'deadline');
+        @updateCols = ('is_urgent', 'is_other', 'deadline');
         @updateVals = ();
         if (($deadline cmp 'u') == 0) {
             @updateVals = ('true', 'false', 'null');
