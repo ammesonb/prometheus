@@ -632,77 +632,6 @@ function openTasks() {
     projectsList = document.createElement('div');
     projectsList.className = 'project_list';
 
-    projectsListHeader = document.createElement('span');
-    upcomingTitle = document.createElement('p');
-    upcomingTitle.className = 'normal_section_header';
-    upcomingTitle.style.marginTop = '5px';
-    upcomingTitle.style.marginBottom = '10px';
-    upcomingLink = document.createElement('a');
-    upcomingLink.className = 'normal_section_header';
-    upcomingLink.href = '#';
-    upcomingLink.onclick = function() {
-        this.parentElement.parentElement.parentElement.parentElement.setAttribute('data-project-id', -1);
-        // First three arguments don't need to be stored, since if they are modified
-        // it will be with updated information
-        taskView = this.parentElement.parentElement.parentElement.parentElement.parentElement.children[1];
-        fetchTaskData();
-
-        populateUpcoming(taskView);
-
-        // Check if task wraps by comparing offsettops through DOM
-        spans = taskView.getElementsByTagName('span');
-        // For each set of tasks (urgent, normal, other)
-        for (s = 0; s < spans.length; s++) {
-            span = spans[s];
-            // For each task/header in them
-            for (pNum = 0; pNum < span.childElementCount; pNum++) {
-                p = span.children[pNum];
-                // Eliminate headers
-                if (p.className.search('normal_text') === -1) {continue;}
-                offset = p.children[0].offsetTop;
-                breakLine = 0;
-                // For each of their children
-                for (cNum = 1; cNum < p.childElementCount; cNum++) {
-                    c = p.children[cNum];
-                    childBreakFound = 0
-                    // If it has children (some do, some don't)
-                    if (c.childElementCount) {
-                        for (c2Num = 0; c2Num < c.childElementCount; c2Num++) {
-                            c2 = c.children[c2Num];
-                            if (c2.offsetTop > offset) {
-                                childBreakFound = 1;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (childBreakFound || c.offsetTop > offset) {
-                        breakLine = 1;
-                        break;
-                    }
-                }
-
-                if (breakLine) {
-                    if (span.children[pNum + 1]) {
-                        span.insertBefore(document.createElement('br'), span.children[pNum + 1]);
-                    } else {
-                        span.appendChild(document.createElement('br'));
-                    }
-                }
-            }
-        }
-    }
-    setText(upcomingLink, 'Overview');
-    upcomingTitle.appendChild(upcomingLink);
-
-    projectsTitle = document.createElement('p');
-    projectsTitle.className = 'normal_section_header';
-    projectsTitle.style.marginTop = '5px';
-    projectsTitle.style.marginBottom = '10px';
-    setText(projectsTitle, 'Projects:');
-    projectsListHeader.appendChild(upcomingTitle);
-    projectsListHeader.appendChild(projectsTitle);
-
     // Create new project input/button
     newProject = document.createElement('span');
     newProjectName = document.createElement('input');
@@ -761,21 +690,18 @@ function openTasks() {
     upcomingU.appendChild(upcomingP);
 
     if (useNightTheme()) {
-        switchToNight(projectsPanel, upcomingTitle, upcomingLink, projectsTitle, newProjectName, upcoming, upcomingU, upcomingP);
+        switchToNight(projectsPanel, newProjectName, upcoming, upcomingU, upcomingP);
     }
 
     projectsPanel.appendChild(projectsList);
     projectsPanel.appendChild(newProject);
-    projectsList.appendChild(projectsListHeader);
+
     upcoming.appendChild(upcomingU);
     taskPanel.appendChild(projectsPanel);
     taskPanel.appendChild(upcoming);
     
-    // Set up project list and upcoming tasks
     fetchTaskData();
-    out = populateProjects(projectsList);
-
-    fetchTaskData();
+    populateProjects(projectsList);
     populateUpcoming(upcoming);
 
     // Add tab and panel
@@ -859,7 +785,7 @@ function openProject(taskView, project) {
     removeProjectLink.onclick = function() {
         conf = confirm('Are you sure you want to delete project \'' + this.getAttribute('data-project-name') + '\'?');
         if (!conf) {return;}
-        deleteProject(this.getAttribute('data-project-id'), 'project');
+        deleteProject(this.getAttribute('data-project-id'), 'project', taskView);
     };
     removeProjectImg = document.createElement('img');
     removeProjectImg.src = 'images/x.png';
@@ -1042,7 +968,7 @@ function openProject(taskView, project) {
     }
 }
 
-function deleteProject(projectID, viewMode) {
+function deleteProject(projectID, viewMode, taskView) {
     // Delete project
     deleteProjectReq = createPostReq('tasks.cgi', false);
     deleteProjectReq.onreadystatechange = function() {
@@ -1058,6 +984,7 @@ function deleteProject(projectID, viewMode) {
 
     // Reset view
     if (viewMode === 'project') {populateUpcoming(taskView);}
+    populateProjects(taskView.parentElement.children[0].children[0]);
 }
 
 function deleteTask(task, taskView, returnToOverview) {
@@ -1634,6 +1561,84 @@ function parseProjects() {
 }
 
 function populateProjects(projectsList) {
+    deleteAllChildren(projectsList);
+
+    // Create project list headers
+    projectsListHeader = document.createElement('span');
+    upcomingTitle = document.createElement('p');
+    upcomingTitle.className = 'normal_section_header';
+    upcomingTitle.style.marginTop = '5px';
+    upcomingTitle.style.marginBottom = '10px';
+    upcomingLink = document.createElement('a');
+    upcomingLink.className = 'normal_section_header';
+    upcomingLink.href = '#';
+    upcomingLink.onclick = function() {
+        this.parentElement.parentElement.parentElement.parentElement.setAttribute('data-project-id', -1);
+        // First three arguments don't need to be stored, since if they are modified
+        // it will be with updated information
+        taskView = this.parentElement.parentElement.parentElement.parentElement.parentElement.children[1];
+        fetchTaskData();
+
+        populateUpcoming(taskView);
+
+        // Check if task wraps by comparing offsettops through DOM
+        spans = taskView.getElementsByTagName('span');
+        // For each set of tasks (urgent, normal, other)
+        for (s = 0; s < spans.length; s++) {
+            span = spans[s];
+            // For each task/header in them
+            for (pNum = 0; pNum < span.childElementCount; pNum++) {
+                p = span.children[pNum];
+                // Eliminate headers
+                if (p.className.search('normal_text') === -1) {continue;}
+                offset = p.children[0].offsetTop;
+                breakLine = 0;
+                // For each of their children
+                for (cNum = 1; cNum < p.childElementCount; cNum++) {
+                    c = p.children[cNum];
+                    childBreakFound = 0
+                    // If it has children (some do, some don't)
+                    if (c.childElementCount) {
+                        for (c2Num = 0; c2Num < c.childElementCount; c2Num++) {
+                            c2 = c.children[c2Num];
+                            if (c2.offsetTop > offset) {
+                                childBreakFound = 1;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (childBreakFound || c.offsetTop > offset) {
+                        breakLine = 1;
+                        break;
+                    }
+                }
+
+                if (breakLine) {
+                    if (span.children[pNum + 1]) {
+                        span.insertBefore(document.createElement('br'), span.children[pNum + 1]);
+                    } else {
+                        span.appendChild(document.createElement('br'));
+                    }
+                }
+            }
+        }
+    }
+    setText(upcomingLink, 'Overview');
+    upcomingTitle.appendChild(upcomingLink);
+
+    projectsTitle = document.createElement('p');
+    projectsTitle.className = 'normal_section_header';
+    projectsTitle.style.marginTop = '5px';
+    projectsTitle.style.marginBottom = '10px';
+    setText(projectsTitle, 'Projects:');
+
+    if (useNightTheme()) {switchToNight(upcomingTitle, upcomingLink, projectsTitle);}
+
+    projectsListHeader.appendChild(upcomingTitle);
+    projectsListHeader.appendChild(projectsTitle);
+    projectsList.appendChild(projectsListHeader);
+
     // Create project list
     for (project = 0; project < rootProjects.length; project++) {
         currentRoot = rootProjects[project];
@@ -1861,7 +1866,8 @@ function addProject(parent, project, level) {
     removeProjectLink.onclick = function() {
         conf = confirm('Are you sure you want to delete project \'' + this.getAttribute('data-project-name') + '\'?');
         if (!conf) {return;}
-        deleteProject(this.getAttribute('data-project-id', 'tree'));
+        taskView = this.parentElement.parentElement.parentElement.children[1];
+        deleteProject(this.getAttribute('data-project-id'), 'tree', taskView);
     };
     removeProjectImg = document.createElement('img');
     removeProjectImg.src = 'images/x.png';
