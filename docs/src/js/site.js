@@ -859,7 +859,6 @@ function openProject(taskView, project) {
     removeProjectLink.onclick = function() {
         conf = confirm('Are you sure you want to delete project \'' + this.getAttribute('data-project-name') + '\'?');
         if (!conf) {return;}
-        fetchTaskData();
         deleteProject(this.getAttribute('data-project-id'), 'project');
     };
     removeProjectImg = document.createElement('img');
@@ -1054,6 +1053,8 @@ function deleteProject(projectID, viewMode) {
         }
     };
     deleteProjectReq.send('mode=4&id=' + projectID);
+
+    fetchTaskData();
 
     // Reset view
     if (viewMode === 'project') {populateUpcoming(taskView);}
@@ -1781,18 +1782,11 @@ function createProjectLink(project, levelsToRoot) {
     projAnchor.href = '#';
     projAnchor.style.whiteSpace = 'nowrap';
     projAnchor.setAttribute('data-project', JSON.stringify(project));
-    projAnchor.setAttribute('data-projects-by-id', JSON.stringify(projectsByID));
-    projAnchor.setAttribute('data-project-hierarchy', JSON.stringify(projectHierarchy));
-    projAnchor.setAttribute('data-subprojects', JSON.stringify(subProjects));
-    projAnchor.setAttribute('data-levels-to-root', levelsToRoot);
     projAnchor.onclick = function() {
         levels = parseInt(this.getAttribute('data-levels-to-root'), 10);
         taskView = this;
         for (levels = levels; levels > 0; levels--) {taskView = taskView.parentElement;}
         openProj = JSON.parse(this.getAttribute('data-project'));
-        pID = JSON.parse(this.getAttribute('data-projects-by-id'));
-        pH = JSON.parse(this.getAttribute('data-project-hierarchy'));
-        subps = JSON.parse(this.getAttribute('data-subprojects'));
         openProject(taskView, openProj);
     };
     setText(projAnchor, project.name);
@@ -1848,19 +1842,9 @@ function addProject(parent, project, level) {
     openProjectLink.href = '#';
     openProjectLink.style.textDecoration = 'none';
     openProjectLink.setAttribute('data-project', JSON.stringify(project));
-    openProjectLink.setAttribute('data-projects-by-id', JSON.stringify(projectsByID));
-    openProjectLink.setAttribute('data-project-hierarchy', JSON.stringify(projectHierarchy));
-    if (subProjects) {
-        openProjectLink.setAttribute('data-subprojects', JSON.stringify(subProjects));
-    } else {
-        openProjectLink.setAttribute('data-subprojects', '[]');
-    }
     openProjectLink.onclick = function() {
         taskView = this.parentElement.parentElement.parentElement.children[1];
         openProj = JSON.parse(this.getAttribute('data-project'));
-        pID = JSON.parse(this.getAttribute('data-projects-by-id'));
-        pH = JSON.parse(this.getAttribute('data-project-hierarchy'));
-        subprojects = JSON.parse(this.getAttribute('data-subprojects'));
         openProject(taskView, openProj);
     };
     projectName = document.createElement('p');
@@ -1898,8 +1882,6 @@ function addProject(parent, project, level) {
     if (subProjects[project.id]) {
         setText(expandProject, stringFill('\u00a0', 3 * level) + '+');
         expandProject.href = '#';
-        expandProject.setAttribute('data-projects-by-id', JSON.stringify(projectsByID));
-        expandProject.setAttribute('data-project-hierarchy', JSON.stringify(projectHierarchy));
         expandProject.onclick = function() {
             nextSibling = this.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling;
             // Collapse
