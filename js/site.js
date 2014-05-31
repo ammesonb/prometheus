@@ -869,7 +869,8 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
     removeProjectLink.onclick = function() {
         conf = confirm('Are you sure you want to delete project \'' + this.getAttribute('data-project-name') + '\'?');
         if (!conf) {return;}
-        deleteProject(this.getAttribute('data-project-id'), 'project', projectsByID, projectHierarchy, taskView, subProjects, tasks);
+        data = JSON.parse(fetchTaskData());
+        deleteProject(this.getAttribute('data-project-id'), 'project', data[1], projectsByID, projectHierarchy, taskView, subProjects);
     };
     removeProjectImg = document.createElement('img');
     removeProjectImg.src = 'images/x.png';
@@ -1055,7 +1056,16 @@ function openProject(taskView, project, projectsByID, projectHierarchy, subProje
 
 function deleteProject(projectID, viewMode, tasks, projectsByID, projectHierarchy, taskView, subProjects) {
     // Delete project
-    
+    deleteProjectReq = createPostReq('tasks.cgi', false);
+    deleteProjectReq.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            if (this.responseText != 'success') {
+                alert('Project deletion failed with error ' + this.responseText);
+            }
+        }
+    };
+    deleteProjectReq.send('mode=4&id=' + projectID);
+
     // Reset view
     if (viewMode === 'project') {populateUpcoming(tasks, projectsByID, projectHierarchy, taskView, subProjects);}
 }
@@ -1887,7 +1897,7 @@ function addProject(parent, project, level, projectsByID, projectHierarchy, subP
         openProjectLink.setAttribute('data-subprojects', '[]');
     }
     openProjectLink.onclick = function() {
-        taskView = this.parentElement.parentElement.parentElement.children[1]
+        taskView = this.parentElement.parentElement.parentElement.children[1];
         openProj = JSON.parse(this.getAttribute('data-project'));
         pID = JSON.parse(this.getAttribute('data-projects-by-id'));
         pH = JSON.parse(this.getAttribute('data-project-hierarchy'));
@@ -1908,7 +1918,6 @@ function addProject(parent, project, level, projectsByID, projectHierarchy, subP
     removeProjectLink.onclick = function() {
         conf = confirm('Are you sure you want to delete project \'' + this.getAttribute('data-project-name') + '\'?');
         if (!conf) {return;}
-        taskView = this.parentElement
         // Don't need extra arguments because not resetting view
         deleteProject(this.getAttribute('data-project-id', 'tree'));
     };

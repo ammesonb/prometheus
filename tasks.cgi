@@ -146,5 +146,16 @@ if ($mode == 0) {
     if ($rows == 0) {print 'fail';}
     elsif ($rows == 1) {print 'success';}
     else {print 'extra';}
+} elsif ($mode == 4) {
+    my $id = $q->param('id');
+    if (not ($id =~ /^[0-9]+$/)) {
+        print 'Invalid ID';
+        exit;
+    }
+
+    my $dbh = COMMON::connectToDB($session);
+    my $deleted = $dbh->do("SELECT delete_project('$id')");
+    if ($deleted == 0) {print 'Database error or project does not exist'; exit;}
+    print 'success';
 }
 exit;
