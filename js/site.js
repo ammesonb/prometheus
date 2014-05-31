@@ -783,8 +783,6 @@ function openProject(taskView, project) {
     removeProjectLink.setAttribute('data-project-id', project.id);
     removeProjectLink.setAttribute('data-project-name', project.name);
     removeProjectLink.onclick = function() {
-        conf = confirm('Are you sure you want to delete project \'' + this.getAttribute('data-project-name') + '\'?');
-        if (!conf) {return;}
         deleteProject(this.getAttribute('data-project-id'), 'project', taskView);
     };
     removeProjectImg = document.createElement('img');
@@ -969,6 +967,15 @@ function openProject(taskView, project) {
 }
 
 function deleteProject(projectID, viewMode, taskView) {
+    // Verify project can be deleted and user wants to
+    n = projectsByID[projectID].name;
+    if (n === 'Default') {
+        alert('The default project can\'t be deleted!');
+        exit;
+    }
+    conf = confirm('Are you sure you want to delete project \'' + n + '\'?');
+    if (!conf) {return;}
+
     // Delete project
     deleteProjectReq = createPostReq('tasks.cgi', false);
     deleteProjectReq.onreadystatechange = function() {
@@ -980,9 +987,8 @@ function deleteProject(projectID, viewMode, taskView) {
     };
     deleteProjectReq.send('mode=4&id=' + projectID);
 
-    fetchTaskData();
-
     // Reset view
+    fetchTaskData();
     if (viewMode === 'project') {populateUpcoming(taskView);}
     populateProjects(taskView.parentElement.children[0].children[0]);
 }
@@ -1873,8 +1879,6 @@ function addProject(parent, project, level) {
     removeProjectLink.setAttribute('data-project-id', project.id);
     removeProjectLink.setAttribute('data-project-name', project.name);
     removeProjectLink.onclick = function() {
-        conf = confirm('Are you sure you want to delete project \'' + this.getAttribute('data-project-name') + '\'?');
-        if (!conf) {return;}
         taskView = this.parentElement.parentElement.parentElement.children[1];
         deleteProject(this.getAttribute('data-project-id'), 'tree', taskView);
     };
