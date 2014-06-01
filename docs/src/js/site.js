@@ -849,6 +849,8 @@ function openProject(taskView, project) {
     urgent = out[0];
     other = out[1];
     normal = out[2];
+    urgent.sort(sortTasksByPriority);
+    other.sort(sortTasksByPriority);
     out = tasksToHTML(urgent, normal, other, 0);
     urgentHeader = out[0];
     urgentHR = out[1];
