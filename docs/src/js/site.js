@@ -1329,6 +1329,11 @@ function openTask(task, taskView) {
 
     // Text handlers
     titleInput.onchange = function() {
+        e = this;
+        while (!(e.style.fontWeight === 'bold')) {
+            e = e.previousElementSibling;
+        }
+        setText(e, this.value);
         if (this.value !== '') {
             saveButton = this.parentElement.getElementsByTagName('button')[0];
             saveButton.setAttribute('data-task-name', this.value);
