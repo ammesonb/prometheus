@@ -1856,12 +1856,27 @@ function addProjectLinks(projLinks, color, parent, isTitle) {
 }
 
 function addProject(parent, project, level) {
-    // Create and add this project to the list
+    /* Create and add this project to the list
+       In state preservation, level == 0 means root project
+       Since some conditions account for the level == 0 part,
+       then project.id doesn't need to be checked since what actually matters
+       is that its parent is expanded, not itself
+       The parts that set the '+'+ or '-' text do not care if the project
+       is a root or sub project, and therefore the ID must be checked
+       in addition to the parent
+    */
+
     // Expand project button
     expandProject = document.createElement('a');
-    expandProject.className = 'open_project';
+    // Only change color if we are expanded
+    if (expanded[project.id]) {
+        expandProject.className = 'close_project';
+        expandProject.setAttribute('data-expanded', 1);
+    } else {
+        expandProject.className = 'open_project';
+        expandProject.setAttribute('data-expanded', 0);
+    }
     expandProject.setAttribute('data-project-id', project.id);
-    expandProject.setAttribute('data-expanded', 0);
     expandProject.setAttribute('data-level', level);
     setText(expandProject, stringFill('\u00a0', 3 * level) + '~');
 
@@ -1898,16 +1913,24 @@ function addProject(parent, project, level) {
     removeProjectLink.appendChild(removeProjectImg);
 
     if (useNightTheme()) {switchToNight(projectName);}
-    if (level !== 0) {expandProject.style.display = 'none'; openProjectLink.style.display = 'none'; removeProjectLink.style.display = 'none';}
+    if (level !== 0 && !expanded[project.parent]) {
+        expandProject.style.display = 'none';
+        openProjectLink.style.display = 'none';
+        removeProjectLink.style.display = 'none';
+    }
 
     parent.appendChild(expandProject);
     parent.appendChild(openProjectLink);
     parent.appendChild(removeProjectLink);
-    if (level === 0) {parent.appendChild(document.createElement('br'));}
+    if (level === 0 || expanded[project.parent] == 1) {parent.appendChild(document.createElement('br'));}
 
     // If there are actually projects to expand
     if (subProjects[project.id]) {
-        setText(expandProject, stringFill('\u00a0', 3 * level) + '+');
+        if (expanded[project.parent] === 1 || expanded[project.id]) {
+            setText(expandProject, stringFill('\u00a0', 3 * level) + '-' + '\u00a0');
+        } else {
+            setText(expandProject, stringFill('\u00a0', 3 * level) + '+');
+        }
         expandProject.href = '#';
         expandProject.onclick = function() {
             nextSibling = this.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling;
