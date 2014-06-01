@@ -839,6 +839,9 @@ function openProject(taskView, project) {
         if (useNightTheme()) {switchToNight(subprojectsP);}
     
         taskView.appendChild(subprojectsP);
+    } else {
+        taskView.appendChild(document.createElement('br'));
+        taskView.appendChild(document.createElement('br'));
     }
 
     // Get task list
@@ -846,8 +849,7 @@ function openProject(taskView, project) {
     urgent = out[0];
     other = out[1];
     normal = out[2];
-    console.log(out);
-    out = tasksToHTML(urgent, normal, other);
+    out = tasksToHTML(urgent, normal, other, false);
     urgentHeader = out[0];
     urgentHR = out[1];
     urgentTasks = out[2];
@@ -856,20 +858,29 @@ function openProject(taskView, project) {
     otherHR = out[5];
     otherTasks = out[6];
 
-    // Add tasks
-    if (urgent.length > 0) {
-        taskView.appendChild(urgentHeader);
-        taskView.appendChild(urgentHR);
-        taskView.appendChild(urgentTasks);
+    // Add new task button
+    newTaskP = document.createElement('p');
+    newTaskP.style.display = 'inline';
+    newTaskP.style.cssFloat = 'right';
+    newTaskP.style.marginBottom = '2px';
+    newTaskButton = document.createElement('button');
+    newTaskButton.onclick = function() {
+        openTask(makeBlankTask('-1'), taskView);
     }
-    if (normal.length > 0) {
-        taskView.appendChild(normalTasks);
+    setText(newTaskButton, 'Create task');
+    newTaskP.appendChild(newTaskButton);
+
+    if (useNightTheme()) {switchToNight(newTaskButton);}
+
+    taskView.appendChild(newTaskP);
+
+    // If no tasks, add whitespace
+    if (urgent.length == 0 && other.length == 0 && normal.length == 0) {
+        taskView.appendChild(document.createElement('br'));
+        taskView.appendChild(document.createElement('br'));
     }
-    if (other.length > 0) {
-        taskView.appendChild(otherHeader);
-        taskView.appendChild(otherHR);
-        taskView.appendChild(otherTasks);
-    }
+
+    addHTMLTasks(taskView, urgentHeader, urgentHR, urgentTasks, normalTasks, otherHeader, otherHR, otherTasks);
 
     return;
 
@@ -1555,7 +1566,7 @@ function addOption(project, level, select, projectID) {
     select.appendChild(opt);
 }
 
-function tasksToHTML(urgent, normal, other) {
+function tasksToHTML(urgent, normal, other, fromOverview) {
     // Create urgent tasks
     urgentHeader = document.createElement('p');
     urgentHeader.className = 'normal_section_header';
@@ -1569,7 +1580,7 @@ function tasksToHTML(urgent, normal, other) {
     urgentTasks = document.createElement('span');
     for (taskNum = 0; taskNum < urgent.length; taskNum++) {
         task = urgent[taskNum];
-        addTask(task, urgentTasks, false);
+        addTask(task, urgentTasks, false, fromOverview);
     }
 
     // Create tasks with deadlines
@@ -1602,7 +1613,7 @@ function tasksToHTML(urgent, normal, other) {
             normalTasks.appendChild(dateHeader);
             normalTasks.appendChild(dateHR);
         }
-        addTask(task, normalTasks, true);
+        addTask(task, normalTasks, true, fromOverview);
     }
 
     // Create other tasks
@@ -1618,11 +1629,62 @@ function tasksToHTML(urgent, normal, other) {
     otherTasks = document.createElement('span');
     for (taskNum = 0; taskNum < other.length; taskNum++) {
         task = other[taskNum];
-        addTask(task, otherTasks, false);
+        addTask(task, otherTasks, false, fromOverview);
     }
 
     if (useNightTheme()) {switchToNight(urgentHeader, urgentHR, otherHeader, otherHR);}
     return [urgentHeader, urgentHR, urgentTasks, normalTasks, otherHeader, otherHR, otherTasks];
+}
+
+function addHTMLTasks(taskView, urgentHeader, urgentHR, urgentTasks, normalTasks, otherHeader, otherHR, otherTasks) {
+    if (urgent.length !== 0) {
+        urgentHeader.style.cssFloat = 'left';
+        taskView.appendChild(urgentHeader);
+        if (css_browser_selector(navigator.userAgent).search('ff') !== -1) {
+            newTaskP.style.paddingRight = '5px';
+            urgentHR.style.marginTop = '2px';
+            taskView.appendChild(document.createElement('br'));
+            taskView.appendChild(document.createElement('br'));
+        }
+        taskView.appendChild(urgentHR);
+        taskView.appendChild(urgentTasks);
+    }
+    if (normal.length !== 0) {
+        if (urgent.length === 0) {normalTasks.children[0].style.cssFloat = 'left';}
+        if (css_browser_selector(navigator.userAgent).search('ff') !== -1 && urgent.length === 0) {
+            newTaskP.style.marginRight = '5px';
+            normalTasks.children[1].style.marginTop = '8px';
+            taskView.appendChild(normalTasks.children[0]);
+            taskView.appendChild(document.createElement('br'));
+            taskView.appendChild(document.createElement('br'));
+        }
+        taskView.appendChild(normalTasks);
+    }
+    if (other.length !== 0) {
+        if (urgent.length === 0 && normal.length === 0) {otherHeader.style.cssFloat = 'left';}
+        taskView.appendChild(otherHeader);
+        if (css_browser_selector(navigator.userAgent).search('ff') != -1 && urgent.length === 0 && normal.length === 0) {
+            newTaskP.style.paddingRight = '5px';
+            otherHR.style.marginTop = '2px';
+            taskView.appendChild(document.createElement('br'));
+            taskView.appendChild(document.createElement('br'));
+        }
+        taskView.appendChild(otherHR);
+        taskView.appendChild(otherTasks);
+    }
+
+    // If no tasks in any section
+    if (urgent.length === 0 && normal.length === 0 && other.length === 0) {
+        blank = document.createElement('p');
+        blank.className = 'normal_text';
+        blank.style.marginTop = '0px';
+        blank.style.fontStyle = 'italic';
+        setText(blank, stringFill('\u00a0', 4) + 'No tasks');
+
+        if (useNightTheme()) {switchToNight(blank);}
+
+        taskView.appendChild(blank);
+    }
 }
 
 function parseProjects() {
@@ -1766,7 +1828,7 @@ function populateUpcoming(taskView) {
     normal = flatten(sortedTasks[2]);
 
     // Create HTML elements from tasks
-    out = tasksToHTML(urgent, normal, other);
+    out = tasksToHTML(urgent, normal, other, true);
     urgentHeader = out[0];
     urgentHR = out[1];
     urgentTasks = out[2];
@@ -1775,57 +1837,7 @@ function populateUpcoming(taskView) {
     otherHR = out[5];
     otherTasks = out[6];
 
-    // Add tasks
-    if (urgent.length !== 0) {
-        urgentHeader.style.cssFloat = 'left';
-        taskView.appendChild(urgentHeader);
-        if (css_browser_selector(navigator.userAgent).search('ff') !== -1) {
-            newTaskP.style.paddingRight = '5px';
-            urgentHR.style.marginTop = '2px';
-            taskView.appendChild(document.createElement('br'));
-            taskView.appendChild(document.createElement('br'));
-        }
-        taskView.appendChild(urgentHR);
-        taskView.appendChild(urgentTasks);
-    }
-    if (normal.length !== 0) {
-        if (urgent.length === 0) {normalTasks.children[0].style.cssFloat = 'left';}
-        if (css_browser_selector(navigator.userAgent).search('ff') !== -1 && urgent.length === 0) {
-            newTaskP.style.marginRight = '5px';
-            normalTasks.children[1].style.marginTop = '8px';
-            taskView.appendChild(normalTasks.children[0]);
-            taskView.appendChild(document.createElement('br'));
-            taskView.appendChild(document.createElement('br'));
-            taskView.appendChild(normalTasks);
-        } else {
-            taskView.appendChild(normalTasks);
-        }
-    }
-    if (other.length !== 0) {
-        if (urgent.length === 0 && normal.length === 0) {otherHeader.style.cssFloat = 'left';}
-        taskView.appendChild(otherHeader);
-        if (css_browser_selector(navigator.userAgent).search('ff') != -1 && urgent.length === 0 && normal.length === 0) {
-            newTaskP.style.paddingRight = '5px';
-            otherHR.style.marginTop = '2px';
-            taskView.appendChild(document.createElement('br'));
-            taskView.appendChild(document.createElement('br'));
-        }
-        taskView.appendChild(otherHR);
-        taskView.appendChild(otherTasks);
-    }
-
-    // If no tasks in any section
-    if (urgent.length === 0 && normal.length === 0 && other.length === 0) {
-        blank = document.createElement('p');
-        blank.className = 'normal_text';
-        blank.style.marginTop = '0px';
-        blank.style.fontStyle = 'italic';
-        setText(blank, stringFill('\u00a0', 4) + 'No tasks');
-
-        if (useNightTheme()) {switchToNight(blank);}
-
-        taskView.appendChild(blank);
-    }
+    addHTMLTasks(taskView, urgentHeader, urgentHR, urgentTasks, normalTasks, otherHeader, otherHR, otherTasks);
 }
 
 function createProjectLinks(projectID, color, levelsToRoot, isTitle) {
@@ -2060,7 +2072,7 @@ function addProject(parent, project, level) {
     }
 }
 
-function addTask(task, parent, showTime) {
+function addTask(task, parent, showTime, fromOverview) {
     color = 0;
     if (task.priority > colors.length) {
         color = colors[colors.length - 1];
@@ -2110,6 +2122,7 @@ function addTask(task, parent, showTime) {
 
     addProjectLinks(projLinks, color, taskProj, false);
     
+    // Create delete task
     delTaskP = document.createElement('p');
     delTaskP.style.display = 'inline';
     setText(delTaskP, '\u00a0\u00a0');
@@ -2120,11 +2133,12 @@ function addTask(task, parent, showTime) {
     delTaskLink = document.createElement('a');
     delTaskLink.href = '#';
     delTaskLink.setAttribute('data-task', JSON.stringify(task));
+    delTaskLink.setAttribute('data-from-overview', fromOverview);
     delTaskLink.onclick = function() {
         t = JSON.parse(this.getAttribute('data-task'));
         conf = confirm('Are you sure you want to delete task "' + t.name + '"?');
         if (!conf) {return;}
-        deleteTask(this.getAttribute('data-task'), parent.parentElement, true);
+        deleteTask(this.getAttribute('data-task'), parent.parentElement, this.getAttribute('data-from-overview'));
     };
     delTaskLink.appendChild(delTaskImg);
     delTaskP.appendChild(delTaskLink);
