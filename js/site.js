@@ -1,5 +1,6 @@
 /* Global variables */
 var colors = ['#FF1300', '#FF6A00', '#FFA540', '#FFD240', '#9BED00', '#37DB79', '#63ADD0', '#7872D8', '#4B5BD8', '#9A3ED5', '#7F4BA0', '#ED3B83', '#999'];
+var expanded = [];
 var tasks = [];
 var sortedTasks = [];
 var tasksByID = [];
@@ -1859,6 +1860,7 @@ function addProject(parent, project, level) {
     // Expand project button
     expandProject = document.createElement('a');
     expandProject.className = 'open_project';
+    expandProject.setAttribute('data-project-id', project.id);
     expandProject.setAttribute('data-expanded', 0);
     expandProject.setAttribute('data-level', level);
     setText(expandProject, stringFill('\u00a0', 3 * level) + '~');
@@ -1914,6 +1916,7 @@ function addProject(parent, project, level) {
                 this.setAttribute('data-expanded', 0);
                 this.className = 'open_project';
                 setText(this, stringFill('\u00a0', 3 * this.getAttribute('data-level')) + '+');
+                expanded[this.getAttribute('data-project-id')] = 0;
                 // Make all sub-nodes invisible
                 while (!nextSibling.getAttribute('data-level') || nextSibling.getAttribute('data-level') > this.getAttribute('data-level')) {
                     // If a br, remove it and continue
@@ -1924,6 +1927,7 @@ function addProject(parent, project, level) {
                     }
                     nextSibling.style.display = 'none';
                     if (nextSibling.className === 'close_project') {
+                        expanded[nextSibling.getAttribute('data-project-id')] = 0;
                         nextSibling.className = 'open_project';
                         setText(nextSibling, stringFill('\u00a0', 3 * nextSibling.getAttribute('data-level')) + '+');
                         nextSibling.setAttribute('data-expanded', 0);
@@ -1933,6 +1937,7 @@ function addProject(parent, project, level) {
             // Expand
             } else {
                 this.setAttribute('data-expanded', 1);
+                expanded[this.getAttribute('data-project-id')] = 1;
                 this.className = 'close_project';
                 numSpaces = 3 * this.getAttribute('data-level');
                 setText(this, stringFill('\u00a0', numSpaces) + '-' + '\u00a0');
