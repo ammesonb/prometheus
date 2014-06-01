@@ -768,7 +768,6 @@ function openTasks() {
 
 function openProject(taskView, project) {
     deleteAllChildren(taskView);
-    taskView.appendChild(document.createElement('br'));
 
     // Display current project tree
     taskView.parentElement.children[0].setAttribute('data-project-id', project.id);
@@ -1821,7 +1820,7 @@ function populateUpcoming(taskView) {
     upcomingP = document.createElement('p');
     upcomingP.className = 'normal_section_header';
     setText(upcomingP, 'Upcoming tasks');
-    upcomingP.style.marginTop = '5px';
+    upcomingP.style.marginTop = '0px';
 
     if (useNightTheme()) {switchToNight(upcomingP);}
 
