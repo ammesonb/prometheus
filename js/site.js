@@ -849,7 +849,7 @@ function openProject(taskView, project) {
     urgent = out[0];
     other = out[1];
     normal = out[2];
-    out = tasksToHTML(urgent, normal, other, false);
+    out = tasksToHTML(urgent, normal, other, 0);
     urgentHeader = out[0];
     urgentHR = out[1];
     urgentTasks = out[2];
@@ -864,8 +864,9 @@ function openProject(taskView, project) {
     newTaskP.style.cssFloat = 'right';
     newTaskP.style.marginBottom = '2px';
     newTaskButton = document.createElement('button');
+    newTaskButton.setAttribute('this-project-id', project.id);
     newTaskButton.onclick = function() {
-        openTask(makeBlankTask('-1'), taskView);
+        openTask(makeBlankTask(this.getAttribute('this-project-id')), taskView);
     }
     setText(newTaskButton, 'Create task');
     newTaskP.appendChild(newTaskButton);
@@ -1040,26 +1041,31 @@ function deleteProject(projectID, viewMode, taskView) {
 
 function deleteTask(task, taskView, returnToOverview) {
     t = JSON.parse(task);
-    deleteTaskReq = createPostReq('tasks.cgi', true);
-    deleteTaskReq.send('mode=3&id=' + t.id);
+    deleteTaskReq = createPostReq('tasks.cgi', false);
 
     deleteTaskReq.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
             if (this.responseText == 'success') {
                 fetchTaskData();
     
-                if (returnToOverview) {
+                if (returnToOverview != '0') {
                     populateUpcoming(taskView);
                 } else {
                     openProject(taskView, projectsByID[t.project]);
                 }
             } else {
                 e = taskView.getElementsByClassName('error')[0];
-                e.style.color = 'red';
-                setText(e, 'Failed to delete task');
+                if (e) {
+                    e.style.color = 'red';
+                    setText(e, 'Failed to delete task');
+                } else {
+                    alert('Failed to delete task!');
+                }
             }
         }
     };
+
+    deleteTaskReq.send('mode=3&id=' + t.id);
 }
 
 function openTask(task, taskView) {
@@ -1828,7 +1834,7 @@ function populateUpcoming(taskView) {
     normal = flatten(sortedTasks[2]);
 
     // Create HTML elements from tasks
-    out = tasksToHTML(urgent, normal, other, true);
+    out = tasksToHTML(urgent, normal, other, 1);
     urgentHeader = out[0];
     urgentHR = out[1];
     urgentTasks = out[2];
