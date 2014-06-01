@@ -841,12 +841,39 @@ function openProject(taskView, project) {
         taskView.appendChild(subprojectsP);
     }
 
-    out = getTasksInProject(projectID);
+    // Get task list
+    out = getTasksInProject(project.id);
     urgent = out[0];
     other = out[1];
     normal = out[2];
+    console.log(out);
+    out = tasksToHTML(urgent, normal, other);
+    urgentHeader = out[0];
+    urgentHR = out[1];
+    urgentTasks = out[2];
+    normalTasks = out[3];
+    otherHeader = out[4];
+    otherHR = out[5];
+    otherTasks = out[6];
 
-    // Show project's tasks
+    // Add tasks
+    if (urgent.length > 0) {
+        taskView.appendChild(urgentHeader);
+        taskView.appendChild(urgentHR);
+        taskView.appendChild(urgentTasks);
+    }
+    if (normal.length > 0) {
+        taskView.appendChild(normalTasks);
+    }
+    if (other.length > 0) {
+        taskView.appendChild(otherHeader);
+        taskView.appendChild(otherHR);
+        taskView.appendChild(otherTasks);
+    }
+
+    return;
+
+    // Show project's tasks - legacy, leaving for reference
     // Add new task button
     newTaskButton = document.createElement('button');
     newTaskButton.onclick = function() {
@@ -1594,6 +1621,7 @@ function tasksToHTML(urgent, normal, other) {
         addTask(task, otherTasks, false);
     }
 
+    if (useNightTheme()) {switchToNight(urgentHeader, urgentHR, otherHeader, otherHR);}
     return [urgentHeader, urgentHR, urgentTasks, normalTasks, otherHeader, otherHR, otherTasks];
 }
 
@@ -1746,10 +1774,6 @@ function populateUpcoming(taskView) {
     otherHeader = out[4];
     otherHR = out[5];
     otherTasks = out[6];
-
-    if (useNightTheme()) {
-        switchToNight(urgentHeader, urgentHR, otherHeader, otherHR);
-    }
 
     // Add tasks
     if (urgent.length !== 0) {
