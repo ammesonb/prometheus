@@ -104,9 +104,11 @@ function flatten(arr) {
     return flat;
 }
 
-function deleteAllChildren(elem) {
+function deleteAllChildren(elem, removeAll) {
     if (isIE()) {
         while (elem.childElementCount > 0) {elem.children[0].removeNode(true);}
+    } else if (removeAll) {
+        while (elem.childNodes.length) {elem.childNodes[0].remove();}
     } else {
         while (elem.childElementCount > 0) {elem.children[0].remove();}
     }
@@ -767,7 +769,7 @@ function openTasks() {
 }
 
 function openProject(taskView, project) {
-    deleteAllChildren(taskView);
+    deleteAllChildren(taskView, 1);
 
     // Display current project tree
     taskView.parentElement.children[0].setAttribute('data-project-id', project.id);
@@ -1070,8 +1072,7 @@ function deleteTask(task, taskView, returnToOverview) {
 }
 
 function openTask(task, taskView, redirectView) {
-    deleteAllChildren(taskView);
-    taskView.appendChild(document.createElement('br'));
+    deleteAllChildren(taskView, 1);
     taskView.parentElement.children[0].setAttribute('data-project-id', task.project);
     c = 'black';
     if (useNightTheme()) {c = 'silver';}
@@ -1815,7 +1816,7 @@ function populateProjects(projectsList) {
 }
 
 function populateUpcoming(taskView) {
-    deleteAllChildren(taskView);
+    deleteAllChildren(taskView, 1);
 
     upcomingP = document.createElement('p');
     upcomingP.className = 'normal_section_header';
