@@ -866,7 +866,7 @@ function openProject(taskView, project) {
     newTaskButton = document.createElement('button');
     newTaskButton.setAttribute('this-project-id', project.id);
     newTaskButton.onclick = function() {
-        openTask(makeBlankTask(this.getAttribute('this-project-id')), taskView);
+        openTask(makeBlankTask(this.getAttribute('this-project-id')), taskView, 'project');
     }
     setText(newTaskButton, 'Create task');
     newTaskP.appendChild(newTaskButton);
@@ -1068,7 +1068,7 @@ function deleteTask(task, taskView, returnToOverview) {
     deleteTaskReq.send('mode=3&id=' + t.id);
 }
 
-function openTask(task, taskView) {
+function openTask(task, taskView, redirectView) {
     deleteAllChildren(taskView);
     taskView.appendChild(document.createElement('br'));
     taskView.parentElement.children[0].setAttribute('data-project-id', task.project);
@@ -1316,6 +1316,7 @@ function openTask(task, taskView) {
     setText(errorText, '\u00a0');
     saveButton = document.createElement('button');
     saveButton.setAttribute('data-task-id', task.id);
+    saveButton.setAttribute('data-redirect', redirectView);
     if (task.project == -1) {
         saveButton.setAttribute('data-task-project', projectSelect.value);
         saveButton.setAttribute('data-project', JSON.stringify(projectsByID[projectSelect.value]));
@@ -1349,8 +1350,10 @@ function openTask(task, taskView) {
                     setText(errorText, 'Saved at ' + getTimeFromString(new Date().toString()));
 
                     fetchTaskData();
-                    if (sB.getAttribute('data-task-id') == -1) {
+                    if (sB.getAttribute('data-redirect') == 'project') {
                         openProject(taskView, JSON.parse(sB.getAttribute('data-project')));
+                    } else {
+                        populateUpcoming(taskView);
                     }
                 } else {
                     errorText.style.color = 'red';
@@ -1580,6 +1583,7 @@ function addOption(project, level, select, projectID) {
 }
 
 function tasksToHTML(urgent, normal, other, fromOverview) {
+    redirectView = (fromOverview == 1) ? 'overview' : 'project';
     // Create urgent tasks
     urgentHeader = document.createElement('p');
     urgentHeader.className = 'normal_section_header';
@@ -1593,7 +1597,7 @@ function tasksToHTML(urgent, normal, other, fromOverview) {
     urgentTasks = document.createElement('span');
     for (taskNum = 0; taskNum < urgent.length; taskNum++) {
         task = urgent[taskNum];
-        addTask(task, urgentTasks, false, fromOverview);
+        addTask(task, urgentTasks, false, fromOverview, redirectView);
     }
 
     // Create tasks with deadlines
@@ -1630,7 +1634,7 @@ function tasksToHTML(urgent, normal, other, fromOverview) {
             normalTasks.appendChild(dateHeader);
             normalTasks.appendChild(dateHR);
         }
-        addTask(task, normalTasks, true, fromOverview);
+        addTask(task, normalTasks, true, fromOverview, redirectView);
     }
 
     // Create other tasks
@@ -1646,7 +1650,7 @@ function tasksToHTML(urgent, normal, other, fromOverview) {
     otherTasks = document.createElement('span');
     for (taskNum = 0; taskNum < other.length; taskNum++) {
         task = other[taskNum];
-        addTask(task, otherTasks, false, fromOverview);
+        addTask(task, otherTasks, false, fromOverview, redirectView);
     }
 
     if (useNightTheme()) {switchToNight(urgentHeader, urgentHR, otherHeader, otherHR);}
@@ -1828,7 +1832,7 @@ function populateUpcoming(taskView) {
     newTaskP.style.marginBottom = '2px';
     newTaskButton = document.createElement('button');
     newTaskButton.onclick = function() {
-        openTask(makeBlankTask('-1'), taskView);
+        openTask(makeBlankTask('-1'), taskView, 'overview');
     }
     setText(newTaskButton, 'Create task');
     newTaskP.appendChild(newTaskButton);
@@ -2132,7 +2136,7 @@ function addTask(task, parent, showTime, fromOverview) {
     taskLink.setAttribute('data-task', JSON.stringify(task));
     taskLink.onclick = function() {
         taskView = this.parentElement.parentElement.parentElement;
-        openTask(JSON.parse(this.getAttribute('data-task')), taskView);
+        openTask(JSON.parse(this.getAttribute('data-task')), taskView, redirectView);
     };
     setText(taskLink, task.name);
     taskProj = document.createElement('p');
