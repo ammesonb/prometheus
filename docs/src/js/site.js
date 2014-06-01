@@ -797,6 +797,7 @@ function openProject(taskView, project) {
 
     // Create subproject list
     if (subProjects[project.id]) {
+        subProjects[project.id].sort(function(a, b) {return a.name > b.name;});
         subprojectsP = document.createElement('p');
         subprojectsP.style.className = 'normal_text';
         tmpP = document.createElement('p');
@@ -1869,7 +1870,7 @@ function addProject(parent, project, level) {
     // Expand project button
     expandProject = document.createElement('a');
     // Only change color if we are expanded
-    if (expanded[project.id]) {
+    if (expanded[project.id] && subProjects[project.id] && subProjects[project.id].length) {
         expandProject.className = 'close_project';
         expandProject.setAttribute('data-expanded', 1);
     } else {
@@ -1925,10 +1926,10 @@ function addProject(parent, project, level) {
     if (level === 0 || expanded[project.parent] == 1) {parent.appendChild(document.createElement('br'));}
 
     // If there are actually projects to expand
-    if (subProjects[project.id]) {
-        if (expanded[project.parent] === 1 || expanded[project.id]) {
+    if (subProjects[project.id] && subProjects[project.id].length) {
+        if (expanded[project.id] && subProjects[project.id].length) {
             setText(expandProject, stringFill('\u00a0', 3 * level) + '-' + '\u00a0');
-        } else {
+        } else if (subProjects[project.id].length) {
             setText(expandProject, stringFill('\u00a0', 3 * level) + '+');
         }
         expandProject.href = '#';
@@ -1938,7 +1939,9 @@ function addProject(parent, project, level) {
             if (this.getAttribute('data-expanded') == 1) {
                 this.setAttribute('data-expanded', 0);
                 this.className = 'open_project';
-                setText(this, stringFill('\u00a0', 3 * this.getAttribute('data-level')) + '+');
+                if (subProjects[this.getAttribute('data-project-id')].length) {
+                    setText(this, stringFill('\u00a0', 3 * this.getAttribute('data-level')) + '+');
+                }
                 expanded[this.getAttribute('data-project-id')] = 0;
                 // Make all sub-nodes invisible
                 while (!nextSibling.getAttribute('data-level') || nextSibling.getAttribute('data-level') > this.getAttribute('data-level')) {
@@ -1952,7 +1955,9 @@ function addProject(parent, project, level) {
                     if (nextSibling.className === 'close_project') {
                         expanded[nextSibling.getAttribute('data-project-id')] = 0;
                         nextSibling.className = 'open_project';
-                        setText(nextSibling, stringFill('\u00a0', 3 * nextSibling.getAttribute('data-level')) + '+');
+                        if (subProjects[nextSibling.getAttribute('data-project-id')].length) {
+                            setText(nextSibling, stringFill('\u00a0', 3 * nextSibling.getAttribute('data-level')) + '+');
+                        }
                         nextSibling.setAttribute('data-expanded', 0);
                     }
                     nextSibling = nextSibling.nextElementSibling;
@@ -1961,9 +1966,11 @@ function addProject(parent, project, level) {
             } else {
                 this.setAttribute('data-expanded', 1);
                 expanded[this.getAttribute('data-project-id')] = 1;
-                this.className = 'close_project';
-                numSpaces = 3 * this.getAttribute('data-level');
-                setText(this, stringFill('\u00a0', numSpaces) + '-' + '\u00a0');
+                if (subProjects[this.getAttribute('data-project-id')].length) {
+                    this.className = 'close_project';
+                    numSpaces = 3 * this.getAttribute('data-level');
+                    setText(this, stringFill('\u00a0', numSpaces) + '-' + '\u00a0');
+                }
                 count = 0;
                 while (nextSibling.getAttribute('data-level') !== this.getAttribute('data-level')) {
                     nextLevel = nextSibling.getAttribute('data-level');
