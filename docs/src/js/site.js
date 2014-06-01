@@ -1536,9 +1536,16 @@ function organizeTasks(tasks) {
             }
             normal[task.project].push(task);
         }
-   }
+    }
     
     return [urgent, other, normal];
+}
+
+function sortTasksByPriority(t1, t2) {
+    if (t1.priority == t2.priority) {
+        return (t1.name > t2.name) ? 1 : -1;
+    }
+    return (t1.priority > t2.priority) ? 1 : -1;
 }
 
 function projectsToSelect(projectID) {
@@ -1591,7 +1598,11 @@ function tasksToHTML(urgent, normal, other, fromOverview) {
 
     // Create tasks with deadlines
     normal.sort(function(a, b) {
-        return ((deadlineToDate(a.deadline).getTime()) > (deadlineToDate(b.deadline).getTime())) ? 1 : -1;
+        if (deadlineToDate(a.deadline).getTime() == deadlineToDate(b.deadline).getTime()) {
+            return sortTasksByPriority(a, b);
+        } else {
+            return ((deadlineToDate(a.deadline).getTime()) > (deadlineToDate(b.deadline).getTime())) ? 1 : -1;
+        }
     });
 
     currentDate = 0;
@@ -1826,12 +1837,14 @@ function populateUpcoming(taskView) {
 
     taskView.appendChild(newTaskP);
 
-    // Sort tasks by urgent, then date, then other
-    // Function returns two-dimensional array, but project is
+    // Tasks sorted by deadline, priority, then name
+    // sortedTask is two-dimensional array, but project is
     // inconsequential for the task view, so flatten them
     urgent = flatten(sortedTasks[0]);
     other = flatten(sortedTasks[1]);
     normal = flatten(sortedTasks[2]);
+    urgent.sort(sortTasksByPriority);
+    other.sort(sortTasksByPriority);
 
     // Create HTML elements from tasks
     out = tasksToHTML(urgent, normal, other, 1);
@@ -2413,4 +2426,5 @@ function viewAccount() {
     addTab(accountPanel, accountTab);
     switchTab(id);
 }
+
 
