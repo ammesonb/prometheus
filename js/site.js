@@ -841,6 +841,11 @@ function openProject(taskView, project) {
         taskView.appendChild(subprojectsP);
     }
 
+    out = getTasksInProject(projectID);
+    urgent = out[0];
+    other = out[1];
+    normal = out[2];
+
     // Show project's tasks
     // Add new task button
     newTaskButton = document.createElement('button');
@@ -1436,6 +1441,35 @@ function fetchTaskData() {
     sortedTasks = organizeTasks(tasks);
 }
 
+function getSubprojects(projectID, projectIDs) {
+    projectIDs.push(projectID);
+    if (subProjects[projectID]) {
+        for (subp = 0; subp < subProjects[projectID].length; subp++) {
+            projectIDs = getSubprojects(subProjects[projectID][subp].id, projectIDs);
+        }
+    }
+
+    return projectIDs;
+}
+
+function getTasksInProject(projectID) {
+    projectTasks = [[], [], []];
+    projectIDs = [projectID];
+    if (subProjects[projectID]) {projectIDs = getSubprojects(projectID, []);}
+
+    // For each project
+    for (p = 0; p < projectIDs.length; p++) {
+        // For each kind of task
+        for (taskGroup = 0; taskGroup < sortedTasks.length; taskGroup++) {
+            // If tasks exist, add them to the list
+            if (!sortedTasks[taskGroup][projectIDs[p]]) {continue;}
+            sortedTasks[taskGroup][projectIDs[p]].map(function(t) {projectTasks[taskGroup].push(t);});
+        }
+    }
+
+    return projectTasks;
+}
+
 function organizeTasks(tasks) {
     urgent = new Array();
     other = new Array();
@@ -1699,13 +1733,9 @@ function populateUpcoming(taskView) {
     // Sort tasks by urgent, then date, then other
     // Function returns two-dimensional array, but project is
     // inconsequential for the task view, so flatten them
-    sortedTasks = organizeTasks(tasks);
-    urgentByID = sortedTasks[0];
-    otherByID = sortedTasks[1];
-    normalByID = sortedTasks[2]
-    urgent = flatten(urgentByID);
-    other = flatten(otherByID);
-    normal = flatten(normalByID);
+    urgent = flatten(sortedTasks[0]);
+    other = flatten(sortedTasks[1]);
+    normal = flatten(sortedTasks[2]);
 
     // Create HTML elements from tasks
     out = tasksToHTML(urgent, normal, other);
