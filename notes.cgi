@@ -148,7 +148,7 @@ if ($mode == 0) {
         my @deleteOps = ('=');
         my @deleteVals = ($noteID);
         my @deleteLogic = ();
-        COMMON::deleteFromTableTable($session, 'notes', \@deleteCols, \@deleteOps, \@deleteVals, \@deleteLogic);
+        COMMON::deleteFromTable($session, 'notes', \@deleteCols, \@deleteOps, \@deleteVals, \@deleteLogic);
     }
 }
 

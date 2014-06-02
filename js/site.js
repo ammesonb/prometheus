@@ -476,7 +476,7 @@ function populateNotes(data, notesTable, notesEditor, resize) {
             
             deleteNoteReq.onreadystatechange = function() {
                 if (this.readyState == 4 && this.status == 200) {
-                    refreshNotesReq = new XMLHttpRequest();
+                    refreshNotesReq = createPostReq('notes.cgi', true);
 
                     refreshNotesReq.onreadystatechange = function() {
                         if (this.readyState == 4 && this.status == 200) {
