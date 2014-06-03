@@ -12,7 +12,7 @@ use strict;
 
 my $indent = '    ';
 
-sub init {
+sub init { #{{{
     my $session = shift;
     my $title = shift;
     my $authorized = checkSession($session);
@@ -20,12 +20,12 @@ sub init {
     print $session->header();
     my $html = "<!DOCTYPE html>\n";
     $html .= "<html>\n";
-    $html .= "<head>\n";
+    $html .= "<head>\n"; #{{{
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/sha512.js\"></script>\n";
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/css_browser_selector.js\"></script>\n";
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/jstz.js\"></script>\n";
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/site.js\"></script>\n";
-    $html .= $indent . "<script type=\"text/javascript\">
+    $html .= $indent . "<script type=\"text/javascript\"> // #{{{
     window.onload = function() {
         document.body.style.backgroundSize = window.innerWidth + \"px \" + window.innerHeight + \"px\";
         theme = document.body.getAttribute('data-night-theme');
@@ -61,21 +61,21 @@ sub init {
         } catch(e) {}
         document.body.style.visibility = 'visible';
     };
-    </script>\n";
+    </script>\n"; #}}}
     $html .= $indent . "<title>$title</title>\n";
     $html .= $indent . "<link rel=\"stylesheet\" type=\"text/css\" href=\"res/style.css\"/>\n";
-    $html .= "</head>\n";
+    $html .= "</head>\n"; #}}}
     $html .= "<body style=\"visibility: hidden;\" data-night-theme=" . $session->param('night_theme') . ">\n";
-    if ($authorized == 2) {
+    if ($authorized == 2) { #{{{
         $html .= "<div id=\"login\">\n";
         $html .= "<img src=\"images/prometheus.png\" alt=\"Prometheus\">\n";
         $html .= "<p><strong>You are not allowed to access this from your current location.<br>Please contact me at ammesonb\@gmail.com.</strong></p>\n";
-        $html .= "</div>\n";
+        $html .= "</div>\n"; #}}}
     } elsif ($authorized == 3) {
         $html .= "<div id=\"login\">\n";
         $html .= "<img src=\"images/prometheus.png\" alt=\"Prometheus\">\n";
         $html .= "<p><strong>This account has been disabled.<br>Please contact me at ammesonb\@gmail.com.</strong></p>\n";
-    } elsif ($authorized == 1) {
+    } elsif ($authorized == 1) { #{{{
         $html .= "<div id=\"login\">\n";
         $html .= $indent . "<a href=\"/\"><img src=\"images/prometheus.png\" alt=\"Prometheus\"></a>\n";
         my $error = "&nbsp;";
@@ -90,7 +90,7 @@ sub init {
         $html .= $indent . "&nbsp;Password:&nbsp;&nbsp;&nbsp;<input type=\"password\">\n";
         $html .= $indent . "<br><br>\n";
         $html .= $indent . "<button onclick=\"login()\">Log In</button>\n";
-        $html .= $indent . "<script type=\"text/javascript\">
+        $html .= $indent . "<script type=\"text/javascript\"> // #{{{
     document.getElementsByTagName('input')[0].focus();
     document.onkeydown = function (evt) {
         var keyCode = evt ? (evt.which ? evt.which : evt.keyCode) : event.keyCode;
@@ -103,9 +103,9 @@ sub init {
             return true;
         }
     };
-    </script>\n";
-        $html .= "</div>\n";
-    } else {
+    </script>\n"; #}}}
+        $html .= "</div>\n"; #}}}
+    } else { #{{{
         $html .= "<img src=\"images/prometheus.png\" alt=\"Prometheus\" style=\"margin-top: -.5%;\">\n";
         my $user = $session->param('user');
         $html .= "<p id=\"userinfo\">Logged in as $user<br><a href=\"logout.cgi\">Log Out</a></p>\n";
@@ -113,8 +113,8 @@ sub init {
         $html .= $indent . "<a href=\"#\"><div class=\"tab\" onclick=\"switchTab('home');\">Home</div></a>\n";
         $html .= "</div>\n";
         $html .= "<div id=\"main\">\n";
-        $html .= "<div id=\"home\" class=\"selected\">\n";
-        $html .= $indent . "<script type=\"text/javascript\">
+        $html .= "<div id=\"home\" class=\"selected\">\n"; #{{{
+        $html .= $indent . "<script type=\"text/javascript\"> // #{{{
     main = document.getElementById('main');
     main.style.width = window.innerWidth - 300 + 'px';
     main.style.marginLeft = -.5 * (window.innerWidth - 300) + 'px';
@@ -123,9 +123,9 @@ sub init {
     tabs = document.getElementById('tabs');
     tabs.style.width = window.innerWidth - 300 + 'px';
     tabs.style.marginLeft = -.5 * (window.innerWidth - 300) + 'px';
-    </script>\n";
+    </script>\n"; #}}}
 
-        # Get services the user has access to
+        # Get services the user has access to #{{{
         my @returnCols = ('user_id', 'array_agg(service_id)');
         my @searchCols = ('user_id');
         my @searchOps = ('=');
@@ -140,7 +140,7 @@ sub init {
         @serviceKeys = keys(%services);
         my @services = @services{$serviceKeys[0]};
         $servicesRef = $services[0];
-        my @serviceIDs = @$servicesRef;
+        my @serviceIDs = @$servicesRef; #}}}
 
         my $toolsRef = getSortedTable($session, "services", "row_order");
         my @tools = @$toolsRef;
@@ -150,55 +150,55 @@ sub init {
             if ((first_index {$_ == $tool{'id'}} @serviceIDs) == -1) {next;}
             push(@services, $tool{'service'});
             $html .= $indent . "<a href=\"#\" onclick=\"$tool{'function'}()\">\n";
-            $html .= $indent x 2 . "<span class=\"tool\">\n";
+            $html .= $indent x 2 . "<span class=\"tool\">\n"; #{{{
             my $image = $tool{'service'};
             $image =~ s/^(.*)$/\L$1.png/;
             $image =~ s/ /_/g;
             $html .= $indent x 3 . "<img src=\"images/$image\" alt=\"$tool{'service'}\" width=\"83px\" height=\"137\">\n";
             $html .= $indent x 3 . "<p class=\"tool_name\">$tool{'service'}</p>\n";
-            $html .= $indent . "</span>\n";
+            $html .= $indent . "</span>\n"; #}}}
             $html .= $indent . "</a>\n";
         }
         $session->param('services', join(', ', @services));
+        $html .= "</div>\n"; #}}}
         $html .= "</div>\n";
-        $html .= "</div>\n";
-    }
+    } #}}}
     $html .= "</body>\n";
     $html .= "</html>\n";
 
     return $html;
-}
+} #}}}
 
-sub checkSession {
+sub checkSession { #{{{
     my $session = shift;
     return 3 if ($session->param('disabled'));
     return 2 if ($session->param('blocked'));
     return 1 if (not $session->param('logged_in'));
     return 0;
-}
+} #}}}
 
-sub connectToDB {
+sub connectToDB { #{{{
     my $session = shift;
     my $dbh = DBI->connect("DBI:Pg:dbname=prometheus", "root");
     $dbh->do("SET timezone='" . $session->param('timezone') . "'");
     return $dbh;
-}
+} #}}}
 
-sub getTable {
+sub getTable { #{{{
     my $session = shift;
     my $tableName = shift;
     my $dbh = connectToDB($session);
     my $tableRef = $dbh->selectall_hashref("SELECT * FROM $tableName", ["id"]);
     $dbh->disconnect();
     return $tableRef;
-}
+} #}}}
 
-sub getSortedTable {
+sub getSortedTable { #{{{
     my $session = shift;
     my $tableName = shift;
     my $sortBy = shift;
     my $direction = shift;
-    
+
     my $dir = "";
     $dir = " $direction" if ($direction);
     my $dbh = connectToDB($session);
@@ -210,10 +210,10 @@ sub getSortedTable {
     }
     $dbh->disconnect();
     return \@rows;
-}
+} #}}}
 
-sub searchTable {
-    # Get arguments
+sub searchTable { #{{{
+    # Get arguments #{{{
     my $session = shift;
     my $tableName = shift;
     my $colsRef = shift;
@@ -232,31 +232,31 @@ sub searchTable {
         my $groupColsRef = shift;
         @groupColumns = @$groupColsRef;
     }
-    my $idCol = shift;
+    my $idCol = shift; #}}}
 
     my $dbh = connectToDB($session);
 
-    # Create query
+    # Create query #{{{
     my $query = "SELECT " . join(', ', @columns) . " FROM $tableName WHERE ";
     for (my $i = 0; $i <= $#logic; $i++) {
         $query .= "$searchColumns[$i] $operators[$i] $patterns[$i] $logic[$i] ";
     }
-    $query .= "$searchColumns[$#searchColumns] $operators[$#operators] $patterns[$#patterns]";
+    $query .= "$searchColumns[$#searchColumns] $operators[$#operators] $patterns[$#patterns]"; #}}}
     $query .= " GROUP BY " . join(', ', @groupColumns) if ($useAgg);
 
-    # Execute query
+    # Execute query #{{{
     my $sth = $dbh->prepare($query);
     $sth->execute();
     my $dataRef;
     if ($idCol) {$dataRef = $sth->fetchall_hashref([$idCol]);}
     else {$dataRef = $sth->fetchall_hashref(['id']);}
-    $dbh->disconnect();
+    $dbh->disconnect(); #}}}
 
     return $dataRef;
-}
+} #}}}
 
-sub searchTableSort {
-    # Get arguments
+sub searchTableSort { #{{{
+    # Get arguments #{{{
     my $session = shift;
     my $tableName = shift;
     my $colsRef = shift;
@@ -269,38 +269,38 @@ sub searchTableSort {
     my @patterns = @$patternsRef;
     my $logicRef = shift;
     my @logic = @$logicRef;
-    my $sort = shift;
+    my $sort = shift; #}}}
 
     my $dbh = connectToDB($session);
 
-    # Create query
+    # Create query #{{{
     my $query = "SELECT " . join(', ', @columns) . " FROM $tableName WHERE ";
     for (my $i = 0; $i <= $#logic; $i++) {
         $query .= "$searchColumns[$i] $operators[$i] $patterns[$i] $logic[$i] ";
     }
-    $query .= "$searchColumns[$#searchColumns] $operators[$#operators] $patterns[$#patterns] ORDER BY $sort";
+    $query .= "$searchColumns[$#searchColumns] $operators[$#operators] $patterns[$#patterns] ORDER BY $sort"; #}}}
 
     my $sth = $dbh->prepare($query);
     $sth->execute();
 
-    # Create array of hash references
+    # Create array of hash references #{{{
     my @rows;
     while (my $rowRef = $sth->fetchrow_hashref) {
         push(@rows, $rowRef);
-    }
+    } #}}}
 
     $dbh->disconnect();
     return \@rows;
-}
+} #}}}
 
-sub insertIntoTable {
-    # Get parameters
+sub insertIntoTable { #{{{
+    # Get parameters #{{{
     my $session = shift;
     my $tableName = shift;
     my $insertColsRef = shift;
     my @insertColumns = @$insertColsRef;
     my $insertValsRef = shift;
-    my @insertValues = @$insertValsRef;
+    my @insertValues = @$insertValsRef; #}}}
 
     my $dbh = connectToDB($session);
 
@@ -310,10 +310,10 @@ sub insertIntoTable {
     $dbh->disconnect();
 
     return $rows;
-}
+} #}}}
 
-sub updateTable {
-    # Get parameters
+sub updateTable { #{{{
+    # Get parameters #{{{
     my $session = shift;
     my $tableName = shift;
     my $updateColsRef = shift;
@@ -327,9 +327,9 @@ sub updateTable {
     my $filterCriteriaRef = shift;
     my @filterCriteria = @$filterCriteriaRef;
     my $filterLogicRef = shift;
-    my @filterLogic = @$filterLogicRef;
+    my @filterLogic = @$filterLogicRef; #}}}
 
-    # Create query
+    # Create query #{{{
     my $query = "UPDATE $tableName SET ";
     for (my $i = 0; $i < $#updateCols; $i++) {
         $query .= "$updateCols[$i]=$updateValues[$i], ";
@@ -338,16 +338,16 @@ sub updateTable {
     for (my $i = 0; $i <= $#filterLogic; $i++) {
         $query .= "$filterCols[$i] $filterOperators[$i] $filterCriteria[$i] $filterLogic[$i] ";
     }
-    $query .= "$filterCols[$#filterCols] $filterOperators[$#filterOperators] $filterCriteria[$#filterCriteria]";
+    $query .= "$filterCols[$#filterCols] $filterOperators[$#filterOperators] $filterCriteria[$#filterCriteria]"; #}}}
 
     my $dbh = connectToDB($session);
     my $rowsChanged = $dbh->do($query);
     $dbh->disconnect;
     return $rowsChanged;
-}
+} #}}}
 
-sub deleteFromTable {
-    # Get parameters
+sub deleteFromTable { #{{{
+    # Get parameters #{{{
     my $session = shift;
     my $tableName = shift;
     my $deleteColsRef = shift;
@@ -357,24 +357,24 @@ sub deleteFromTable {
     my $deleteValsRef = shift;
     my @deleteValues = @$deleteValsRef;
     my $deleteLogicRef = shift;
-    my @deleteLogic = @$deleteLogicRef;
+    my @deleteLogic = @$deleteLogicRef; #}}}
 
     my $dbh = connectToDB($session);
 
-    # Create query
+    # Create query #{{{
     my $query = "DELETE FROM $tableName * WHERE ";
     for (my $i = 0; $i <= $#deleteLogic; $i++) {
         $query .= "$deleteCols[$i] $deleteOps[$i] $deleteValues[$i] $deleteLogic[$i] ";
     }
-    $query .= "$deleteCols[$#deleteCols] $deleteOps[$#deleteOps] $deleteValues[$#deleteValues]";
+    $query .= "$deleteCols[$#deleteCols] $deleteOps[$#deleteOps] $deleteValues[$#deleteValues]"; #}}}
 
     my $deletedRows = $dbh->do($query);
     $dbh->disconnect();
 
     return $deletedRows;
-}
+} #}}}
 
-sub attempt_login {
+sub attempt_login { #{{{
     my $session = shift;
     my $username = shift;
     my $pass = shift;
@@ -395,7 +395,7 @@ sub attempt_login {
     foreach(keys %usersHash) {
         my $userRef = $usersHash{$_};
         my %user = %$userRef;
-        
+
         if (($username cmp $user{'username'}) == 0) {
             return 4 if ($user{'disabled'});
             if (($pass cmp $user{'pw'}) == 0) {
@@ -408,39 +408,39 @@ sub attempt_login {
     }
 
     return 2;
-}
+} #}}}
 
-sub checkPrintable {
+sub checkPrintable { #{{{
     my $str = shift;
 
     return ($str =~ /^[\n\r\t\x20-\x7E]*$/);
-}
+} #}}}
 
 1;
 
 __END__
 
-=head1 NAME
+=head1 NAME #{{{
 
 =cut
 
 =pod
 
-COMMON - provides basic database and html functions 
+COMMON - provides basic database and html functions
 
-=cut
+=cut #}}}
 
-=head1 DESCRIPTION
+=head1 DESCRIPTION #{{{
 
 Various functions used for the backend of the web interface
 
-=cut
+=cut #}}}
 
-=head1 METHODS
+=head1 METHODS #{{{
 
-=head2 init
+=head2 init #{{{
 
-=pod 
+=pod
 
 Takes a CGI session and page title as arguments
 
@@ -448,9 +448,9 @@ Initializes main view for web interface, including
 verifying user has proper authorization
 and is in acceptable location
 
-=cut
+=cut #}}}
 
-=head2 checkSession
+=head2 checkSession #{{{
 
 =pod
 
@@ -458,9 +458,9 @@ Takes a CGI session
 
 Returns boolean for user being logged in
 
-=cut
+=cut #}}}
 
-=head2 connectToDB
+=head2 connectToDB #{{{
 
 =pod
 
@@ -468,9 +468,9 @@ Takes a CGI session variable for reference to user's timezone.
 
 Returns a handle to the local database, connected as user 'root'
 
-=cut
+=cut #}}}
 
-=head2 getTable
+=head2 getTable #{{{
 
 =pod
 
@@ -479,9 +479,9 @@ Takes a table name, requires the table to have a primary key with name 'id'
 Returns a reference to a hash of the table where the first index is the id,
 then the rows are indexed by their column names
 
-=cut
+=cut #}}}
 
-=head2 getSortedTable
+=head2 getSortedTable #{{{
 
 =pod
 
@@ -489,9 +489,9 @@ Takes a table name, a column name, and optionally a direction to sort ('ASC' or 
 
 Returns a reference to an array of references to hashes, indexed by column name
 
-=cut
+=cut #}}}
 
-=head2 searchTable
+=head2 searchTable #{{{
 
 =pod
 
@@ -505,9 +505,9 @@ If so, it will also take a reference to an array of columns to group by
 
 Returns a reference to a hash of the filtered table
 
-=cut
+=cut #}}}
 
-=head2 searchTableSort
+=head2 searchTableSort #{{{
 
 =pod
 
@@ -519,9 +519,9 @@ and a sort string of the format 'column_name[,column2]... [ASC || DESC]
 
 Returns a reference to an array of sorted hash references to rows that matched the filter
 
-=cut
+=cut #}}}
 
-=head2 insertIntoTable
+=head2 insertIntoTable #{{{
 
 =pod
 
@@ -530,9 +530,9 @@ and a reference to an array of values to fill the columns with.
 
 Returns the number of rows created.
 
-=cut
+=cut #}}}
 
-=head2 updateTable
+=head2 updateTable #{{{
 
 =pod
 
@@ -545,9 +545,9 @@ and a reference to an array of logic operators to use to combine the terms
 
 Returns the number of rows updated.
 
-=cut
+=cut #}}}
 
-=head2 deleteFromTable
+=head2 deleteFromTable #{{{
 
 =pod
 
@@ -558,9 +558,9 @@ and a reference to an array of logic operators to combine the filters with.
 
 Returns the number of rows deleted
 
-=cut
+=cut #}}}
 
-=head2 attempt_login
+=head2 attempt_login #{{{
 
 =pod
 
@@ -582,17 +582,17 @@ Returns the login state:
 
 =back
 
-=cut
+=cut #}}}
 
-=head2 check_printable
+=head2 check_printable #{{{
 
 =pod
 
 Takes a string and returns true if it is between hex 20 and 7E, AKA a printable ASCII character
 
-=cut
+=cut #}}} #}}}
 
-=head1 AUTHOR
+=head1 AUTHOR #{{{
 
 =cut
 
@@ -600,4 +600,4 @@ Takes a string and returns true if it is between hex 20 and 7E, AKA a printable 
 
 Brett Ammeson C<ammesonb@gmail.com>
 
-=cut
+=cut #}}}

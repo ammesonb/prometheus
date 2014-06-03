@@ -18,26 +18,26 @@ exit;
 
 __END__
 
-=head1 NAME
+=head1 NAME */ #{{{
 
 =pod
 
 logout.cgi - Logs out
 
-=cut
+=cut #}}}
 
-=head1 DESCRIPTION
+=head1 DESCRIPTION */ #{{{
 
 =pod
 
 Clears critical session parameters and redirects to root
 
-=cut
+=cut #}}}
 
-=head1 AUTHOR
+=head1 AUTHOR */ #{{{
 
 =pod
 
 Brett Ammeson C<ammesonb@gmail.com>
 
-=cut
+=cut #}}}

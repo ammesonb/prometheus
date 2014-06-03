@@ -1,34 +1,34 @@
-body {
+body { /*{{{*/
     font-family: Arial;
     background: url(gradient.png);
-}
+} /*}}}*/
 
-/* Scrollbar */
-::-webkit-scrollbar {
+/* Scrollbar */ /*{{{*/
+::-webkit-scrollbar { /*{{{*/
     width: 12px;
-}
+} /*}}}*/
 
 /* Track */
-::-webkit-scrollbar-track {
-    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3); 
+::-webkit-scrollbar-track { /*{{{*/
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
     -webkit-border-radius: 10px;
     border-radius: 10px;
-}
+} /*}}}*/
 
 /* Handle */
-::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb { /*{{{*/
     -webkit-border-radius: 15px;
     border-radius: 15px;
-    background: rgb(100,100,100); 
-    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5); 
-}
+    background: rgb(100,100,100);
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
+} /*}}}*/
 
-::-webkit-scrollbar-thumb:window-inactive {
-    background: rgb(100,100,100); 
-}
+::-webkit-scrollbar-thumb:window-inactive { /*{{{*/
+    background: rgb(100,100,100);
+} /*}}}*/ /*}}}*/
 
-/* div */
-div#login {
+/* div */ /*{{{*/
+div#login { /*{{{*/
     display: inline-block;
     text-align: center;
     background-color: white;
@@ -42,14 +42,14 @@ div#login {
     margin-left: -250px;
     margin-top: -110px;
     font-style: italic;
-}
+} /*}}}*/
 
-div#login.night {
+div#login.night { /*{{{*/
     background-color: rgba(0, 0, 0, .30);
     color: silver;
-}
+} /*}}}*/
 
-div#tabs {
+div#tabs { /*{{{*/
     display: inline-block;
     position: absolute;
     width: 800px;
@@ -58,9 +58,9 @@ div#tabs {
     left: 50%;
     margin-left: -400px;
     margin-top: -20px;
-}
+} /*}}}*/
 
-div#main {
+div#main { /*{{{*/
     display: inline-block;
     background-color: white;
     border: 5px groove #999;
@@ -74,21 +74,21 @@ div#main {
     margin-top: -250px;
     padding-left: 20px;
     padding-right: 15px;
-}
+} /*}}}*/
 
-div#main.night {
+div#main.night { /*{{{*/
     background-color: rgba(0, 0, 0, .30);
-}
+} /*}}}*/
 
-div.normal {
+div.normal { /*{{{*/
     color: black;
-}
+} /*}}}*/
 
-div.normal.night {
+div.normal.night { /*{{{*/
     color: silver;
-}
+} /*}}}*/
 
-div.tab {
+div.tab { /*{{{*/
     display: inline-block;
     border-radius: 5px;
     background-color: gray;
@@ -97,22 +97,22 @@ div.tab {
     color: white;
     padding: 3px;
     margin-right: 5px;
-}
+} /*}}}*/
 
-div.notes {
+div.notes { /*{{{*/
     width: 98%;
     height: 98%;
     padding: 5px 0px 5px 5px;
-}
+} /*}}}*/
 
-div.notes_list {
+div.notes_list { /*{{{*/
     float: left;
     width: 40%;
     height: 100%;
     overflow: auto;
-}
+} /*}}}*/
 
-div.notes_editor {
+div.notes_editor { /*{{{*/
     float: right;
     border: 1px solid black;
     left: 45%;
@@ -120,37 +120,37 @@ div.notes_editor {
     height: 100%;
     padding-left: 15px;
     text-align: center;
-}
+} /*}}}*/
 
-div.notes_editor.night {
+div.notes_editor.night { /*{{{*/
     border: 1px solid silver;
-}
+} /*}}}*/
 
-div.tasks {
+div.tasks { /*{{{*/
     width: 98%;
     height: 98%;
     padding: 5px 0px 5px 5px;
-}
+} /*}}}*/
 
-div.project_panel {
+div.project_panel { /*{{{*/
     float: left;
     width: 35%;
     height: 100%;
     border: 1px solid black;
     padding-left: 5px;
-}
+} /*}}}*/
 
-div.project_panel.night {
+div.project_panel.night { /*{{{*/
     border: 1px solid silver;
     background-color: rgba(0, 0, 0, .3);
-}
+} /*}}}*/
 
-div.project_list {
+div.project_list { /*{{{*/
     height: 95%;
     overflow: auto;
-}
+} /*}}}*/
 
-div.task_view {
+div.task_view { /*{{{*/
     float: right;
     left: 35%;
     width: 62%;
@@ -159,202 +159,202 @@ div.task_view {
     padding-top: 5px;
     padding-left: 5px;
     overflow: auto;
-}
+} /*}}}*/
 
-div.task_view.night {
+div.task_view.night { /*{{{*/
     border: 1px solid silver;
     background-color: rgba(0, 0, 0, .3);
-}
+} /*}}}*/ /*}}}*/
 
-/* span */
-span.normal {
+/* span */ /*{{{*/
+span.normal { /*{{{*/
     color: black;
-}
+} /*}}}*/
 
-span.normal.night {
+span.normal.night { /*{{{*/
     color: silver;
-}
+} /*}}}*/
 
-span.tool {
+span.tool { /*{{{*/
     margin-left: 40px;
     margin-top: 30px;
     float: left;
     text-align: center;
-}
+} /*}}}*/
 
-span.error {
+span.error { /*{{{*/
     font-size: 10pt;
     font-weight: bold;
     color: red;
     margin-top: 5px;
     padding-top: 0px;
-}
+} /*}}}*/ /*}}}*/
 
-/* table */
-table.notes {
+/* table */ /*{{{*/
+table.notes { /*{{{*/
     border-collapse: collapse;
     width: 99%;
-}
+} /*}}}*/
 
-table.notes th {
+table.notes th { /*{{{*/
     border: solid thin black;
     padding: 5px 0px 5px 5px;
     background-color: #888;
     color: white;
-}
+} /*}}}*/
 
-table.notes.night th {
+table.notes.night th { /*{{{*/
     background-color: rgba(0, 0, 0, 0);
     border: solid thin silver;
-}
+} /*}}}*/
 
-table.notes td {
+table.notes td { /*{{{*/
     border: solid thin black;
     padding: 5px 0px 5px 5px;
-}
+} /*}}}*/
 
-table.notes.night td {
+table.notes.night td { /*{{{*/
     background-color: rgba(0, 0, 0, 0);
     border: solid thin silver;
     color: silver;
-}
+} /*}}}*/ /*}}}*/
 
-/* inputs */
-legend.night {
+/* inputs */ /*{{{*/
+legend.night { /*{{{*/
     color: silver;
-}
+} /*}}}*/
 
-input {
+input { /*{{{*/
     padding-left: 2px;
-}
+} /*}}}*/
 
-input.night {
+input.night { /*{{{*/
     background-color: rgba(0, 0, 0, 0);
     border: 1px solid silver;
     color: silver;
-}
+} /*}}}*/
 
-input.new_project {
+input.new_project { /*{{{*/
     width: 92%;
-}
+} /*}}}*/
 
-input.note_title {
+input.note_title { /*{{{*/
     width: 95%;
     padding-top: 0px;
     margin-top: 0px;
-}
+} /*}}}*/
 
-textarea.night {
+textarea.night { /*{{{*/
     background-color: rgba(0, 0, 0, 0);
     border: 1px solid silver;
     color: silver;
-}
+} /*}}}*/
 
-textarea.note_editor {
+textarea.note_editor { /*{{{*/
     width: 95%;
-}
+} /*}}}*/
 
-select.night {
+select.night { /*{{{*/
     background-color: #555;
     border: 1px solid silver;
     color: silver;
-}
+} /*}}}*/
 
-option.night {
+option.night { /*{{{*/
     background-color: #555;
     color: silver;
-}
+} /*}}}*/
 
-button.night {
+button.night { /*{{{*/
     background-color: rgba(0, 0, 0, 0);
     border: 1px solid silver;
     border-radius: 10px;
     color: silver;
-}
+} /*}}}*/
 
-button.night:hover {
+button.night:hover { /*{{{*/
     color: #CCF;
     border: 1px solid #CCF;
-}
+} /*}}}*/
 
-button.left_action {
+button.left_action { /*{{{*/
     float: left;
     margin-right: 10px;
-}
+} /*}}}*/
 
-button.right_action {
+button.right_action { /*{{{*/
     float: right;
     margin-left: 10px;
-}
+} /*}}}*/ /*}}}*/
 
-/* p */
-p#error {
+/* p */ /*{{{*/
+p#error { /*{{{*/
     font-size: 10pt;
     font-weight: bold;
     color: red;
     margin-top: 5px;
     padding-top: 0px;
-}
+} /*}}}*/
 
-p#userinfo {
+p#userinfo { /*{{{*/
     position: absolute;
     top: .5%;
     right: 1%;
     color: white;
     text-align: right;
-}
+} /*}}}*/
 
-p#userinfo a {
+p#userinfo a { /*{{{*/
     color: white;
     text-decoration: none;
     font-style: italic;
-}
+} /*}}}*/
 
-p.night {
+p.night { /*{{{*/
     color: silver;
-}
+} /*}}}*/
 
-p.error {
+p.error { /*{{{*/
     font-size: 10pt;
     font-weight: bold;
     color: red;
     margin-top: 5px;
     padding-top: 0px;
-}
+} /*}}}*/
 
-p.normal_text {
+p.normal_text { /*{{{*/
     color: black;
-}
+} /*}}}*/
 
-p.normal_text.night {
+p.normal_text.night { /*{{{*/
     color: silver;
-}
+} /*}}}*/
 
-p.normal_section_header {
+p.normal_section_header { /*{{{*/
     color: black;
     font-size: 125%;
     font-weight: bold;
-}
+} /*}}}*/
 
-p.normal_section_header.night {
+p.normal_section_header.night { /*{{{*/
     color: silver;
-}
+} /*}}}*/
 
-p.project_name {
+p.project_name { /*{{{*/
     display: inline;
     color: black;
-}
+} /*}}}*/
 
-p.project_name.night {
+p.project_name.night { /*{{{*/
     color: white;
-}
+} /*}}}*/
 
-p.project_name:hover {
+p.project_name:hover { /*{{{*/
     font-style: italic;
     font-weight: bold;
-}
+} /*}}}*/
 
-p.tool_name {
+p.tool_name { /*{{{*/
     color: #555;
     font-weight: bold;
     font-size: 120%;
@@ -363,103 +363,103 @@ p.tool_name {
         1px -1px 0 #000,
         -1px 1px 0 #000,
         1px 1px 0 #000;*/
-}
+} /*}}}*/
 
-p.tool_name.night {
+p.tool_name.night { /*{{{*/
     color: white;
-}
+} /*}}}*/
 
-p.form_label {
+p.form_label { /*{{{*/
     text-align: left;
     padding-bottom: 3px;
     margin-bottom: 3px;
-}
+} /*}}}*/
 
-p.error_text {
+p.error_text { /*{{{*/
     float: left;
     margin: 5px;
     padding-left: 5px;
     color: red;
     font-weight: bold;
     font-size: 75%;
-}
+} /*}}}*/ /*}}}*/
 
-/* a */
-a.normal_section_header {
+/* a */ /*{{{*/
+a.normal_section_header { /*{{{*/
     color: black;
     text-decoration: none;
-}
+} /*}}}*/
 
-a.normal_section_header:hover {
+a.normal_section_header:hover { /*{{{*/
     font-style: italic;
     text-decoration: underline;
-}
+} /*}}}*/
 
-a.normal_section_header.night {
+a.normal_section_header.night { /*{{{*/
     color: silver;
-}
+} /*}}}*/
 
-a.blank {
+a.blank { /*{{{*/
     text-decoration: none;
-}
+} /*}}}*/
 
-a.normal_text {
+a.normal_text { /*{{{*/
     color: black;
     text-decoration: none;
-}
+} /*}}}*/
 
-a.normal_text:hover {
+a.normal_text:hover { /*{{{*/
     font-style: italic;
     text-decoration: underline;
-}
+} /*}}}*/
 
-a.normal_text.night {
+a.normal_text.night { /*{{{*/
     color: silver;
-}
+} /*}}}*/
 
-a.save_project {
+a.save_project { /*{{{*/
     position: absolute;
     font-size: 200%;
     text-decoration: none;
     color: green;
-}
+} /*}}}*/
 
-a.save_project:hover {
+a.save_project:hover { /*{{{*/
     text-decoration: underline;
-}
+} /*}}}*/
 
-a.open_project {
+a.open_project { /*{{{*/
     color: #CCF;
     text-decoration: none;
-}
+} /*}}}*/
 
-a.close_project {
+a.close_project { /*{{{*/
     color: red;
     text-decoration: none;
-}
+} /*}}}*/ /*}}}*/
 
-/* underlines, hr, etc */
-u.note_blank {
+/* underlines, hr, etc */ /*{{{*/
+u.note_blank { /*{{{*/
     color: rgba(0, 0, 0, 0);
-}
+} /*}}}*/
 
-u.note_edit {
+u.note_edit { /*{{{*/
     color: black;
-}
+} /*}}}*/
 
-u.note_edit.night {
+u.note_edit.night { /*{{{*/
     color: silver;
-}
+} /*}}}*/
 
-hr.task_divider {
+hr.task_divider { /*{{{*/
     color: black;
     margin-top: 0px;
     width: 98%;
     margin-left: 0px;
     padding-left: 0px;
-}
+} /*}}}*/
 
-hr.task_divider.night {
+hr.task_divider.night { /*{{{*/
     color: silver;
-}
-
+} /*}}}*/
+ /*}}}*/

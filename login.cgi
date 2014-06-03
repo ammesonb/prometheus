@@ -7,18 +7,18 @@ use CGI::Carp qw(fatalsToBrowser);
 use COMMON;
 use strict;
 
-my %titles = (
+my %titles = ( #{{{
     0 => "Prometheus",
     1 => "Login",
     2 => "Login",
     3 => "Blocked",
     4 => "Disabled"
-);
+); #}}}
 
 my $q = new CGI();
 my $session = CGI::Session->new($q);
 
-if (index($q->param('a'), "'", ) != -1) {
+if (index($q->param('a'), "'", ) != -1) { #{{{
     $session->param('attempt_login', 1);
     $session->expire('attempt_login', '+30m');
     $session->param('logged_in', 0);
@@ -26,9 +26,9 @@ if (index($q->param('a'), "'", ) != -1) {
     my $html = COMMON::init($session, 1);
     print $html;
     exit;
-}
+} #}}}
 
-# Get user data
+# Get user data #{{{
 my @returnCols = ('id', 'is_shared', 'is_admin', 'theme', 'domain');
 my @searchCols = ('username');
 my @operators = ('=');
@@ -37,11 +37,11 @@ my @logic = ();
 my $userRef = COMMON::searchTable($session, 'users', \@returnCols, \@searchCols, \@operators,\@patterns, \@logic);
 my %userData = %$userRef;
 my @userIDs = keys %userData;
-my $userID = $userIDs[0];
+my $userID = $userIDs[0]; #}}}
 
 my $response = COMMON::attempt_login($session, $q->param('a'), $q->param('c'), $userData{$userID}{'domain'});
 
-# Set session parameters
+# Set session parameters #{{{
 $session->param('attempt_login', 1);
 $session->expire('attempt_login', '+30m');
 $session->param('night_theme', $userData{$userID}{'theme'});
@@ -64,7 +64,7 @@ $session->param('logged_in', 1) if ($response == 0);
 print $q->redirect('/') if ($response == 0);
 $session->param('blocked', 1) if ($response == 3);
 $session->param('disabled', 1) if ($response == 4);
-$session->expire('disabled', '+30m') if ($response == 4);
+$session->expire('disabled', '+30m') if ($response == 4); #}}}
 
 my $html = COMMON::init($session, $titles{$response});
 print $html;
@@ -72,15 +72,15 @@ exit;
 
 __END__
 
-=head1 NAME
+=head1 NAME #{{{
 
 =pod
 
 login.cgi - Authentication backend
 
-=cut
+=cut #}}}
 
-=head1 DESCRIPTION
+=head1 DESCRIPTION #{{{
 
 =pod
 
@@ -88,12 +88,12 @@ Check login validity and display appropriate information
 
 Redirects to root if login is successful
 
-=cut
+=cut #}}}
 
-=head1 AUTHOR
+=head1 AUTHOR #{{{
 
 =pod
 
 Brett Ammeson C<ammesonb@gmail.com>
 
-=cut
+=cut #}}}

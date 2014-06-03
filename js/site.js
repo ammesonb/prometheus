@@ -1,4 +1,4 @@
-/* Global variables */
+/* Global variables */ /*{{{*/
 var colors = ['#FF1300', '#FF6A00', '#FFA540', '#FFD240', '#9BED00', '#37DB79', '#63ADD0', '#7872D8', '#4B5BD8', '#9A3ED5', '#7F4BA0', '#ED3B83', '#999'];
 var expanded = [];
 var tasks = [];
@@ -8,16 +8,16 @@ var projects = [];
 var rootProjects = [];
 var subProjects = [];
 var projectsByID = [];
-var projectHierarchy = [];
+var projectHierarchy = []; /*}}}*/
 
-function createPostReq(url, mode) {
+function createPostReq(url, mode) { /*{{{*/
     req = new XMLHttpRequest();
     req.open('POST', url, mode);
     req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
     return req;
-}
+} /*}}}*/
 
-function login() {
+function login() { /*{{{*/
     elems = document.getElementsByTagName('input');
     a = elems[0];
     b = elems[1];
@@ -52,19 +52,19 @@ function login() {
     f.style.display = 'none';
     document.body.appendChild(f);
     f.submit();
-}
+} /*}}}*/
 
-function useNightTheme() {
+function useNightTheme() { /*{{{*/
     theme = document.body.getAttribute('data-night-theme');
     now = new Date();
     return ((theme == 1 && (now.getHours() >= 19 || now.getHours() < 8)) || theme == 2);
-}
+} /*}}}*/
 
-function switchToNight() {
+function switchToNight() { /*{{{*/
     for (a = 0; a < arguments.length; a++) {arguments[a].className += ' night';}
-}
+} /*}}}*/
 
-function stringFill(x, n) {
+function stringFill(x, n) { /*{{{*/
     var s = '';
     for (;;) {
         if (n & 1) {s += x;}
@@ -73,27 +73,27 @@ function stringFill(x, n) {
         else {break;}
     }
     return s;
-}
+} /*}}}*/
 
-function pad(text, length, fill, side) {
+function pad(text, length, fill, side) { /*{{{*/
     if (side == 'f') {
         while (text.length < length) {text = fill + text;}
     } else if (side == 'b') {
         while (text.length < length) {text += fill;}
     }
     return text;
-}
+} /*}}}*/
 
-function padTime(text) {
+function padTime(text) { /*{{{*/
     return pad(text, 2, '0', 'f');
-}
+}/*}}}*/
 
-function isIE() {
+function isIE() { /*{{{*/
     return (css_browser_selector(navigator.userAgent).search('ie') != -1) ||
             (navigator.userAgent.search('\\) like Gecko') != -1);
-}
+} /*}}}*/
 
-function flatten(arr) {
+function flatten(arr) { /*{{{*/
     flat = new Array();
     for (i = 0; i < arr.length; i++) {
         if (arr[i]) {
@@ -102,9 +102,9 @@ function flatten(arr) {
     }
 
     return flat;
-}
+} /*}}}*/
 
-function deleteAllChildren(elem, removeAll) {
+function deleteAllChildren(elem, removeAll) { /*{{{*/
     if (isIE()) {
         while (elem.childElementCount > 0) {elem.children[0].removeNode(true);}
     } else if (removeAll) {
@@ -112,15 +112,15 @@ function deleteAllChildren(elem, removeAll) {
     } else {
         while (elem.childElementCount > 0) {elem.children[0].remove();}
     }
-}
+} /*}}}*/
 
-function setText(element, text) {
+function setText(element, text) { /*{{{*/
     element.innerText = text;
     element.innerHTML = text;
-}
+} /*}}}*/
 
-/* Tabs */
-function addTab(element, tabElement) {
+/* Tabs */ /*{{{*/
+function addTab(element, tabElement) { /*{{{*/
     tabElement.className = 'tab ' + element.id;
     tabLink = document.createElement('a');
     tabLink.href = '#';
@@ -137,15 +137,15 @@ function addTab(element, tabElement) {
     tabElement.appendChild(x);
     document.getElementById('tabs').appendChild(tabLink);
     document.getElementById('main').appendChild(element);
-}
+} /*}}}*/
 
-function closeTab(tabID) {
+function closeTab(tabID) { /*{{{*/
     switchTab('home');
     document.getElementById(tabID).remove();
     document.getElementsByClassName(tabID)[0].remove();
-}
+} /*}}}*/
 
-function switchTab(tabID) {
+function switchTab(tabID) { /*{{{*/
     if (!document.getElementById(tabID)) {return;}
 
     oldTab = document.getElementsByClassName('selected')[0];
@@ -155,11 +155,11 @@ function switchTab(tabID) {
     newTab = document.getElementById(tabID);
     newTab.style.display = 'inline-block';
     newTab.className = newTab.className + ' selected';
-}
+} /*}}}*/ /*}}}*/
 
-/* Notes */
-function openNotes() {
-    // Create notes panel
+/* Notes */ /*{{{*/
+function openNotes() { /*{{{*/
+    // Create notes panel /*{{{*/
     notes = document.createElement('div');
     id = 'notes' + new Date().getTime();
     notes.id = id;
@@ -173,9 +173,9 @@ function openNotes() {
     notesEditor = document.createElement('div');
     notesEditor.setAttribute('data-note-id', -1);
     notesEditor.className = 'notes_editor';
-    notes.appendChild(notesEditor);
+    notes.appendChild(notesEditor); /*}}}*/
 
-    // Create table to display notes in
+    // Create table to display notes in /*{{{*/
     notesTable = document.createElement('table');
     notesTable.className = 'notes';
     if (useNightTheme()) {notesTable.className += ' night';}
@@ -189,9 +189,9 @@ function openNotes() {
     headerRow.appendChild(tableMTime);
     notesTable.appendChild(headerRow);
 
-    notesList.appendChild(notesTable);
+    notesList.appendChild(notesTable); /*}}}*/
 
-    // Create editor pane
+    // Create editor pane /*{{{*/
     titleDesc = document.createElement('p');
     titleDesc.className = 'form_label';
     setText(titleDesc, 'Title:');
@@ -212,7 +212,7 @@ function openNotes() {
     saveButton = document.createElement('button');
     saveButton.className = 'left_action';
     setText(saveButton, 'Save');
-    saveButton.onclick = function() {
+    saveButton.onclick = function() { /*{{{*/
         editPane = this.parentElement;
         noteID = editPane.getAttribute('data-note-id');
         noteTitle = '';
@@ -220,7 +220,7 @@ function openNotes() {
         errorText = 0;
         c = editPane.children;
 
-        for (child= 0; child < c.length; child++) {
+        for (child= 0; child < c.length; child++) { /*{{{*/
             if (c[child].tagName == 'INPUT') {
                 noteTitle = c[child].value;
             } else if (c[child].tagName == 'TEXTAREA') {
@@ -228,7 +228,7 @@ function openNotes() {
             } else if (c[child].className == 'error_text') {
                 errorText = c[child];
             }
-        }
+        } /*}}}*/
         setText(errorText, '');
 
         if (noteTitle.length === 0) {
@@ -241,7 +241,7 @@ function openNotes() {
 
         saveNoteReq = createPostReq('notes.cgi', false);
 
-        saveNoteReq.onreadystatechange = function() {
+        saveNoteReq.onreadystatechange = function() { /*{{{*/
             if (this.readyState == 4 && this.status == 200) {
                 status = this.responseText;
 
@@ -275,30 +275,30 @@ function openNotes() {
                         break;
                 }
             }
-        };
+        }; /*}}}*/
 
         saveNoteReq.send('mode=1&note_id=' + noteID +
                      '&note_title=' + encodeURIComponent(noteTitle) + '&note_text=' + encodeURIComponent(noteText));
 
         if (saveNoteReq.responseText === 'expired') {return;}
 
-        // Delay update for one second
+        // Delay update for one second /*{{{*/
         setTimeout(function() {
             updateNoteReq = createPostReq('notes.cgi', true);
-    
+
             updateNoteReq.onreadystatechange = function() {
                 if (this.readyState == 4 && this.status == 200) {refreshNotes(this.responseText);}
             };
-    
+
             updateNoteReq.send('mode=0');
-        }, 1000);
-    };
+        }, 1000); /*}}}*/
+    }; /*}}}*/
 
     cancelButton = document.createElement('button');
     cancelButton.className = 'left_action';
     setText(cancelButton, 'Cancel');
-    cancelButton.onclick = function() {
-        tab = this.parentElement.parentElement.children[0];
+    cancelButton.onclick = function() { /*{{{*/
+        tab = this.parentElement.parentElement.children[0]; /*{{{*/
         table = 0;
         for (child = 0; child < tab.childElementCount; child++) {
             if (tab.children[child].tagName === 'TABLE') {table = tab.children[child];}
@@ -306,22 +306,22 @@ function openNotes() {
         while (document.getElementsByClassName('note_edit').length !== 0) {
             underlines = document.getElementsByClassName('note_edit');
             for (u = 0; u < underlines.length; u++) {underlines[u].className = 'note_blank';}
-        }
+        } /*}}}*/
 
-        this.parentElement.setAttribute('data-note-id', -1);
+        this.parentElement.setAttribute('data-note-id', -1); /*{{{*/
         c = this.parentElement.children;
         for (child = 0; child < c.length; child++) {
             if (c[child].tagName == 'INPUT' || c[child].tagName == 'TEXTAREA') {c[child].value = '';}
             if (c[child].className == 'error_text') {setText(c[child], '');}
-        }
-    };
+        } /*}}}*/
+    }; /*}}}*/
 
     createButton = document.createElement('button');
     createButton.className = 'right_action';
     createButton.style.marginRight = '10px';
     setText(createButton, 'Create note');
-    createButton.onclick = function() {
-        tab = this.parentElement.parentElement.children[0];
+    createButton.onclick = function() { /*{{{*/
+        tab = this.parentElement.parentElement.children[0]; /*{{{*/
         table = 0;
         for (child = 0; child < tab.childElementCount; child++) {
             if (tab.children[child].tagName === 'TABLE') {table = tab.children[child];}
@@ -329,15 +329,15 @@ function openNotes() {
         while (document.getElementsByClassName('note_edit').length !== 0) {
             underlines = document.getElementsByClassName('note_edit');
             for (u = 0; u < underlines.length; u++) {underlines[u].className = 'note_blank';}
-        }
+        } /*}}}*/
 
-        this.parentElement.setAttribute('data-note-id', -1);
+        this.parentElement.setAttribute('data-note-id', -1); /*{{{*/
         c = this.parentElement.children;
         for (child = 0; child < c.length; child++) {
             if (c[child].tagName == 'INPUT' || c[child].tagName == 'TEXTAREA') {c[child].value = '';}
             if (c[child].className == 'error_text') {setText(c[child], '');}
-        }
-    };
+        } /*}}}*/
+    }; /*}}}*/
 
     errorText = document.createElement('p');
     errorText.className = 'error_text';
@@ -354,47 +354,47 @@ function openNotes() {
     notesEditor.appendChild(saveButton);
     notesEditor.appendChild(cancelButton);
     notesEditor.appendChild(errorText);
-    notesEditor.appendChild(createButton);
+    notesEditor.appendChild(createButton); /*}}}*/
 
-    // Fetch notes
+    // Fetch notes /*{{{*/
     req = createPostReq('notes.cgi', true);
 
     req.onreadystatechange = function() {
         if (req.readyState == 4 && req.status == 200) {populateNotes(req.responseText, notesTable, notesEditor, 1);}
     };
 
-    req.send('mode=0');
+    req.send('mode=0'); /*}}}*/
 
-    // Create actual note tab
+    // Create actual note tab /*{{{*/
     noteTab = document.createElement('div');
     setText(noteTab, 'Notes');
     noteTab.className = 'tab';
     noteTab.setAttribute('data-id', id);
     noteTab.onclick = function() {switchTab(this.getAttribute('data-id'));};
     addTab(notes, noteTab);
-    switchTab(id);
-}
+    switchTab(id); /*}}}*/
+} /*}}}*/
 
-function populateNotes(data, notesTable, notesEditor, resize) {
+function populateNotes(data, notesTable, notesEditor, resize) { /*{{{*/
     if (data == 'noauth') {window.location.reload(true);}
 
     // Else
-    // Get current editor state
+    // Get current editor state /*{{{*/
     editorTitleText = '';
     editorNoteText = '';
     for (child = 0; child < notesEditor.childElementCount; child++) {
         editorElem = notesEditor.children[child];
         if (editorElem.tagName == 'INPUT') {editorTitleText = editorElem.value;}
         if (editorElem.tagName == 'TEXTAREA') {editorNoteText = editorElem.value;}
-    }
+    } /*}}}*/
 
     notes = JSON.parse(data);
-    for (n = 0; n < notes.length; n++) {
+    for (n = 0; n < notes.length; n++) { /*{{{*/
         note = notes[n];
         r = document.createElement('tr');
         r.setAttribute('data-note', JSON.stringify(note));
 
-        // Select appropriate note
+        // Select appropriate note /*{{{*/
         // If no note loaded, but title and text match, this note must have just been created
         selected = 0;
         if (notesEditor.getAttribute('data-note-id') == '-1' &&
@@ -404,9 +404,9 @@ function populateNotes(data, notesTable, notesEditor, resize) {
         // Otherwise if current note is in editor
         } else if (notesEditor.getAttribute('data-note-id') == note.id) {
             selected = 1;
-        }
+        } /*}}}*/
 
-        r.onclick = function() {
+        r.onclick = function() { /*{{{*/
             editNote(JSON.parse(this.getAttribute('data-note')), this);
 
             // Since just doing it once doesn't seem to be enough....
@@ -419,15 +419,15 @@ function populateNotes(data, notesTable, notesEditor, resize) {
                 underlines[u].className = 'note_edit';
                 if (useNightTheme()) {switchToNight(underlines[u]);}
             }
-        };
-        r.onmouseover = function() {
+        }; /*}}}*/
+        r.onmouseover = function() { /*{{{*/
             this.style.fontWeight = 'bold';
             this.style.fontStyle = 'italic';
-        };
-        r.onmouseout = function() {
+        }; /*}}}*/
+        r.onmouseout = function() { /*{{{*/
             this.style.fontWeight = 'normal';
             this.style.fontStyle = 'normal';
-        };
+        }; /*}}}*/
 
         title = document.createElement('td');
         title.style.paddingRight = '5px';
@@ -468,17 +468,17 @@ function populateNotes(data, notesTable, notesEditor, resize) {
         a.appendChild(i);
         a.setAttribute('data-note-id', note.id);
         a.setAttribute('data-note-title', note.title);
-        a.onclick = function() {
+        a.onclick = function() { /*{{{*/
             confirmDelete = confirm('Are you sure you want to delete note \'' + this.getAttribute('data-note-title') + '\'?');
             if (!confirmDelete) {return;}
             deletedNoteID = this.getAttribute('data-note-id');
             deleteNoteReq = createPostReq('notes.cgi', true);
-            
+
             deleteNoteReq.onreadystatechange = function() {
                 if (this.readyState == 4 && this.status == 200) {
                     refreshNotesReq = createPostReq('notes.cgi', true);
 
-                    refreshNotesReq.onreadystatechange = function() {
+                    refreshNotesReq.onreadystatechange = function() { /*{{{*/
                         if (this.readyState == 4 && this.status == 200) {
                             if (notesEditor.getAttribute('data-note-id') == deletedNoteID) {
                                 notesEditor.setAttribute('data-note-id', -1);
@@ -489,7 +489,7 @@ function populateNotes(data, notesTable, notesEditor, resize) {
                             }
                             refreshNotes(this.responseText);
                         }
-                    };
+                    }; /*}}}*/
 
                     refreshNotesReq.send('mode=0');
                 }
@@ -498,7 +498,7 @@ function populateNotes(data, notesTable, notesEditor, resize) {
             deleteNoteReq.open('POST', 'notes.cgi', true);
             deleteNoteReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
             deleteNoteReq.send('mode=2&note_id=' + this.getAttribute('data-note-id'));
-        }
+        } /*}}}*/
         mtime.appendChild(a);
 
         if (useNightTheme()) {
@@ -509,9 +509,9 @@ function populateNotes(data, notesTable, notesEditor, resize) {
         r.appendChild(mtime);
 
         notesTable.appendChild(r);
-    }
+    } /*}}}*/
 
-    // Resize notes text to fill height
+    // Resize notes text to fill height /*{{{*/
     if (resize) {
         noteText = 0;
         c = notesEditor.children;
@@ -525,29 +525,29 @@ function populateNotes(data, notesTable, notesEditor, resize) {
 
         titleTD = notesTable.children[0].children[0];
         titleTD.style.width = titleTD.offsetWidth + 20 + 'px';
-    }
-}
+    } /*}}}*/
+} /*}}}*/
 
-function editNote(note, row) {
+function editNote(note, row) { /*{{{*/
     notePanel = row.parentElement.parentElement.parentElement;
     panes = notePanel.children;
     editPane = 0;
-    for (pane = 0; pane < panes.length; pane++) {
+    for (pane = 0; pane < panes.length; pane++) { /*{{{*/
         if (panes[pane].className.search('notes_editor') != -1) {
             editPane = panes[pane];
             break;
         }
-    }
+    } /*}}}*/
     editPane.setAttribute('data-note-id', note.id);
     editElems = editPane.children;
-    for (elem = 0; elem < editElems.length; elem++) {
+    for (elem = 0; elem < editElems.length; elem++) { /*{{{*/
         if (editElems[elem].tagName == 'INPUT') {editElems[elem].value = note.title;}
         if (editElems[elem].tagName == 'TEXTAREA') {editElems[elem].value = note.text;}
         if (editElems[elem].className == 'error_text') {setText(editElems[elem], '');}
-    }
-}
+    } /*}}}*/
+} /*}}}*/
 
-function refreshNotes(notes) {
+function refreshNotes(notes) { /*{{{*/
     notesPanes = document.getElementsByClassName('notes');
     for (pane = 0; pane < notesPanes.length; pane++) {
         if (notesPanes[pane].tagName != 'DIV') {continue;}
@@ -555,7 +555,7 @@ function refreshNotes(notes) {
         notePane = notesPanes[pane];
         noteTable = 0;
         noteEditor = 0;
-        // Get note table and note editor
+        // Get note table and note editor /*{{{*/
         // and clear out old entries
         for (child = 0; child < notePane.childElementCount; child++) {
             elem = notePane.children[child];
@@ -568,23 +568,23 @@ function refreshNotes(notes) {
                     row.remove();
                 }
             }
-        }
+        } /*}}}*/
 
-        // If this pane wasn't selected, clear out its edit panel
+        // If this pane wasn't selected, clear out its edit panel /*{{{*/
         if (noteTable.parentElement.parentElement.className.search('selected') == -1) {
             noteEditor.setAttribute('data-note-id', -1);
             for (child = 0; child < noteEditor.childElementCount; child++) {
                 elem = noteEditor.children[child];
                 if (elem.tagName == 'INPUT' || elem.tagName == 'TEXTAREA') {elem.value = '';}
             }
-        }
+        } /*}}}*/
 
         populateNotes(notes, noteTable, noteEditor, 0);
     }
-}
+} /*}}}*/ /*}}}*/
 
-/* Tasks */
-function switchDeadlineTimezone(d) {
+/* Tasks */ /*{{{*/
+function switchDeadlineTimezone(d) { /*{{{*/
     utc = 0;
     if (d.toString().search('\\\+') != -1) {
         utc = d.getTime() + (d.getTimezoneOffset() * 60000);
@@ -592,22 +592,22 @@ function switchDeadlineTimezone(d) {
         utc = d.getTime() - (d.getTimezoneOffset() * 60000);
     }
     return new Date(utc);
-}
+} /*}}}*/
 
-function deadlineToDate(deadline) {
+function deadlineToDate(deadline) { /*{{{*/
     deadline = deadline.replace('-', '/');
     deadline = deadline.replace('-', '/');
     deadline = deadline.split('+')[0];
     d = new Date(deadline);
     return d;
-}
+} /*}}}*/
 
-function getTimeFromString(dateString) {
+function getTimeFromString(dateString) { /*{{{*/
     time = dateString.split(' ')[4].split(':')
     return time[0] + ':' + time[1]
-}
+} /*}}}*/
 
-function makeBlankTask(project) {
+function makeBlankTask(project) { /*{{{*/
     newTask = new Object();
     newTask.id = -1;
     newTask.name = 'New task';
@@ -618,52 +618,52 @@ function makeBlankTask(project) {
     newTask.is_urgent = true;
 
     return newTask;
-}
+} /*}}}*/
 
-function openTasks() {
+function openTasks() { /*{{{*/
     id = 'tasks_' + new Date().getTime();
     taskPanel = document.createElement('div');
     taskPanel.className = 'tasks';
     taskPanel.id = id;
 
-    // Create panel skeleton
-    // Section headers
+    // Create panel skeleton /*{{{*/
+    // Section headers /*{{{*/
     projectsPanel = document.createElement('div');
     projectsPanel.className = 'project_panel';
     projectsPanel.setAttribute('data-project-id', -1);
 
     projectsList = document.createElement('div');
-    projectsList.className = 'project_list';
+    projectsList.className = 'project_list'; /*}}}*/
 
-    // Create new project input/button
+    // Create new project input/button /*{{{*/
     newProject = document.createElement('span');
     newProjectName = document.createElement('input');
     newProjectName.className = 'new_project';
     newProjectName.value = 'Enter new project name';
-    newProjectName.onfocus = function() {
+    newProjectName.onfocus = function() { /*{{{*/
         if (this.value === 'Enter new project name') {this.value = '';}
-    };
-    newProjectName.onblur = function() {
+    }; /*}}}*/
+    newProjectName.onblur = function() { /*{{{*/
         if (this.value === '') {this.value = 'Enter new project name';}
-    };
+    }; /*}}}*/
     saveNewProject = document.createElement('a');
     saveNewProject.className = 'save_project';
     saveNewProject.href = '#';
-    saveNewProject.onclick = function() {
+    saveNewProject.onclick = function() { /*{{{*/
         list = this.parentElement.parentElement.getElementsByClassName('project_list')[0];
         nameElem = this.previousSibling;
         if (name === 'Enter new project name') {return;}
 
         saveProjReq = createPostReq('tasks.cgi', true);
 
-        saveProjReq.onreadystatechange = function() {
+        saveProjReq.onreadystatechange = function() { /*{{{*/
             if (this.readyState == 4 && this.status == 200) {
                 switch(this.responseText) {
                     case 'success':
                         nameElem.value = 'Enter new project name';
 
                         fetchTaskData();
-                        populateProjects(list);
+                        populateProjects(list); /*{{{*/ /*}}}*/
 
                         break;
                     default:
@@ -671,15 +671,15 @@ function openTasks() {
                         break;
                 }
             }
-        };
+        }; /*}}}*/
 
         saveProjReq.send('mode=1&name=' + nameElem.value + '&parent=' + projectsPanel.getAttribute('data-project-id'));
-    };
+    }; /*}}}*/
     setText(saveNewProject, '+');
     newProject.appendChild(newProjectName);
-    newProject.appendChild(saveNewProject);
+    newProject.appendChild(saveNewProject); /*}}}*/
 
-    // Upcoming panel
+    // Upcoming panel /*{{{*/
     upcoming = document.createElement('div');
     upcoming.className = 'task_view';
     upcoming.setAttribute('project_level', 0);
@@ -701,46 +701,46 @@ function openTasks() {
 
     upcoming.appendChild(upcomingU);
     taskPanel.appendChild(projectsPanel);
-    taskPanel.appendChild(upcoming);
-    
+    taskPanel.appendChild(upcoming); /*}}}*/
+
     fetchTaskData();
     populateProjects(projectsList);
-    populateUpcoming(upcoming);
+    populateUpcoming(upcoming); /*}}}*/
 
-    // Add tab and panel
+    // Add tab and panel /*{{{*/
     taskTab = document.createElement('div');
     setText(taskTab, 'Task List');
     taskTab.className = 'tab';
     taskTab.setAttribute('data-id', id);
     taskTab.onclick = function() {switchTab(this.getAttribute('data-id'));};
     addTab(taskPanel, taskTab);
-    switchTab(id);
+    switchTab(id); /*}}}*/
 
-    // Position the new project elements
+    // Position the new project elements /*{{{*/
     newProject.style.position = 'absolute';
     newProject.style.top = projectsPanel.offsetTop + projectsPanel.offsetHeight - newProject.offsetHeight - 5 + 'px';
     newProject.style.width = projectsPanel.offsetWidth - 5 + 'px';
     newProjectName.style.width = newProject.offsetWidth - saveNewProject.offsetWidth - 10 + 'px';
     saveNewProject.style.left = newProjectName.offsetLeft + newProjectName.offsetWidth + 3 + 'px';
-    saveNewProject.style.top = newProjectName.offsetTop + (0.5 * newProjectName.offsetHeight - (0.5 * saveNewProject.offsetHeight)) + 1 + 'px';
+    saveNewProject.style.top = newProjectName.offsetTop + (0.5 * newProjectName.offsetHeight - (0.5 * saveNewProject.offsetHeight)) + 1 + 'px'; /*}}}*/
 
-    // Check if task wraps by comparing offsettops through DOM
+    // Check if task wraps by comparing offsettops through DOM /*{{{*/
     spans = upcoming.getElementsByTagName('span');
     // For each set of tasks (urgent, normal, other)
     for (s = 0; s < spans.length; s++) {
         span = spans[s];
-        // For each task/header in them
+        // For each task/header in them /*{{{*/
         for (pNum = 0; pNum < span.childElementCount; pNum++) {
             p = span.children[pNum];
             // Eliminate headers
             if (p.className.search('normal_text') === -1) {continue;}
             offset = p.children[0].offsetTop;
             breakLine = 0;
-            // For each of their children
+            // For each of their children /*{{{*/
             for (cNum = 1; cNum < p.childElementCount; cNum++) {
                 c = p.children[cNum];
                 childBreakFound = 0
-                // If it has children (some do, some don't)
+                // If it has children (some do, some don't) /*{{{*/
                 if (c.childElementCount) {
                     for (c2Num = 0; c2Num < c.childElementCount; c2Num++) {
                         c2 = c.children[c2Num];
@@ -749,44 +749,44 @@ function openTasks() {
                             break;
                         }
                     }
-                }
+                } /*}}}*/
 
-                if (childBreakFound || c.offsetTop > offset) {
+                if (childBreakFound || c.offsetTop > offset) { /*{{{*/
                     breakLine = 1;
                     break;
-                }
-            }
+                } /*}}}*/
+            } /*}}}*/
 
-            if (breakLine) {
+            if (breakLine) { /*{{{*/
                 if (span.children[pNum + 1]) {
                     span.insertBefore(document.createElement('br'), span.children[pNum + 1]);
                 } else {
                     span.appendChild(document.createElement('br'));
                 }
-            }
-        }
-    }
-}
+            } /*}}}*/
+        } /*}}}*/
+    } /*}}}*/
+} /*}}}*/
 
-function openProject(taskView, project) {
+function openProject(taskView, project) { /*{{{*/
     deleteAllChildren(taskView, 1);
 
-    // Display current project tree
+    // Display current project tree /*{{{*/
     taskView.parentElement.children[0].setAttribute('data-project-id', project.id);
     c = 'black';
     if (useNightTheme()) {c = 'silver';}
     projLinks = createProjectLinks(project.id, c, 1, 1);
-    addProjectLinks(projLinks, c, taskView, true);
+    addProjectLinks(projLinks, c, taskView, true); /*}}}*/
 
-    // Delete project button
+    // Delete project button /*{{{*/
     removeProjectLink = document.createElement('a');
     removeProjectLink.className = 'blank';
     removeProjectLink.href = '#';
     removeProjectLink.setAttribute('data-project-id', project.id);
     removeProjectLink.setAttribute('data-project-name', project.name);
-    removeProjectLink.onclick = function() {
+    removeProjectLink.onclick = function() { /*{{{*/
         deleteProject(this.getAttribute('data-project-id'), 'project', taskView);
-    };
+    }; /*}}}*/
     removeProjectImg = document.createElement('img');
     removeProjectImg.src = 'images/x.png';
     removeProjectImg.alt = 'Remove project';
@@ -794,9 +794,9 @@ function openProject(taskView, project) {
     removeProjectLink.appendChild(document.createTextNode('\u00a0\u00a0'));
     removeProjectLink.appendChild(removeProjectImg);
 
-    taskView.appendChild(removeProjectLink);
+    taskView.appendChild(removeProjectLink); /*}}}*/
 
-    // Create subproject list
+    // Create subproject list /*{{{*/
     if (subProjects[project.id]) {
         subProjects[project.id].sort(function(a, b) {return a.name > b.name;});
         subprojectsP = document.createElement('p');
@@ -814,7 +814,7 @@ function openProject(taskView, project) {
         tmpP.style.display = 'inline';
         setText(tmpP, '\u00a0\u00a0\u00a0');
         subprojectsP.appendChild(tmpP);
-        for (subp = 0; subp < subProjects[project.id].length; subp++) {
+        for (subp = 0; subp < subProjects[project.id].length; subp++) { /*{{{*/
             subpr = subProjects[project.id][subp];
             subpA = document.createElement('a');
             subpA.className = 'normal_text';
@@ -826,7 +826,7 @@ function openProject(taskView, project) {
             };
             setText(subpA, subpr.name);
             subprojectsP.appendChild(subpA);
-    
+
             if (subp != (subProjects[project.id].length - 1)) {
                 tmpP = document.createElement('p');
                 tmpP.className = 'normal_text';
@@ -835,17 +835,17 @@ function openProject(taskView, project) {
                 if (useNightTheme()) {switchToNight(tmpP);}
                 subprojectsP.appendChild(tmpP);
             }
-        }
-    
+        } /*}}}*/
+
         if (useNightTheme()) {switchToNight(subprojectsP);}
-    
+
         taskView.appendChild(subprojectsP);
     } else {
         taskView.appendChild(document.createElement('br'));
         taskView.appendChild(document.createElement('br'));
-    }
+    } /*}}}*/
 
-    // Get task list
+    // Get task list /*{{{*/
     out = getTasksInProject(project.id);
     urgent = out[0];
     other = out[1];
@@ -859,9 +859,9 @@ function openProject(taskView, project) {
     normalTasks = out[3];
     otherHeader = out[4];
     otherHR = out[5];
-    otherTasks = out[6];
+    otherTasks = out[6]; /*}}}*/
 
-    // Add new task button
+    // Add new task button /*{{{*/
     newTaskP = document.createElement('p');
     newTaskP.style.display = 'inline';
     newTaskP.style.cssFloat = 'right';
@@ -876,37 +876,37 @@ function openProject(taskView, project) {
 
     if (useNightTheme()) {switchToNight(newTaskButton);}
 
-    taskView.appendChild(newTaskP);
+    taskView.appendChild(newTaskP); /*}}}*/
 
-    // If no tasks, add whitespace
+    // If no tasks, add whitespace /*{{{*/
     if (urgent.length == 0 && other.length == 0 && normal.length == 0) {
         taskView.appendChild(document.createElement('br'));
         taskView.appendChild(document.createElement('br'));
-    }
+    } /*}}}*/
 
     addHTMLTasks(taskView, urgentHeader, urgentHR, urgentTasks, normalTasks, otherHeader, otherHR, otherTasks);
 
     return;
 
-    // Show project's tasks - legacy, leaving for reference
-    // Add new task button
+    // Show project's tasks - legacy, leaving for reference /*{{{*/
+    // Add new task button /*{{{*/
     newTaskButton = document.createElement('button');
     newTaskButton.onclick = function() {
         openTask(makeBlankTask(project.id), taskView);
     }
     setText(newTaskButton, 'Create task');
 
-    if (useNightTheme()) {switchToNight(newTaskButton);}
+    if (useNightTheme()) {switchToNight(newTaskButton);} /*}}}*/
 
-    // If no subprojects, need an extra two line
+    // If no subprojects, need an extra two line /*{{{*/
     if (!subProjects[project.id]) {
         taskView.appendChild(document.createElement('br'));
         taskView.appendChild(document.createElement('br'));
     }
     taskView.appendChild(newTaskButton);
-    taskView.appendChild(document.createElement('br'));
+    taskView.appendChild(document.createElement('br')); /*}}}*/
 
-    // Order tasks alphabetically then by urgent, normal, other
+    // Order tasks alphabetically then by urgent, normal, other /*{{{*/
     myTasks = new Array();
     myUrgent = sortedTasks[0][project.id];
     myOther = sortedTasks[1][project.id];
@@ -922,16 +922,16 @@ function openProject(taskView, project) {
     if (myOther) {
         myOther.sort(function(a, b) {return (a.name > b.name);});
         myOther.forEach(function(e) {myTasks.push(e);});
-    }
+    } /*}}}*/
 
-    // Add tasks table
+    // Add tasks table /*{{{*/
     if (myTasks.length > 0) {
         taskView.appendChild(document.createElement('br'));
 
         tasksTable = document.createElement('table');
         tasksTable.className = 'notes';
-    
-        // Create table header
+
+        // Create table header /*{{{*/
         tasksHeader = document.createElement('tr');
         tasksTitleCell = document.createElement('th');
         tasksTitleCell.style.width = '100%';
@@ -946,14 +946,14 @@ function openProject(taskView, project) {
         tasksHeader.appendChild(tasksPriCell);
         tasksHeader.appendChild(tasksDeadCell);
         tasksHeader.appendChild(tasksDelCell);
-    
-        tasksTable.appendChild(tasksHeader);
 
-        // Create table rows
+        tasksTable.appendChild(tasksHeader); /*}}}*/
+
+        // Create table rows /*{{{*/
         for (taskNum = 0; taskNum < myTasks.length; taskNum++) {
             task = myTasks[taskNum];
 
-            // Create task row
+            // Create task row /*{{{*/
             taskRow = document.createElement('tr');
             taskRow.style.textAlign = 'center';
             titleCell = document.createElement('td');
@@ -999,7 +999,7 @@ function openProject(taskView, project) {
             delImg.src = 'images/x.png';
             delImg.alt = 'Remove task';
             delLink.appendChild(delImg);
-            delCell.appendChild(delLink);
+            delCell.appendChild(delLink); /*}}}*/
 
             taskRow.appendChild(titleCell);
             taskRow.appendChild(priCell);
@@ -1007,56 +1007,56 @@ function openProject(taskView, project) {
             taskRow.appendChild(delCell);
 
             tasksTable.appendChild(taskRow);
-        }
+        } /*}}}*/
 
         if (useNightTheme()) {switchToNight(tasksTable);}
 
         taskView.appendChild(tasksTable);
-    }
-}
+    } /*}}}*/ /*}}}*/
+} /*}}}*/
 
-function deleteProject(projectID, viewMode, taskView) {
-    // Verify project can be deleted and user wants to
+function deleteProject(projectID, viewMode, taskView) { /*{{{*/
+    // Verify project can be deleted and user wants to /*{{{*/
     n = projectsByID[projectID].name;
     if (n === 'Default') {
         alert('The default project can\'t be deleted!');
         exit;
     }
     conf = confirm('Are you sure you want to delete project \'' + n + '\'?');
-    if (!conf) {return;}
+    if (!conf) {return;} /*}}}*/
 
-    // Delete project
+    // Delete project /*{{{*/
     deleteProjectReq = createPostReq('tasks.cgi', false);
-    deleteProjectReq.onreadystatechange = function() {
+    deleteProjectReq.onreadystatechange = function() { /*{{{*/
         if (this.readyState == 4 && this.status == 200) {
             if (this.responseText != 'success') {
                 alert('Project deletion failed with error ' + this.responseText);
             }
         }
-    };
-    deleteProjectReq.send('mode=4&id=' + projectID);
+    }; /*}}}*/
+    deleteProjectReq.send('mode=4&id=' + projectID); /*}}}*/
 
-    // Reset view
+    // Reset view /*{{{*/
     fetchTaskData();
     if (viewMode === 'project') {populateUpcoming(taskView);}
-    populateProjects(taskView.parentElement.children[0].children[0]);
-}
+    populateProjects(taskView.parentElement.children[0].children[0]); /*}}}*/
+} /*}}}*/
 
-function deleteTask(task, taskView, returnToOverview) {
+function deleteTask(task, taskView, returnToOverview) { /*{{{*/
     t = JSON.parse(task);
     deleteTaskReq = createPostReq('tasks.cgi', false);
 
     deleteTaskReq.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
-            if (this.responseText == 'success') {
+            if (this.responseText == 'success') { /*{{{*/
                 fetchTaskData();
-    
+
                 if (returnToOverview != '0') {
                     populateUpcoming(taskView);
                 } else {
                     openProject(taskView, projectsByID[t.project]);
-                }
-            } else {
+                } /*}}}*/
+            } else { /*{{{*/
                 e = taskView.getElementsByClassName('error')[0];
                 if (e) {
                     e.style.color = 'red';
@@ -1064,27 +1064,27 @@ function deleteTask(task, taskView, returnToOverview) {
                 } else {
                     alert('Failed to delete task!');
                 }
-            }
+            } /*}}}*/
         }
     };
 
     deleteTaskReq.send('mode=3&id=' + t.id);
-}
+} /*}}}*/
 
-function openTask(task, taskView, redirectView) {
+function openTask(task, taskView, redirectView) { /*{{{*/
     deleteAllChildren(taskView, 1);
     taskView.parentElement.children[0].setAttribute('data-project-id', task.project);
     c = 'black';
     if (useNightTheme()) {c = 'silver';}
 
-    // If task has a project, display path
+    // If task has a project, display path /*{{{*/
     if (task.project != -1) {
         // Display task path
         projLinks = createProjectLinks(task.project, c, 1, 1);
         addProjectLinks(projLinks, c, taskView, true)
-    }
+    } /*}}}*/
 
-    // Add this task
+    // Add this task /*{{{*/
     if (task.project !== -1) {
         tmpP = document.createElement('p');
         tmpP.style.display = 'inline';
@@ -1102,9 +1102,9 @@ function openTask(task, taskView, redirectView) {
     tmpP.style.whiteSpace = 'nowrap';
     tmpP.style.fontWeight = 'bold';
     tmpP.style.fontSize = '115%';
-    taskView.appendChild(tmpP);
+    taskView.appendChild(tmpP); /*}}}*/
 
-    // If task path wraps, indent each new line
+    // If task path wraps, indent each new line /*{{{*/
     lastOffset = taskView.children[1].offsetTop;
     for (p = 2; p < taskView.childElementCount; p++) {
         e = taskView.children[p];
@@ -1112,9 +1112,9 @@ function openTask(task, taskView, redirectView) {
             lastOffset = e.offsetTop;
             taskView.insertBefore(document.createTextNode(stringFill('\u00a0', 4)), e);
         }
-    }
+    } /*}}}*/
 
-    // Delete task button, if not new
+    // Delete task button, if not new /*{{{*/
     if (task.id != -1) {
         deleteTaskElem = document.createElement('p');
         deleteTaskElem.style.display = 'inline';
@@ -1122,11 +1122,11 @@ function openTask(task, taskView, redirectView) {
         deleteTaskLink = document.createElement('a');
         deleteTaskLink.href = '#';
         deleteTaskLink.setAttribute('data-task', JSON.stringify(task));
-        deleteTaskLink.onclick = function() {
+        deleteTaskLink.onclick = function() { /*{{{*/
             t = JSON.parse(this.getAttribute('data-task'));
             conf = confirm('Are you sure you want to delete task "' + t.name + '"?');
             if (conf) {deleteTask(this.getAttribute('data-task'), taskView, false);}
-        };
+        }; /*}}}*/
         deleteTaskImg = document.createElement('img');
         deleteTaskImg.src = 'images/x.png';
         deleteTaskImg.title = 'Delete task';
@@ -1134,39 +1134,39 @@ function openTask(task, taskView, redirectView) {
         deleteTaskLink.appendChild(deleteTaskImg);
         deleteTaskElem.appendChild(deleteTaskLink);
         taskView.appendChild(deleteTaskElem);
-    }
+    } /*}}}*/
 
     taskView.appendChild(document.createElement('br'));
     taskView.appendChild(document.createElement('br'));
 
-    // Create task edit GUI
-    // Project
+    // Create task edit GUI /*{{{*/
+    // Project /*{{{*/
     projectSelect = projectsToSelect(task.project);
     projectSelect.onchange = function() {
         saveButton = this.parentElement.getElementsByTagName('button')[0];
         saveButton.setAttribute('data-task-project', this.value);
         saveButton.setAttribute('data-project', JSON.stringify(projectsByID[this.value]));
     }
-    taskView.appendChild(projectSelect);
+    taskView.appendChild(projectSelect); /*}}}*/
 
-    // Title
+    // Title /*{{{*/
     titleLabel = document.createElement('p');
     titleLabel.className = 'normal_text form_label';
     setText(titleLabel, 'Task\u00a0name:\u00a0')
     titleInput = document.createElement('input');
     titleInput.style.width = '75%';
-    titleInput.value = task.name;
+    titleInput.value = task.name; /*}}}*/
 
-    // Description
+    // Description /*{{{*/
     descLabel = document.createElement('p');
     descLabel.className = 'normal_text form_label';
     setText(descLabel, 'Task\u00a0Description:');
     descInput = document.createElement('textarea');
     descInput.style.width = '90%';
     descInput.style.height = '30%';
-    descInput.value = task.description;
+    descInput.value = task.description; /*}}}*/
 
-    // Priority
+    // Priority /*{{{*/
     priLabel = document.createElement('p');
     priLabel.className = 'normal_text form_label';
     priLabel.style.display = 'inline';
@@ -1180,10 +1180,10 @@ function openTask(task, taskView, redirectView) {
         if (o == task.priority) {opt.selected = true;}
         priInput.appendChild(opt);
         if (useNightTheme()) {switchToNight(opt);}
-    }
+    } /*}}}*/
 
-    // Deadline
-    // Elements
+    // Deadline /*{{{*/
+    // Elements /*{{{*/
     deadlineGroup = document.createElement('fieldset');
     deadlineGroup.style.width = '92%';
     deadlineLabel = document.createElement('legend');
@@ -1192,14 +1192,14 @@ function openTask(task, taskView, redirectView) {
     urgentRadio.name = 'deadline';
     urgentRadio.type = 'radio';
     urgentRadio.value = 'u';
-    urgentRadio.onclick = function() {
+    urgentRadio.onclick = function() { /*{{{*/
         e = this;
         for (i = 0; i < 6; i++) {
             e = e.nextElementSibling;
         }
 
         e.readOnly = true;
-    };
+    }; /*}}}*/
     urgentLabel = document.createElement('p');
     urgentLabel.className = 'normal_text';
     urgentLabel.style.display = 'inline';
@@ -1208,14 +1208,14 @@ function openTask(task, taskView, redirectView) {
     otherRadio.name = 'deadline';
     otherRadio.type = 'radio';
     otherRadio.value = 's';
-    otherRadio.onclick = function() {
+    otherRadio.onclick = function() { /*{{{*/
         e = this;
         for (i = 0; i < 4; i++) {
             e = e.nextElementSibling;
         }
 
         e.readOnly = true;
-    };
+    }; /*}}}*/
     otherLabel = document.createElement('p');
     otherLabel.className = 'normal_text';
     otherLabel.style.display = 'inline';
@@ -1224,22 +1224,22 @@ function openTask(task, taskView, redirectView) {
     dateRadio.name = 'deadline';
     dateRadio.type = 'radio';
     dateRadio.value = 'd';
-    dateRadio.onclick = function() {
+    dateRadio.onclick = function() { /*{{{*/
         this.nextElementSibling.nextElementSibling.disabled = false;
-    };
+    }; /*}}}*/
     dateLabel = document.createElement('p');
     dateLabel.className = 'normal_text';
     dateLabel.style.display = 'inline';
     setText(dateLabel, 'Date\u00a0');
     dateInput = document.createElement('input');
     dateInput.className = 'normal_text';
-    dateInput.type = 'datetime-local';
+    dateInput.type = 'datetime-local'; /*}}}*/
     dateInput.onclick = function() {
         this.readOnly = false;
         this.previousElementSibling.previousElementSibling.checked = true;
     }
 
-    // Add defaults to deadline fields
+    // Add defaults to deadline fields /*{{{*/
     if (task.is_urgent) {urgentRadio.defaultChecked = true; dateInput.readOnly = true;}
     else if (task.is_other) {otherRadio.defaultChecked = true; dateInput.readOnly = true;}
     else {
@@ -1251,14 +1251,14 @@ function openTask(task, taskView, redirectView) {
                    pad(d.getUTCDate().toString(), 2, '0', 'f') +
                    'T' + time;
         dateInput.value = deadline;
-    }
-    
-    // If datetime input type isn't supported
+    } /*}}}*/
+
+    // If datetime input type isn't supported /*{{{*/
     if (dateInput.type == 'text') {
         if (dateInput.value === '') {
             dateInput.value = 'YYYY-MM-DD HH:MM';
         } else {dateInput.value = dateInput.value.replace('T', ' ');}
-        dateInput.onchange = function() {
+        dateInput.onchange = function() { /*{{{*/
             year = /[0-9]{4}-/;
             month = /(0[1-9]|1[12])-/;
             date = /(0[1-9]|[12][0-9]|3[01])-/;
@@ -1272,7 +1272,7 @@ function openTask(task, taskView, redirectView) {
 
             v = dateInput.value;
             newValue = '';
-            // Verify date and time validity, reset if invalid otherwise keep
+            // Verify date and time validity, reset if invalid otherwise keep /*{{{*/
             if (!year.test(v.substr(0, 5))) {
                 yearValid = 0;
                 newValue += 'YYYY-';
@@ -1293,9 +1293,9 @@ function openTask(task, taskView, redirectView) {
                 minuteValid = 0;
                 newValue += 'MM';
             } else {newValue += v.substr(14, 2);}
-            dateInput.value = newValue;
-        }
-    }
+            dateInput.value = newValue; /*}}}*/
+        } /*}}}*/
+    } /*}}}*/
 
     deadlineGroup.appendChild(deadlineLabel);
     deadlineGroup.appendChild(urgentRadio);
@@ -1309,9 +1309,9 @@ function openTask(task, taskView, redirectView) {
     if (useNightTheme()) {
         switchToNight(titleLabel, titleInput, descLabel, descInput, priLabel, priInput,
             deadlineLabel, urgentLabel, otherLabel, dateLabel, dateInput);
-    }
+    } /*}}}*/
 
-    // Create save and cancel buttons
+    // Create save and cancel buttons /*{{{*/
     errorText = document.createElement('p');
     errorText.className = 'error';
     errorText.style.display = 'inline';
@@ -1339,13 +1339,13 @@ function openTask(task, taskView, redirectView) {
     else {d = dateInput.value;}
     saveButton.setAttribute('data-task-deadline', d);
     setText(saveButton, 'Save');
-    saveButton.onclick = function() {
+    saveButton.onclick = function() { /*{{{*/
         errorText = this.nextElementSibling.nextElementSibling;
         sB = this;
-        
+
         saveTaskReq = createPostReq('tasks.cgi', true);
 
-        saveTaskReq.onreadystatechange = function() {
+        saveTaskReq.onreadystatechange = function() { /*{{{*/
             if (this.readyState == 4 && this.status == 200) {
                 if (this.responseText === 'success') {
                     errorText.style.color = 'green';
@@ -1362,29 +1362,29 @@ function openTask(task, taskView, redirectView) {
                     setText(errorText, 'Save failed - ' + this.responseText);
                 }
             }
-        };
+        }; /*}}}*/
 
-        saveTaskReq.send('mode=2&id=' + this.getAttribute('data-task-id') + '&n=' + this.getAttribute('data-task-name') + 
-                         '&pj=' + this.getAttribute('data-task-project') + '&ds=' + this.getAttribute('data-task-desc') + 
+        saveTaskReq.send('mode=2&id=' + this.getAttribute('data-task-id') + '&n=' + this.getAttribute('data-task-name') +
+                         '&pj=' + this.getAttribute('data-task-project') + '&ds=' + this.getAttribute('data-task-desc') +
                          '&p=' + this.getAttribute('data-task-priority') + '&d=' + this.getAttribute('data-task-deadline'));
-    };
+    }; /*}}}*/
 
     cancelButton = document.createElement('button');
     setText(cancelButton, 'Cancel');
-    cancelButton.onclick = function() {
+    cancelButton.onclick = function() { /*{{{*/
         if (task.project != -1) {
             openProject(taskView, projectsByID[task.project]);
         } else {
             populateUpcoming(taskView);
         }
-    }
+    } /*}}}*/
 
     if (useNightTheme()) {
         switchToNight(saveButton, cancelButton);
-    }
+    } /*}}}*/
 
-    // Text handlers
-    titleInput.onchange = function() {
+    // Text handlers /*{{{*/
+    titleInput.onchange = function() { /*{{{*/
         e = this;
         while (!(e.style.fontWeight === 'bold')) {
             e = e.previousElementSibling;
@@ -1403,29 +1403,29 @@ function openTask(task, taskView, redirectView) {
             setText(errorText, 'Name cannot be blank');
             saveButton.disabled = true;
         }
-    }
+    } /*}}}*/
 
-    descInput.onchange = function() {
+    descInput.onchange = function() { /*{{{*/
         saveButton = this.parentElement.getElementsByTagName('button')[0];
         saveButton.setAttribute('data-task-desc', this.value);
-    }
+    } /*}}}*/
 
-    priInput.onchange = function() {
+    priInput.onchange = function() { /*{{{*/
         saveButton = this.parentElement.getElementsByTagName('button')[0];
         saveButton.setAttribute('data-task-priority', this.value);
-    }
+    } /*}}}*/
 
-    urgentRadio.onchange = function() {
+    urgentRadio.onchange = function() { /*{{{*/
         saveButton = this.parentElement.parentElement.getElementsByTagName('button')[0];
         if (this.checked) {saveButton.setAttribute('data-task-deadline', 'u');}
-    }
+    } /*}}}*/
 
-    otherRadio.onchange = function() {
+    otherRadio.onchange = function() { /*{{{*/
         saveButton = this.parentElement.parentElement.getElementsByTagName('button')[0];
         if (this.checked) {saveButton.setAttribute('data-task-deadline', 's');}
-    }
+    } /*}}}*/
 
-    dateRadio.onchange = function() {
+    dateRadio.onchange = function() { /*{{{*/
         saveButton = this.parentElement.parentElement.getElementsByTagName('button')[0];
         if (this.checked) {
             input = this.nextElementSibling.nextElementSibling;
@@ -1439,9 +1439,9 @@ function openTask(task, taskView, redirectView) {
                 saveButton.disabled = false;
             }
         }
-    }
+    } /*}}}*/
 
-    dateInput.onchange = function() {
+    dateInput.onchange = function() { /*{{{*/
         saveButton = this.parentElement.parentElement.getElementsByTagName('button')[0];
         errorText = this.parentElement.parentElement.getElementsByClassName('error')[0];
         saveButton.setAttribute('data-task-deadline', this.value);
@@ -1453,9 +1453,9 @@ function openTask(task, taskView, redirectView) {
             setText(errorText, '\u00a0');
             saveButton.disabled = false;
         }
-    }
-    
-    // Add children
+    } /*}}}*/ /*}}}*/
+
+    // Add children /*{{{*/
     taskView.appendChild(titleLabel);
     taskView.appendChild(titleInput);
     taskView.appendChild(descLabel);
@@ -1470,10 +1470,10 @@ function openTask(task, taskView, redirectView) {
     taskView.appendChild(document.createTextNode('\u00a0\u00a0'));
     taskView.appendChild(cancelButton);
     taskView.appendChild(document.createTextNode('\u00a0\u00a0'));
-    taskView.appendChild(errorText);
-}
+    taskView.appendChild(errorText); /*}}}*/ /*}}}*/
+} /*}}}*/
 
-function fetchTaskData() {
+function fetchTaskData() { /*{{{*/
     getTasksReq = createPostReq('tasks.cgi', false);
     getTasksReq.send('mode=0');
     if (getTasksReq.responseText === 'noauth') {
@@ -1488,9 +1488,9 @@ function fetchTaskData() {
     parseProjects();
     tasks = data[1];
     sortedTasks = organizeTasks(tasks);
-}
+} /*}}}*/
 
-function getSubprojects(projectID, projectIDs) {
+function getSubprojects(projectID, projectIDs) { /*{{{*/
     projectIDs.push(projectID);
     if (subProjects[projectID]) {
         for (subp = 0; subp < subProjects[projectID].length; subp++) {
@@ -1499,14 +1499,14 @@ function getSubprojects(projectID, projectIDs) {
     }
 
     return projectIDs;
-}
+} /*}}}*/
 
-function getTasksInProject(projectID) {
+function getTasksInProject(projectID) { /*{{{*/
     projectTasks = [[], [], []];
     projectIDs = [projectID];
     if (subProjects[projectID]) {projectIDs = getSubprojects(projectID, []);}
 
-    // For each project
+    // For each project /*{{{*/
     for (p = 0; p < projectIDs.length; p++) {
         // For each kind of task
         for (taskGroup = 0; taskGroup < sortedTasks.length; taskGroup++) {
@@ -1514,79 +1514,79 @@ function getTasksInProject(projectID) {
             if (!sortedTasks[taskGroup][projectIDs[p]]) {continue;}
             sortedTasks[taskGroup][projectIDs[p]].map(function(t) {projectTasks[taskGroup].push(t);});
         }
-    }
+    } /*}}}*/
 
     return projectTasks;
-}
+} /*}}}*/
 
-function organizeTasks(tasks) {
+function organizeTasks(tasks) { /*{{{*/
     urgent = new Array();
     other = new Array();
     normal = new Array();
     for (taskNum = 0; taskNum < tasks.length; taskNum++) {
         task = tasks[taskNum];
-        if (task.is_urgent) {
+        if (task.is_urgent) { /*{{{*/
             if (!urgent[task.project] || urgent[task.project].constructor.name !== 'Array') {
                 urgent[task.project] = new Array();
             }
-            urgent[task.project].push(task);
-        } else if (task.is_other) {
+            urgent[task.project].push(task); /*}}}*/
+        } else if (task.is_other) { /*{{{*/
             if (!other[task.project] || other[task.project].constructor.name !== 'Array') {
                 other[task.project] = new Array();
             }
-            other[task.project].push(task);
-        } else {
+            other[task.project].push(task); /*}}}*/
+        } else { /*{{{*/
             if (!normal[task.project] || normal[task.project].constructor.name !== 'Array') {
                 normal[task.project] = new Array();
             }
             normal[task.project].push(task);
-        }
+        } /*}}}*/
     }
-    
-    return [urgent, other, normal];
-}
 
-function sortTasksByPriority(t1, t2) {
+    return [urgent, other, normal];
+} /*}}}*/
+
+function sortTasksByPriority(t1, t2) { /*{{{*/
     if (t1.priority == t2.priority) {
         return (t1.name > t2.name) ? 1 : -1;
     }
     return (t1.priority > t2.priority) ? 1 : -1;
-}
+} /*}}}*/
 
-function projectsToSelect(projectID) {
+function projectsToSelect(projectID) { /*{{{*/
    projectSelect = document.createElement('select');
-    for (root = 0; root < rootProjects.length; root++) {
+    for (root = 0; root < rootProjects.length; root++) { /*{{{*/
         currentRoot = rootProjects[root];
         addOption(currentRoot, 0, projectSelect, projectID);
         if (subProjects[currentRoot.id]) {
             addOptionTree(subProjects[currentRoot.id], 0, projectSelect, projectID);
         }
-    }
+    } /*}}}*/
 
     if (useNightTheme()) {switchToNight(projectSelect);}
     return projectSelect;
-}
+} /*}}}*/
 
-function addOptionTree(projects, level, select, projectID) {
+function addOptionTree(projects, level, select, projectID) { /*{{{*/
     for (s = 0; s < projects.length; s++) {
         p = projects[s];
         addOption(p, level + 1, select, projectID);
         if (subProjects[p.id]) {addOptionTree(subProjects[p.id], level + 1, select, projectID);}
     }
-}
+} /*}}}*/
 
-function addOption(project, level, select, projectID) {
+function addOption(project, level, select, projectID) { /*{{{*/
     opt = document.createElement('option');
     opt.value = project.id;
     if (project.id == projectID) {opt.selected = 'selected';}
     setText(opt, stringFill('\u00a0', 3 * level) + project.name);
     if (useNightTheme()) {switchToNight(opt);}
     select.appendChild(opt);
-}
+} /*}}}*/
 
-function tasksToHTML(urgent, normal, other, fromOverview) {
+function tasksToHTML(urgent, normal, other, fromOverview) { /*{{{*/
     redirectView = (fromOverview == 1) ? 'overview' : 'project';
-    // Create urgent tasks
+    // Create urgent tasks /*{{{*/
     urgentHeader = document.createElement('p');
     urgentHeader.className = 'normal_section_header';
     urgentHeader.style.fontWeight = 'bold';
@@ -1600,9 +1600,9 @@ function tasksToHTML(urgent, normal, other, fromOverview) {
     for (taskNum = 0; taskNum < urgent.length; taskNum++) {
         task = urgent[taskNum];
         addTask(task, urgentTasks, false, fromOverview, redirectView);
-    }
+    } /*}}}*/
 
-    // Create tasks with deadlines
+    // Create tasks with deadlines /*{{{*/
     normal.sort(function(a, b) {
         if (deadlineToDate(a.deadline).getTime() == deadlineToDate(b.deadline).getTime()) {
             return sortTasksByPriority(a, b);
@@ -1617,7 +1617,7 @@ function tasksToHTML(urgent, normal, other, fromOverview) {
         task = normal[taskNum];
 
         d = deadlineToDate(task.deadline);
-        // If date has changed
+        // If date has changed /*{{{*/
         if (d.toLocaleDateString() != currentDate) {
             currentDate = d.toLocaleDateString();
 
@@ -1635,11 +1635,11 @@ function tasksToHTML(urgent, normal, other, fromOverview) {
 
             normalTasks.appendChild(dateHeader);
             normalTasks.appendChild(dateHR);
-        }
+        } /*}}}*/
         addTask(task, normalTasks, true, fromOverview, redirectView);
-    }
+    } /*}}}*/
 
-    // Create other tasks
+    // Create other tasks /*{{{*/
     otherHeader = document.createElement('p');
     otherHeader.className = 'normal_section_header';
     otherHeader.style.fontWeight = 'bold';
@@ -1653,50 +1653,50 @@ function tasksToHTML(urgent, normal, other, fromOverview) {
     for (taskNum = 0; taskNum < other.length; taskNum++) {
         task = other[taskNum];
         addTask(task, otherTasks, false, fromOverview, redirectView);
-    }
+    } /*}}}*/
 
     if (useNightTheme()) {switchToNight(urgentHeader, urgentHR, otherHeader, otherHR);}
     return [urgentHeader, urgentHR, urgentTasks, normalTasks, otherHeader, otherHR, otherTasks];
-}
+} /*}}}*/
 
-function addHTMLTasks(taskView, urgentHeader, urgentHR, urgentTasks, normalTasks, otherHeader, otherHR, otherTasks) {
-    if (urgent.length !== 0) {
+function addHTMLTasks(taskView, urgentHeader, urgentHR, urgentTasks, normalTasks, otherHeader, otherHR, otherTasks) { /*{{{*/
+    if (urgent.length !== 0) { /*{{{*/
         urgentHeader.style.cssFloat = 'left';
         taskView.appendChild(urgentHeader);
-        if (css_browser_selector(navigator.userAgent).search('ff') !== -1) {
+        if (css_browser_selector(navigator.userAgent).search('ff') !== -1) { /*{{{*/
             newTaskP.style.paddingRight = '5px';
             urgentHR.style.marginTop = '2px';
             taskView.appendChild(document.createElement('br'));
             taskView.appendChild(document.createElement('br'));
-        }
+        } /*}}}*/
         taskView.appendChild(urgentHR);
         taskView.appendChild(urgentTasks);
-    }
-    if (normal.length !== 0) {
+    } /*}}}*/
+    if (normal.length !== 0) { /*{{{*/
         if (urgent.length === 0) {normalTasks.children[0].style.cssFloat = 'left';}
-        if (css_browser_selector(navigator.userAgent).search('ff') !== -1 && urgent.length === 0) {
+        if (css_browser_selector(navigator.userAgent).search('ff') !== -1 && urgent.length === 0) { /*{{{*/
             newTaskP.style.marginRight = '5px';
             normalTasks.children[1].style.marginTop = '8px';
             taskView.appendChild(normalTasks.children[0]);
             taskView.appendChild(document.createElement('br'));
             taskView.appendChild(document.createElement('br'));
-        }
+        } /*}}}*/
         taskView.appendChild(normalTasks);
-    }
-    if (other.length !== 0) {
+    } /*}}}*/
+    if (other.length !== 0) { /*{{{*/
         if (urgent.length === 0 && normal.length === 0) {otherHeader.style.cssFloat = 'left';}
         taskView.appendChild(otherHeader);
-        if (css_browser_selector(navigator.userAgent).search('ff') != -1 && urgent.length === 0 && normal.length === 0) {
+        if (css_browser_selector(navigator.userAgent).search('ff') != -1 && urgent.length === 0 && normal.length === 0) { /*{{{*/
             newTaskP.style.paddingRight = '5px';
             otherHR.style.marginTop = '2px';
             taskView.appendChild(document.createElement('br'));
             taskView.appendChild(document.createElement('br'));
-        }
+        } /*}}}*/
         taskView.appendChild(otherHR);
         taskView.appendChild(otherTasks);
-    }
+    } /*}}}*/
 
-    // If no tasks in any section
+    // If no tasks in any section /*{{{*/
     if (urgent.length === 0 && normal.length === 0 && other.length === 0) {
         blank = document.createElement('p');
         blank.className = 'normal_text';
@@ -1707,12 +1707,12 @@ function addHTMLTasks(taskView, urgentHeader, urgentHR, urgentTasks, normalTasks
         if (useNightTheme()) {switchToNight(blank);}
 
         taskView.appendChild(blank);
-    }
-}
+    } /*}}}*/
+} /*}}}*/
 
-function parseProjects() {
+function parseProjects() { /*{{{*/
     defaultProject = -1;
-    for (project = 0; project < projects.length; project++) {
+    for (project = 0; project < projects.length; project++) { /*{{{*/
         p = projects[project];
         projectsByID[p.id] = p;
         projectHierarchy[p.id] = p.parent;
@@ -1724,15 +1724,15 @@ function parseProjects() {
             subProjects[p.parent] = new Array();
         }
         subProjects[p.parent].push(p);
-    }
+    } /*}}}*/
     rootProjects.sort(function(p1, p2) {return (p1.name > p2.name);});
     rootProjects.splice(0, 0, defaultProject);
-}
+} /*}}}*/
 
-function populateProjects(projectsList) {
+function populateProjects(projectsList) { /*{{{*/
     deleteAllChildren(projectsList);
 
-    // Create project list headers
+    // Create project list headers /*{{{*/
     projectsListHeader = document.createElement('span');
     upcomingTitle = document.createElement('p');
     upcomingTitle.className = 'normal_section_header';
@@ -1741,7 +1741,7 @@ function populateProjects(projectsList) {
     upcomingLink = document.createElement('a');
     upcomingLink.className = 'normal_section_header';
     upcomingLink.href = '#';
-    upcomingLink.onclick = function() {
+    upcomingLink.onclick = function() { /*{{{*/
         this.parentElement.parentElement.parentElement.parentElement.setAttribute('data-project-id', -1);
         // First three arguments don't need to be stored, since if they are modified
         // it will be with updated information
@@ -1755,18 +1755,18 @@ function populateProjects(projectsList) {
         // For each set of tasks (urgent, normal, other)
         for (s = 0; s < spans.length; s++) {
             span = spans[s];
-            // For each task/header in them
+            // For each task/header in them /*{{{*/
             for (pNum = 0; pNum < span.childElementCount; pNum++) {
                 p = span.children[pNum];
                 // Eliminate headers
                 if (p.className.search('normal_text') === -1) {continue;}
                 offset = p.children[0].offsetTop;
                 breakLine = 0;
-                // For each of their children
+                // For each of their children /*{{{*/
                 for (cNum = 1; cNum < p.childElementCount; cNum++) {
                     c = p.children[cNum];
                     childBreakFound = 0
-                    // If it has children (some do, some don't)
+                    // If it has children (some do, some don't) /*{{{*/
                     if (c.childElementCount) {
                         for (c2Num = 0; c2Num < c.childElementCount; c2Num++) {
                             c2 = c.children[c2Num];
@@ -1775,24 +1775,24 @@ function populateProjects(projectsList) {
                                 break;
                             }
                         }
-                    }
+                    } /*}}}*/
 
                     if (childBreakFound || c.offsetTop > offset) {
                         breakLine = 1;
                         break;
                     }
-                }
+                } /*}}}*/
 
-                if (breakLine) {
+                if (breakLine) { /*{{{*/
                     if (span.children[pNum + 1]) {
                         span.insertBefore(document.createElement('br'), span.children[pNum + 1]);
                     } else {
                         span.appendChild(document.createElement('br'));
                     }
-                }
-            }
+                } /*}}}*/
+            } /*}}}*/
         }
-    }
+    } /*}}}*/
     setText(upcomingLink, 'Overview');
     upcomingTitle.appendChild(upcomingLink);
 
@@ -1806,16 +1806,16 @@ function populateProjects(projectsList) {
 
     projectsListHeader.appendChild(upcomingTitle);
     projectsListHeader.appendChild(projectsTitle);
-    projectsList.appendChild(projectsListHeader);
+    projectsList.appendChild(projectsListHeader); /*}}}*/
 
     // Create project list
     for (project = 0; project < rootProjects.length; project++) {
         currentRoot = rootProjects[project];
         addProject(projectsList, currentRoot, 0);
     }
-}
+} /*}}}*/
 
-function populateUpcoming(taskView) {
+function populateUpcoming(taskView) { /*{{{*/
     deleteAllChildren(taskView, 1);
 
     upcomingP = document.createElement('p');
@@ -1827,7 +1827,7 @@ function populateUpcoming(taskView) {
 
     taskView.appendChild(upcomingP);
 
-    // Add new task button
+    // Add new task button /*{{{*/
     newTaskP = document.createElement('p');
     newTaskP.style.display = 'inline';
     newTaskP.style.cssFloat = 'right';
@@ -1841,18 +1841,18 @@ function populateUpcoming(taskView) {
 
     if (useNightTheme()) {switchToNight(newTaskButton);}
 
-    taskView.appendChild(newTaskP);
+    taskView.appendChild(newTaskP); /*}}}*/
 
-    // Tasks sorted by deadline, priority, then name
+    // Tasks sorted by deadline, priority, then name /*{{{*/
     // sortedTask is two-dimensional array, but project is
     // inconsequential for the task view, so flatten them
     urgent = flatten(sortedTasks[0]);
     other = flatten(sortedTasks[1]);
     normal = flatten(sortedTasks[2]);
     urgent.sort(sortTasksByPriority);
-    other.sort(sortTasksByPriority);
+    other.sort(sortTasksByPriority); /*}}}*/
 
-    // Create HTML elements from tasks
+    // Create HTML elements from tasks /*{{{*/
     out = tasksToHTML(urgent, normal, other, 1);
     urgentHeader = out[0];
     urgentHR = out[1];
@@ -1860,12 +1860,12 @@ function populateUpcoming(taskView) {
     normalTasks = out[3];
     otherHeader = out[4];
     otherHR = out[5];
-    otherTasks = out[6];
+    otherTasks = out[6]; /*}}}*/
 
     addHTMLTasks(taskView, urgentHeader, urgentHR, urgentTasks, normalTasks, otherHeader, otherHR, otherTasks);
-}
+} /*}}}*/
 
-function createProjectLinks(projectID, color, levelsToRoot, isTitle) {
+function createProjectLinks(projectID, color, levelsToRoot, isTitle) { /*{{{*/
     projLinks = [createProjectLink(projectsByID[projectID], levelsToRoot)];
     projLinks[0].style.color = color;
     projParent = projectHierarchy[projectID];
@@ -1875,54 +1875,54 @@ function createProjectLinks(projectID, color, levelsToRoot, isTitle) {
         projParent = projectHierarchy[projParent];
     }
 
-    // If this is a title, add an overview link
+    // If this is a title, add an overview link /*{{{*/
     if (isTitle) {
         overviewLink = document.createElement('a');
         overviewLink.className = 'normal_text';
         overviewLink.href = '#';
         overviewLink.style.whiteSpace = 'nowrap';
         overviewLink.style.color = color;
-        overviewLink.onclick = function() {
+        overviewLink.onclick = function() { /*{{{*/
             fetchTaskData();
             populateUpcoming(taskView);
-        };
+        }; /*}}}*/
         setText(overviewLink, 'Overview');
         projLinks.push(overviewLink);
-    }
+    } /*}}}*/
 
     projLinks.reverse();
     return projLinks;
-}
+} /*}}}*/
 
-function createProjectLink(project, levelsToRoot) {
+function createProjectLink(project, levelsToRoot) { /*{{{*/
     projAnchor = document.createElement('a');
     projAnchor.className = 'normal_text';
     projAnchor.href = '#';
     projAnchor.style.whiteSpace = 'nowrap';
     projAnchor.setAttribute('data-project', JSON.stringify(project));
     projAnchor.setAttribute('data-levels-to-root', levelsToRoot);
-    projAnchor.onclick = function() {
+    projAnchor.onclick = function() { /*{{{*/
         levels = parseInt(this.getAttribute('data-levels-to-root'), 10);
         taskView = this;
         for (levels = levels; levels > 0; levels--) {taskView = taskView.parentElement;}
         openProj = JSON.parse(this.getAttribute('data-project'));
         openProject(taskView, openProj);
-    };
+    }; /*}}}*/
     setText(projAnchor, project.name);
     return projAnchor;
-}
+} /*}}}*/
 
-function addProjectLinks(projLinks, color, parent, isTitle) {
-    // Add opening bracket
+function addProjectLinks(projLinks, color, parent, isTitle) { /*{{{*/
+    // Add opening bracket /*{{{*/
     if (!isTitle) {
         tmpP = document.createElement('p');
         tmpP.style.display = 'inline';
         tmpP.style.color = color;
         setText(tmpP, '\u00a0\u00a0\u00a0&lt;');
         parent.appendChild(tmpP);
-    }
+    } /*}}}*/
 
-    for (link = 0; link < projLinks.length; link++) {
+    for (link = 0; link < projLinks.length; link++) { /*{{{*/
         projLink = projLinks[link];
         if (isTitle) {projLink.style.fontWeight = 'bold'; projLink.style.fontSize = '115%';}
         parent.appendChild(projLink);
@@ -1935,19 +1935,19 @@ function addProjectLinks(projLinks, color, parent, isTitle) {
             if (isTitle) {tmpP.style.fontWeight = 'bold'; tmpP.style.fontSize = '115%';}
             parent.appendChild(tmpP);
         }
-    }
+    } /*}}}*/
 
-    // Add closing bracket
+    // Add closing bracket /*{{{*/
     if (!isTitle) {
         tmpP = document.createElement('p');
         tmpP.style.display = 'inline';
         tmpP.style.color = color;
         setText(tmpP, '&gt;');
         parent.appendChild(tmpP);
-    }
-}
+    } /*}}}*/
+} /*}}}*/
 
-function addProject(parent, project, level) {
+function addProject(parent, project, level) { /*{{{*/
     /* Create and add this project to the list
        In state preservation, level == 0 means root project
        Since some conditions account for the level == 0 part,
@@ -1958,7 +1958,7 @@ function addProject(parent, project, level) {
        in addition to the parent
     */
 
-    // Expand project button
+    // Expand project button /*{{{*/
     expandProject = document.createElement('a');
     // Only change color if we are expanded
     if (expanded[project.id] && subProjects[project.id] && subProjects[project.id].length) {
@@ -1970,33 +1970,33 @@ function addProject(parent, project, level) {
     }
     expandProject.setAttribute('data-project-id', project.id);
     expandProject.setAttribute('data-level', level);
-    setText(expandProject, stringFill('\u00a0', 3 * level) + '~');
+    setText(expandProject, stringFill('\u00a0', 3 * level) + '~'); /*}}}*/
 
-    // Open project text
+    // Open project text /*{{{*/
     openProjectLink = document.createElement('a');
     openProjectLink.href = '#';
     openProjectLink.style.textDecoration = 'none';
     openProjectLink.setAttribute('data-project', JSON.stringify(project));
-    openProjectLink.onclick = function() {
+    openProjectLink.onclick = function() { /*{{{*/
         taskView = this.parentElement.parentElement.parentElement.children[1];
         openProj = JSON.parse(this.getAttribute('data-project'));
         openProject(taskView, openProj);
-    };
+    }; /*}}}*/
     projectName = document.createElement('p');
     projectName.className = 'project_name';
     setText(projectName, '\u00a0' + project.name);
-    openProjectLink.appendChild(projectName);
+    openProjectLink.appendChild(projectName); /*}}}*/
 
-    // Delete project button
+    // Delete project button /*{{{*/
     removeProjectLink = document.createElement('a');
     removeProjectLink.className = 'blank';
     removeProjectLink.href = '#';
     removeProjectLink.setAttribute('data-project-id', project.id);
     removeProjectLink.setAttribute('data-project-name', project.name);
-    removeProjectLink.onclick = function() {
+    removeProjectLink.onclick = function() { /*{{{*/
         taskView = this.parentElement.parentElement.parentElement.children[1];
         deleteProject(this.getAttribute('data-project-id'), 'tree', taskView);
-    };
+    }; /*}}}*/
     removeProjectImg = document.createElement('img');
     removeProjectImg.src = 'images/x.png';
     removeProjectImg.alt = 'Remove project';
@@ -2014,9 +2014,9 @@ function addProject(parent, project, level) {
     parent.appendChild(expandProject);
     parent.appendChild(openProjectLink);
     parent.appendChild(removeProjectLink);
-    if (level === 0 || expanded[project.parent] == 1) {parent.appendChild(document.createElement('br'));}
+    if (level === 0 || expanded[project.parent] == 1) {parent.appendChild(document.createElement('br'));} /*}}}*/
 
-    // If there are actually projects to expand
+    // If there are actually projects to expand /*{{{*/
     if (subProjects[project.id] && subProjects[project.id].length) {
         if (expanded[project.id] && subProjects[project.id].length) {
             setText(expandProject, stringFill('\u00a0', 3 * level) + '-' + '\u00a0');
@@ -2024,9 +2024,9 @@ function addProject(parent, project, level) {
             setText(expandProject, stringFill('\u00a0', 3 * level) + '+');
         }
         expandProject.href = '#';
-        expandProject.onclick = function() {
+        expandProject.onclick = function() { /*{{{*/
             nextSibling = this.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling;
-            // Collapse
+            // Collapse /*{{{*/
             if (this.getAttribute('data-expanded') == 1) {
                 this.setAttribute('data-expanded', 0);
                 this.className = 'open_project';
@@ -2052,8 +2052,8 @@ function addProject(parent, project, level) {
                         nextSibling.setAttribute('data-expanded', 0);
                     }
                     nextSibling = nextSibling.nextElementSibling;
-                }
-            // Expand
+                } /*}}}*/
+            // Expand /*{{{*/
             } else {
                 this.setAttribute('data-expanded', 1);
                 expanded[this.getAttribute('data-project-id')] = 1;
@@ -2065,7 +2065,7 @@ function addProject(parent, project, level) {
                 count = 0;
                 while (nextSibling.getAttribute('data-level') !== this.getAttribute('data-level')) {
                     nextLevel = nextSibling.getAttribute('data-level');
-                    // Make sure that we are still only one level deeper than the expanded element
+                    // Make sure that we are still only one level deeper than the expanded element /*{{{*/
                     if (nextLevel) {
                         while ((!nextLevel) ||
                             nextLevel.toString() !== (parseInt(this.getAttribute('data-level'), 10) + 1).toString()) {
@@ -2073,31 +2073,31 @@ function addProject(parent, project, level) {
                             nextSibling = nextSibling.nextElementSibling;
                             nextLevel = nextSibling.getAttribute('data-level');
                         }
-                    }
+                    } /*}}}*/
                     if (nextSibling.getAttribute('data-level') === this.getAttribute('data-level')) {break;}
                     nextSibling.style.display = 'inline';
                     count++;
-                    // If at end of elements for this project, add new line
+                    // If at end of elements for this project, add new line /*{{{*/
                     if (count == 3) {
                         count = 0;
                         parent.insertBefore(document.createElement('br'), nextSibling.nextElementSibling);
                         nextSibling = nextSibling.nextElementSibling;
-                    }
+                    } /*}}}*/
                     nextSibling = nextSibling.nextElementSibling;
                 }
-            }
-        };
+            } /*}}}*/
+        }; /*}}}*/
 
-        for (subp = 0; subp < subProjects[project.id].length; subp++) {
+        for (subp = 0; subp < subProjects[project.id].length; subp++) { /*{{{*/
             parent.setAttribute('data-current-sub-' + level, subp);
             subpr = subProjects[project.id][subp];
             addProject(parent, subpr, level + 1, projectsByID, projectHierarchy, subProjects, tasks);
             subp = parent.getAttribute('data-current-sub-' + level);
-        }
-    }
-}
+        } /*}}}*/
+    } /*}}}*/
+} /*}}}*/
 
-function addTask(task, parent, showTime, fromOverview) {
+function addTask(task, parent, showTime, fromOverview) { /*{{{*/
     color = 0;
     if (task.priority > colors.length) {
         color = colors[colors.length - 1];
@@ -2107,7 +2107,7 @@ function addTask(task, parent, showTime, fromOverview) {
 
     projLinks = createProjectLinks(task.project, color, 4, false);
 
-    // If normal, should have a deadline
+    // If normal, should have a deadline /*{{{*/
     taskDate = 0;
     if (showTime === true) {
         taskDate = document.createElement('p');
@@ -2121,9 +2121,9 @@ function addTask(task, parent, showTime, fromOverview) {
         d = new Date(deadline);
         time = getTimeFromString(d.toString());
         setText(taskDate, time + stringFill('\u00a0', 2));
-    }
-    
-    // Create task link
+    } /*}}}*/
+
+    // Create task link /*{{{*/
     taskElem = document.createElement('p');
     taskElem.className = 'normal_text';
     taskElem.appendChild(document.createTextNode(stringFill('\u00a0', 4)));
@@ -2136,18 +2136,18 @@ function addTask(task, parent, showTime, fromOverview) {
     taskLink.style.fontWeight = 'bold';
     taskLink.href = '#';
     taskLink.setAttribute('data-task', JSON.stringify(task));
-    taskLink.onclick = function() {
+    taskLink.onclick = function() { /*{{{*/
         taskView = this.parentElement.parentElement.parentElement;
         openTask(JSON.parse(this.getAttribute('data-task')), taskView, redirectView);
-    };
+    }; /*}}}*/
     setText(taskLink, task.name);
     taskProj = document.createElement('p');
     taskProj.style.color = color;
     taskProj.style.display = 'inline';
 
-    addProjectLinks(projLinks, color, taskProj, false);
-    
-    // Create delete task
+    addProjectLinks(projLinks, color, taskProj, false); /*}}}*/
+
+    // Create delete task /*{{{*/
     delTaskP = document.createElement('p');
     delTaskP.style.display = 'inline';
     setText(delTaskP, '\u00a0\u00a0');
@@ -2159,14 +2159,14 @@ function addTask(task, parent, showTime, fromOverview) {
     delTaskLink.href = '#';
     delTaskLink.setAttribute('data-task', JSON.stringify(task));
     delTaskLink.setAttribute('data-from-overview', fromOverview);
-    delTaskLink.onclick = function() {
+    delTaskLink.onclick = function() { /*{{{*/
         t = JSON.parse(this.getAttribute('data-task'));
         conf = confirm('Are you sure you want to delete task "' + t.name + '"?');
         if (!conf) {return;}
         deleteTask(this.getAttribute('data-task'), parent.parentElement, this.getAttribute('data-from-overview'));
-    };
+    }; /*}}}*/
     delTaskLink.appendChild(delTaskImg);
-    delTaskP.appendChild(delTaskLink);
+    delTaskP.appendChild(delTaskLink); /*}}}*/
 
     if (showTime === true) {taskElem.appendChild(taskDate);}
     taskElem.appendChild(taskLink);
@@ -2176,17 +2176,17 @@ function addTask(task, parent, showTime, fromOverview) {
     if (useNightTheme()) {switchToNight(taskElem, taskLink, taskProj, delTaskP, delTaskLink);}
 
     parent.appendChild(taskElem);
-}
+} /*}}}*/ /*}}}*/
 
-/* Account Management */
-function viewAccount() {
+/* Account Management */ /*{{{*/
+function viewAccount() { /*{{{*/
     id = 'my_account_' + new Date().getTime();
     accountPanel = document.createElement('div');
     accountPanel.id = id;
 
     privilegesReq = createPostReq('account.cgi', false);
 
-    privilegesReq.onreadystatechange = function() {
+    privilegesReq.onreadystatechange = function() { /*{{{*/
         if (privilegesReq.readyState == 4 && privilegesReq.status == 200) {
             data = privilegesReq.responseText;
             data = data.split(';');
@@ -2199,22 +2199,22 @@ function viewAccount() {
             accountPanel.appendChild(serviceP);
 
             // If account isn't shared, show password box and theme
-            if (accountType != 'shared') {
+            if (accountType != 'shared') { /*{{{*/
                 passText = document.createElement('p');
                 passText.className = 'normal_section_header';
                 passText.style.paddingBottom = '0px';
                 passText.style.marginBottom = '10px';
                 setText(passText, 'Update Password');
 
-                // Divs for alignment
+                // Divs for alignment /*{{{*/
                 pBox = document.createElement('div');
                 pBox.style.display = 'inline-block';
                 pBox.style.textAlign = 'center';
                 pBox.className = 'normal';
                 iBox = document.createElement('div');
-                iBox.style.textAlign = 'left';
+                iBox.style.textAlign = 'left'; /*}}}*/
 
-                // Text
+                // Text /*{{{*/
                 error_p = document.createElement('p');
                 error_p.id = 'pass_error_' + id;
                 error_p.className = 'error';
@@ -2231,9 +2231,9 @@ function viewAccount() {
                 p.style.paddingTop = '0px';
                 p.style.paddingBottom = '0px';
                 p.style.marginTop = '0px';
-                p.style.marginBottom = '0px';
+                p.style.marginBottom = '0px'; /*}}}*/
 
-                // Inputs
+                // Inputs /*{{{*/
                 p1 = document.createElement('input');
                 p1.type = 'password';
                 p1.id = 'pass_' + id;
@@ -2245,9 +2245,9 @@ function viewAccount() {
                 p2.type = 'password';
                 p2.setAttribute('data-button-id', 'update_pass_' + id);
                 p2.setAttribute('data-other-input-id', 'pass_' + id);
-                p2.setAttribute('data-error-id', 'pass_error_' + id);
+                p2.setAttribute('data-error-id', 'pass_error_' + id); /*}}}*/
 
-                p1.onkeyup = function() {
+                p1.onkeyup = function() { /*{{{*/
                     b = document.getElementById(this.getAttribute('data-button-id'));
                     if (this.value === '' || this.value.length < 8) {
                         b.disabled = true;
@@ -2258,8 +2258,8 @@ function viewAccount() {
                     } else {
                         b.disabled = true;
                     }
-                };
-                p1.onchange = function() {
+                }; /*}}}*/
+                p1.onchange = function() { /*{{{*/
                     if (this.value === '' || this.value.length < 8) {
                         if (this.value) {
                             setText(document.getElementById(this.getAttribute('data-error-id')),
@@ -2272,8 +2272,8 @@ function viewAccount() {
                         setText(document.getElementById(this.getAttribute('data-error-id')),
                                 'Passwords don\'t match');
                     }
-                };
-                p2.onkeyup = function() {
+                }; /*}}}*/
+                p2.onkeyup = function() { /*{{{*/
                     b = document.getElementById(this.getAttribute('data-button-id'));
                     if (this.value.length < 8) {
                         b.disabled = true;
@@ -2284,8 +2284,8 @@ function viewAccount() {
                     } else {
                         b.disabled = true;
                     }
-                };
-                p2.onchange = function() {
+                }; /*}}}*/
+                p2.onchange = function() { /*{{{*/
                     if (this.value.length >= 8 && this.value ===
                             document.getElementById(this.getAttribute('data-other-input-id')).value) {
                         setText(document.getElementById(this.getAttribute('data-error-id')), '\u00a0');
@@ -2296,18 +2296,18 @@ function viewAccount() {
                         setText(document.getElementById(this.getAttribute('data-error-id')),
                                 'Passwords don\'t match');
                     }
-                };
+                }; /*}}}*/
 
                 updateButton = document.createElement('button');
                 updateButton.id = 'update_pass_' + id;
                 updateButton.disabled = true;
                 updateButton.setAttribute('data-pass-id', 'pass_' + id);
                 updateButton.setAttribute('data-error-id', 'pass_error_' + id);
-                updateButton.onclick = function() {
+                updateButton.onclick = function() { /*{{{*/
                     updatePassReq = new XMLHttpRequest();
                     error_id = this.getAttribute('data-error-id');
 
-                    updatePassReq.onreadystatechange = function() {
+                    updatePassReq.onreadystatechange = function() { /*{{{*/
                         if (this.readyState == 4 && this.status == 200) {
                             e = document.getElementById(error_id);
                             switch(this.responseText) {
@@ -2326,20 +2326,20 @@ function viewAccount() {
                                     break;
                             }
                         }
-                    };
+                    }; /*}}}*/
                     updatePassReq.open('POST', 'account.cgi', true);
                     updatePassReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
                     updatePassReq.send('mode=1&p=' +
                         CryptoJS.SHA512(document.getElementById(this.getAttribute('data-pass-id')).value));
-                };
+                }; /*}}}*/
                 setText(updateButton, 'Update Password');
 
                 // Switch to night theme if appropriate
                 if (useNightTheme()) {
                     switchToNight(passText, pBox, p1, p2, updateButton);
                 }
-        
-                // Add children
+
+                // Add children /*{{{*/
                 p.appendChild(document.createTextNode('Enter password:\u00a0\u00a0'));
                 p.appendChild(p1);
                 p.appendChild(document.createElement('br'));
@@ -2352,11 +2352,11 @@ function viewAccount() {
                 pBox.appendChild(updateButton);
 
                 accountPanel.appendChild(passText);
-                accountPanel.appendChild(pBox);
+                accountPanel.appendChild(pBox); /*}}}*/
 
                 // Theme selection shouldn't be allowed for shared accounts
                 // to avoid conflict
-                // Elements
+                // Elements /*{{{*/
                 themeP = document.createElement('p');
                 themeP.className = 'normal_text';
                 setText(themeP, 'Night theme: ');
@@ -2378,14 +2378,14 @@ function viewAccount() {
                 themeError.className = 'error';
                 themeError.fontWeight = 'bold';
                 themeError.style.paddingLeft = '10px';
-                setText(themeError, '\u00a0');
-    
-                themeS.onchange = function() {
+                setText(themeError, '\u00a0'); /*}}}*/
+
+                themeS.onchange = function() { /*{{{*/
                     updateThemeReq = new XMLHttpRequest();
                     error = document.getElementById(this.getAttribute('data-error-id'));
                     theme = this.value;
-    
-                    updateThemeReq.onreadystatechange = function() {
+
+                    updateThemeReq.onreadystatechange = function() { /*{{{*/
                         if (this.readyState == 4 && this.status == 200) {
                             switch(this.responseText) {
                                 case 'success':
@@ -2399,14 +2399,14 @@ function viewAccount() {
                                     break;
                             }
                         }
-                    };
-    
+                    }; /*}}}*/
+
                     updateThemeReq.open('POST', 'account.cgi', false);
                     updateThemeReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
                     updateThemeReq.send('mode=2&theme=' + this.value);
-                    
-                };
-    
+
+                }; /*}}}*/
+
                 if (useNightTheme()) {
                     switchToNight(themeP, themeS, opt1, opt2, opt3);
                 }
@@ -2417,9 +2417,9 @@ function viewAccount() {
                 themeP.appendChild(themeS);
                 themeP.appendChild(themeError);
                 accountPanel.appendChild(themeP);
-            }
+            } /*}}}*/
         }
-    };
+    }; /*}}}*/
 
     privilegesReq.send('mode=0');
 
@@ -2431,6 +2431,6 @@ function viewAccount() {
     accountTab.onclick = function() {switchTab(this.getAttribute('data-id'));};
     addTab(accountPanel, accountTab);
     switchTab(id);
-}
-
+} /*}}}*/
+ /*}}}*/
 

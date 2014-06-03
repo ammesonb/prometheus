@@ -17,26 +17,26 @@ exit;
 
 __END__
 
-=head1 NAME
+=head1 NAME #{{{
 
 =pod
 
 index.cgi - Landing page for web interface
 
-=cut
+=cut #}}}
 
-=head1 DESCRIPTION
+=head1 DESCRIPTION #{{{
 
 =pod
 
 Provides authentication and tools panel
 
-=cut
+=cut #}}}
 
-=head1 AUTHOR
+=head1 AUTHOR #{{{
 
 =pod
 
 Brett Ammeson C<ammesonb@gmail.com>
 
-=cut
+=cut #}}}

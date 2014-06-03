@@ -24,7 +24,7 @@ if (not ($mode =~ /^[0-9]+$/)) {
     exit;
 }
 
-if ($mode == 0) {
+if ($mode == 0) { #{{{
     my @returnCols = ('*');
     my @searchCols = ('user_id');
     my @searchOps = ('=');
@@ -49,8 +49,8 @@ if ($mode == 0) {
         print ',' if ($count < $#tasks);
         $count++;
     }
-    print ']]';
-} elsif ($mode == 1) {
+    print ']]'; #}}}
+} elsif ($mode == 1) { #{{{
     my $name = $q->param('name');
     $name =~ s/'/''/g;
     my $parent = $q->param('parent');
@@ -58,7 +58,7 @@ if ($mode == 0) {
         print 'baddata';
         exit;
     }
-    
+
     my @columns = ('user_id', 'name');
     my @values = ($session->param('user_id'), "'$name'");
     if (($parent cmp "-1") != 0) {
@@ -67,9 +67,9 @@ if ($mode == 0) {
     }
     my $inserted = COMMON::insertIntoTable($session, 'projects', \@columns, \@values);
     print 'success' if ($inserted == 1);
-    print 'fail' if ($inserted == 0);
-} elsif ($mode == 2) {
-    # Verify parameter integrity
+    print 'fail' if ($inserted == 0); #}}}
+} elsif ($mode == 2) { #{{{
+    # Verify parameter integrity #{{{
     my $id = $q->param('id');
     if (not ($id =~ /^-?[0-9]+$/)) {print 'baddata'; exit;}
     my $name = $q->param('n');
@@ -85,9 +85,9 @@ if ($mode == 0) {
     my $pri = $q->param('p');
     if (not ($pri =~ /^[0-9]+$/)) {print 'badpri'; exit;}
     my $deadline = $q->param('d');
-    if (not (COMMON::checkPrintable($deadline))) {print 'baddead'; exit;}
+    if (not (COMMON::checkPrintable($deadline))) {print 'baddead'; exit;} #}}}
 
-    # Create
+    # Create #{{{
     if ($id == -1 || (($id cmp "-1") == 0)) {
         my @createCols = ('name', 'user_id', 'description', 'priority', 'project', 'is_urgent', 'is_other', 'deadline');
         my @createVals = ("'$name'", $session->param('user_id'), $desc, $pri, $proj);
@@ -104,18 +104,18 @@ if ($mode == 0) {
             push(@createVals, 'false');
             push(@createVals, "'$deadline'");
         }
-    
+
         my $rows = COMMON::insertIntoTable($session, 'tasks', \@createCols, \@createVals);
         if ($rows) {print 'success';}
-        else {print 'fail';}
-    # Modify
+        else {print 'fail';} #}}}
+    # Modify #{{{
     } else {
         my @filterCols = ('id');
         my @filterOps = ('=');
         my @filterVals = ($id);
         my @logic = ();
         my @updateCols = ('name', 'description', 'priority', 'project');
-        my @updateVals = ("'$name'", $desc, $pri, $proj);
+        my @updateVals = ("'$name'", $desc, $pri, $proj); #{{{ #}}}
         my $updated = COMMON::updateTable($session, 'tasks', \@updateCols, \@updateVals, \@filterCols, \@filterOps, \@filterVals, \@logic);
         if ($updated == 0) {print 'failed'; exit;}
         @updateCols = ('is_urgent', 'is_other', 'deadline');
@@ -130,8 +130,8 @@ if ($mode == 0) {
         $updated = COMMON::updateTable($session, 'tasks', \@updateCols, \@updateVals, \@filterCols, \@filterOps, \@filterVals, \@logic);
         if ($updated == 0) {print 'failed'; exit;}
         print 'success';
-    }
-} elsif ($mode == 3) {
+    } #}}} #}}}
+} elsif ($mode == 3) { #{{{
     my $id = $q->param('id');
     if (not ($id =~ /^[0-9]+$/)) {
         print 'badid';
@@ -145,8 +145,8 @@ if ($mode == 0) {
     my $rows = COMMON::deleteFromTable($session, 'tasks', \@searchCols, \@searchOps, \@searchVals, \@logic);
     if ($rows == 0) {print 'fail';}
     elsif ($rows == 1) {print 'success';}
-    else {print 'extra';}
-} elsif ($mode == 4) {
+    else {print 'extra';} #}}}
+} elsif ($mode == 4) { #{{{
     my $id = $q->param('id');
     if (not ($id =~ /^[0-9]+$/)) {
         print 'Invalid ID';
@@ -157,5 +157,5 @@ if ($mode == 0) {
     my $deleted = $dbh->do("SELECT delete_project('$id')");
     if ($deleted == 0) {print 'Database error or project does not exist'; exit;}
     print 'success';
-}
+} #}}}
 exit;
