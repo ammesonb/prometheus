@@ -1142,6 +1142,7 @@ function populateUpcoming(taskView) { /*{{{*/
     setText(newTaskButton, 'Create task');
     newTaskP.appendChild(newTaskButton);
 
+    if (isFirefox()) {newTaskP.style.paddingRight = '15px';}
     if (useNightTheme()) {switchToNight(newTaskButton);}
 
     taskView.appendChild(newTaskP); /*}}}*/
@@ -1676,6 +1677,8 @@ function openProject(taskView, project) { /*{{{*/
     setText(newTaskButton, 'Create task');
     newTaskP.appendChild(newTaskButton);
 
+    if (isFirefox()) {newTaskP.style.paddingRight = '15px';}
+
     if (useNightTheme()) {switchToNight(newTaskButton);}
 
     taskView.appendChild(newTaskP); /*}}}*/
@@ -1697,6 +1700,8 @@ function openProject(taskView, project) { /*{{{*/
         openTask(makeBlankTask(project.id), taskView);
     }
     setText(newTaskButton, 'Create task');
+
+    if (isFirefox()) {newTaskP.style.paddingRight = 'px';}
 
     if (useNightTheme()) {switchToNight(newTaskButton);} /*}}}*/
 
