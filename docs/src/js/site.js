@@ -1,4 +1,4 @@
-/* Global variables */ /*{{{*/
+/* Global variables *//*{{{*/
 var colors = ['#FF1300', '#FF6A00', '#FFA540', '#FFD240', '#9BED00', '#37DB79', '#63ADD0', '#7872D8', '#4B5BD8', '#9A3ED5', '#7F4BA0', '#ED3B83', '#999'];
 var expanded = [];
 var tasks = [];
@@ -9,6 +9,14 @@ var rootProjects = [];
 var subProjects = [];
 var projectsByID = [];
 var projectHierarchy = []; /*}}}*/
+
+function updateJS() {/*{{{*/
+   var docHeadObj = document.getElementsByTagName("head")[0];
+   var newScript = document.createElement("script");
+   newScript.type = "text/javascript";
+   newScript.src = 'js/site.js';
+   docHeadObj.appendChild(newScript);
+}/*}}}*/
 
 function createPostReq(url, mode) { /*{{{*/
     req = new XMLHttpRequest();
@@ -92,6 +100,10 @@ function isIE() { /*{{{*/
     return (css_browser_selector(navigator.userAgent).search('ie') != -1) ||
             (navigator.userAgent.search('\\) like Gecko') != -1);
 } /*}}}*/
+
+function isFirefox() {/*{{{*/
+    return (css_browser_selector(navigator.userAgent).search('ff') !== -1);
+}/*}}}*/
 
 function flatten(arr) { /*{{{*/
     flat = new Array();
@@ -1663,9 +1675,8 @@ function addHTMLTasks(taskView, urgentHeader, urgentHR, urgentTasks, normalTasks
     if (urgent.length !== 0) { /*{{{*/
         urgentHeader.style.cssFloat = 'left';
         taskView.appendChild(urgentHeader);
-        if (css_browser_selector(navigator.userAgent).search('ff') !== -1) { /*{{{*/
-            newTaskP.style.paddingRight = '5px';
-            urgentHR.style.marginTop = '2px';
+        if (isFirefox()) { /*{{{*/
+            urgentHR.style.marginTop = '10px';
             taskView.appendChild(document.createElement('br'));
             taskView.appendChild(document.createElement('br'));
         } /*}}}*/
@@ -1674,21 +1685,23 @@ function addHTMLTasks(taskView, urgentHeader, urgentHR, urgentTasks, normalTasks
     } /*}}}*/
     if (normal.length !== 0) { /*{{{*/
         if (urgent.length === 0) {normalTasks.children[0].style.cssFloat = 'left';}
-        if (css_browser_selector(navigator.userAgent).search('ff') !== -1 && urgent.length === 0) { /*{{{*/
-            newTaskP.style.marginRight = '5px';
-            normalTasks.children[1].style.marginTop = '8px';
+        if (isFirefox()) { /*{{{*/
+            if (urgent.length == 0) {
+                normalTasks.children[1].style.marginTop = '8px';
+            }
             taskView.appendChild(normalTasks.children[0]);
-            taskView.appendChild(document.createElement('br'));
-            taskView.appendChild(document.createElement('br'));
+            if (urgent.length == 0) {
+                taskView.appendChild(document.createElement('br'));
+                taskView.appendChild(document.createElement('br'));
+            }
         } /*}}}*/
         taskView.appendChild(normalTasks);
     } /*}}}*/
     if (other.length !== 0) { /*{{{*/
         if (urgent.length === 0 && normal.length === 0) {otherHeader.style.cssFloat = 'left';}
         taskView.appendChild(otherHeader);
-        if (css_browser_selector(navigator.userAgent).search('ff') != -1 && urgent.length === 0 && normal.length === 0) { /*{{{*/
-            newTaskP.style.paddingRight = '5px';
-            otherHR.style.marginTop = '2px';
+        if (isFirefox() && urgent.length === 0 && normal.length === 0) { /*{{{*/
+            otherHR.style.marginTop = '10px';
             taskView.appendChild(document.createElement('br'));
             taskView.appendChild(document.createElement('br'));
         } /*}}}*/
@@ -1869,7 +1882,7 @@ function createProjectLinks(projectID, color, levelsToRoot, isTitle) { /*{{{*/
     projLinks = [createProjectLink(projectsByID[projectID], levelsToRoot)];
     projLinks[0].style.color = color;
     projParent = projectHierarchy[projectID];
-    while (projParent) {
+    while (projectsByID[projParent]) {
         projLinks.push(createProjectLink(projectsByID[projParent], levelsToRoot));
         projLinks[projLinks.length - 1].style.color = color;
         projParent = projectHierarchy[projParent];
