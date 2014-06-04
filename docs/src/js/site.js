@@ -596,6 +596,7 @@ function refreshNotes(notes) { /*{{{*/
 } /*}}}*/ /*}}}*/
 
 /* Tasks */ /*{{{*/
+/* Generic task functions *//*{{{*/
 function switchDeadlineTimezone(d) { /*{{{*/
     utc = 0;
     if (d.toString().search('\\\+') != -1) {
@@ -630,8 +631,109 @@ function makeBlankTask(project) { /*{{{*/
     newTask.is_urgent = true;
 
     return newTask;
+} /*}}}*//*}}}*/
+
+/* Data structure functions *//*{{{*/
+function fetchTaskData() { /*{{{*/
+    getTasksReq = createPostReq('tasks.cgi', false);
+    getTasksReq.send('mode=0');
+    if (getTasksReq.responseText === 'noauth') {
+        alert('Session timed out! Please copy any unsaved changes then refresh the page.');
+    } else if (getTasksReq.responseText === 'Bad request!') {
+        alert('Invalid request! Please copy any unsaved changes then refresh the page.');
+    }
+    rootProjects.length = 0;
+    subProjects.length = 0;
+    data = JSON.parse(getTasksReq.responseText);
+    projects = data[0];
+    parseProjects();
+    tasks = data[1];
+    sortedTasks = parseTasks(tasks);
 } /*}}}*/
 
+function parseTasks(tasks) { /*{{{*/
+    urgent = new Array();
+    other = new Array();
+    normal = new Array();
+    for (taskNum = 0; taskNum < tasks.length; taskNum++) {
+        task = tasks[taskNum];
+        if (task.is_urgent) { /*{{{*/
+            if (!urgent[task.project] || urgent[task.project].constructor.name !== 'Array') {
+                urgent[task.project] = new Array();
+            }
+            urgent[task.project].push(task); /*}}}*/
+        } else if (task.is_other) { /*{{{*/
+            if (!other[task.project] || other[task.project].constructor.name !== 'Array') {
+                other[task.project] = new Array();
+            }
+            other[task.project].push(task); /*}}}*/
+        } else { /*{{{*/
+            if (!normal[task.project] || normal[task.project].constructor.name !== 'Array') {
+                normal[task.project] = new Array();
+            }
+            normal[task.project].push(task);
+        } /*}}}*/
+    }
+
+    return [urgent, other, normal];
+} /*}}}*/
+
+function getTasksInProject(projectID) { /*{{{*/
+    projectTasks = [[], [], []];
+    projectIDs = [projectID];
+    if (subProjects[projectID]) {projectIDs = getSubprojects(projectID, []);}
+
+    // For each project /*{{{*/
+    for (p = 0; p < projectIDs.length; p++) {
+        // For each kind of task
+        for (taskGroup = 0; taskGroup < sortedTasks.length; taskGroup++) {
+            // If tasks exist, add them to the list
+            if (!sortedTasks[taskGroup][projectIDs[p]]) {continue;}
+            sortedTasks[taskGroup][projectIDs[p]].map(function(t) {projectTasks[taskGroup].push(t);});
+        }
+    } /*}}}*/
+
+    return projectTasks;
+} /*}}}*/
+
+function sortTasksByPriority(t1, t2) { /*{{{*/
+    if (t1.priority == t2.priority) {
+        return (t1.name > t2.name) ? 1 : -1;
+    }
+    return (t1.priority > t2.priority) ? 1 : -1;
+} /*}}}*/
+
+function parseProjects() { /*{{{*/
+    defaultProject = -1;
+    for (project = 0; project < projects.length; project++) { /*{{{*/
+        p = projects[project];
+        projectsByID[p.id] = p;
+        projectHierarchy[p.id] = p.parent;
+        if (p.name == 'Default') {defaultProject = p; continue;}
+        if (!p.parent) {
+            rootProjects.push(p);
+            continue;
+        } else if (!subProjects[p.parent]) {
+            subProjects[p.parent] = new Array();
+        }
+        subProjects[p.parent].push(p);
+    } /*}}}*/
+    rootProjects.sort(function(p1, p2) {return (p1.name > p2.name);});
+    rootProjects.splice(0, 0, defaultProject);
+} /*}}}*/
+
+function getSubprojects(projectID, projectIDs) { /*{{{*/
+    projectIDs.push(projectID);
+    if (subProjects[projectID]) {
+        for (subp = 0; subp < subProjects[projectID].length; subp++) {
+            projectIDs = getSubprojects(subProjects[projectID][subp].id, projectIDs);
+        }
+    }
+
+    return projectIDs;
+} /*}}}*//*}}}*/
+
+/* DOM Manipulation */
 function openTasks() { /*{{{*/
     id = 'tasks_' + new Date().getTime();
     taskPanel = document.createElement('div');
@@ -780,15 +882,131 @@ function openTasks() { /*{{{*/
     } /*}}}*/
 } /*}}}*/
 
-function openProject(taskView, project) { /*{{{*/
-    deleteAllChildren(taskView, 1);
+function populateProjects(projectsList) { /*{{{*/
+    deleteAllChildren(projectsList);
 
-    // Display current project tree /*{{{*/
-    taskView.parentElement.children[0].setAttribute('data-project-id', project.id);
-    c = 'black';
-    if (useNightTheme()) {c = 'silver';}
-    projLinks = createProjectLinks(project.id, c, 1, 1);
-    addProjectLinks(projLinks, c, taskView, true); /*}}}*/
+    // Create project list headers /*{{{*/
+    projectsListHeader = document.createElement('span');
+    upcomingTitle = document.createElement('p');
+    upcomingTitle.className = 'normal_section_header';
+    upcomingTitle.style.marginTop = '5px';
+    upcomingTitle.style.marginBottom = '10px';
+    upcomingLink = document.createElement('a');
+    upcomingLink.className = 'normal_section_header';
+    upcomingLink.href = '#';
+    upcomingLink.onclick = function() { /*{{{*/
+        this.parentElement.parentElement.parentElement.parentElement.setAttribute('data-project-id', -1);
+        // First three arguments don't need to be stored, since if they are modified
+        // it will be with updated information
+        taskView = this.parentElement.parentElement.parentElement.parentElement.parentElement.children[1];
+        fetchTaskData();
+
+        populateUpcoming(taskView);
+
+        // Check if task wraps by comparing offsettops through DOM
+        spans = taskView.getElementsByTagName('span');
+        // For each set of tasks (urgent, normal, other)
+        for (s = 0; s < spans.length; s++) {
+            span = spans[s];
+            // For each task/header in them /*{{{*/
+            for (pNum = 0; pNum < span.childElementCount; pNum++) {
+                p = span.children[pNum];
+                // Eliminate headers
+                if (p.className.search('normal_text') === -1) {continue;}
+                offset = p.children[0].offsetTop;
+                breakLine = 0;
+                // For each of their children /*{{{*/
+                for (cNum = 1; cNum < p.childElementCount; cNum++) {
+                    c = p.children[cNum];
+                    childBreakFound = 0
+                    // If it has children (some do, some don't) /*{{{*/
+                    if (c.childElementCount) {
+                        for (c2Num = 0; c2Num < c.childElementCount; c2Num++) {
+                            c2 = c.children[c2Num];
+                            if (c2.offsetTop > offset) {
+                                childBreakFound = 1;
+                                break;
+                            }
+                        }
+                    } /*}}}*/
+
+                    if (childBreakFound || c.offsetTop > offset) {
+                        breakLine = 1;
+                        break;
+                    }
+                } /*}}}*/
+
+                if (breakLine) { /*{{{*/
+                    if (span.children[pNum + 1]) {
+                        span.insertBefore(document.createElement('br'), span.children[pNum + 1]);
+                    } else {
+                        span.appendChild(document.createElement('br'));
+                    }
+                } /*}}}*/
+            } /*}}}*/
+        }
+    } /*}}}*/
+    setText(upcomingLink, 'Overview');
+    upcomingTitle.appendChild(upcomingLink);
+
+    projectsTitle = document.createElement('p');
+    projectsTitle.className = 'normal_section_header';
+    projectsTitle.style.marginTop = '5px';
+    projectsTitle.style.marginBottom = '10px';
+    setText(projectsTitle, 'Projects:');
+
+    if (useNightTheme()) {switchToNight(upcomingTitle, upcomingLink, projectsTitle);}
+
+    projectsListHeader.appendChild(upcomingTitle);
+    projectsListHeader.appendChild(projectsTitle);
+    projectsList.appendChild(projectsListHeader); /*}}}*/
+
+    // Create project list
+    for (project = 0; project < rootProjects.length; project++) {
+        currentRoot = rootProjects[project];
+        addProject(projectsList, currentRoot, 0);
+    }
+} /*}}}*/
+
+function addProject(parent, project, level) { /*{{{*/
+    /* Create and add this project to the list
+       In state preservation, level == 0 means root project
+       Since some conditions account for the level == 0 part,
+       then project.id doesn't need to be checked since what actually matters
+       is that its parent is expanded, not itself
+       The parts that set the '+'+ or '-' text do not care if the project
+       is a root or sub project, and therefore the ID must be checked
+       in addition to the parent
+    */
+
+    // Expand project button /*{{{*/
+    expandProject = document.createElement('a');
+    // Only change color if we are expanded
+    if (expanded[project.id] && subProjects[project.id] && subProjects[project.id].length) {
+        expandProject.className = 'close_project';
+        expandProject.setAttribute('data-expanded', 1);
+    } else {
+        expandProject.className = 'open_project';
+        expandProject.setAttribute('data-expanded', 0);
+    }
+    expandProject.setAttribute('data-project-id', project.id);
+    expandProject.setAttribute('data-level', level);
+    setText(expandProject, stringFill('\u00a0', 3 * level) + '~'); /*}}}*/
+
+    // Open project text /*{{{*/
+    openProjectLink = document.createElement('a');
+    openProjectLink.href = '#';
+    openProjectLink.style.textDecoration = 'none';
+    openProjectLink.setAttribute('data-project', JSON.stringify(project));
+    openProjectLink.onclick = function() { /*{{{*/
+        taskView = this.parentElement.parentElement.parentElement.children[1];
+        openProj = JSON.parse(this.getAttribute('data-project'));
+        openProject(taskView, openProj);
+    }; /*}}}*/
+    projectName = document.createElement('p');
+    projectName.className = 'project_name';
+    setText(projectName, '\u00a0' + project.name);
+    openProjectLink.appendChild(projectName); /*}}}*/
 
     // Delete project button /*{{{*/
     removeProjectLink = document.createElement('a');
@@ -797,7 +1015,8 @@ function openProject(taskView, project) { /*{{{*/
     removeProjectLink.setAttribute('data-project-id', project.id);
     removeProjectLink.setAttribute('data-project-name', project.name);
     removeProjectLink.onclick = function() { /*{{{*/
-        deleteProject(this.getAttribute('data-project-id'), 'project', taskView);
+        taskView = this.parentElement.parentElement.parentElement.children[1];
+        deleteProject(this.getAttribute('data-project-id'), 'tree', taskView);
     }; /*}}}*/
     removeProjectImg = document.createElement('img');
     removeProjectImg.src = 'images/x.png';
@@ -806,72 +1025,110 @@ function openProject(taskView, project) { /*{{{*/
     removeProjectLink.appendChild(document.createTextNode('\u00a0\u00a0'));
     removeProjectLink.appendChild(removeProjectImg);
 
-    taskView.appendChild(removeProjectLink); /*}}}*/
+    if (useNightTheme()) {switchToNight(projectName);}
+    if (level !== 0 && !expanded[project.parent]) {
+        expandProject.style.display = 'none';
+        openProjectLink.style.display = 'none';
+        removeProjectLink.style.display = 'none';
+    }
 
-    // Create subproject list /*{{{*/
-    if (subProjects[project.id]) {
-        subProjects[project.id].sort(function(a, b) {return a.name > b.name;});
-        subprojectsP = document.createElement('p');
-        subprojectsP.style.className = 'normal_text';
-        tmpP = document.createElement('p');
-        tmpP.className = 'normal_text';
-        tmpP.style.fontSize = '120%';
-        tmpP.style.marginBottom = '0px';
-        setText(tmpP, 'Subprojects:');
-        if (useNightTheme()) {switchToNight(tmpP);}
-        subprojectsP.appendChild(tmpP);
-        tmpP = document.createElement('p');
-        tmpP.className = 'normal_text';
-        tmpP.style.fontSize = '120%';
-        tmpP.style.display = 'inline';
-        setText(tmpP, '\u00a0\u00a0\u00a0');
-        subprojectsP.appendChild(tmpP);
+    parent.appendChild(expandProject);
+    parent.appendChild(openProjectLink);
+    parent.appendChild(removeProjectLink);
+    if (level === 0 || expanded[project.parent] == 1) {parent.appendChild(document.createElement('br'));} /*}}}*/
+
+    // If there are actually projects to expand /*{{{*/
+    if (subProjects[project.id] && subProjects[project.id].length) {
+        if (expanded[project.id] && subProjects[project.id].length) {
+            setText(expandProject, stringFill('\u00a0', 3 * level) + '-' + '\u00a0');
+        } else if (subProjects[project.id].length) {
+            setText(expandProject, stringFill('\u00a0', 3 * level) + '+');
+        }
+        expandProject.href = '#';
+        expandProject.onclick = function() { /*{{{*/
+            nextSibling = this.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling;
+            // Collapse /*{{{*/
+            if (this.getAttribute('data-expanded') == 1) {
+                this.setAttribute('data-expanded', 0);
+                this.className = 'open_project';
+                if (subProjects[this.getAttribute('data-project-id')].length) {
+                    setText(this, stringFill('\u00a0', 3 * this.getAttribute('data-level')) + '+');
+                }
+                expanded[this.getAttribute('data-project-id')] = 0;
+                // Make all sub-nodes invisible
+                while (!nextSibling.getAttribute('data-level') || nextSibling.getAttribute('data-level') > this.getAttribute('data-level')) {
+                    // If a br, remove it and continue
+                    if (nextSibling.tagName == 'BR') {
+                        nextSibling = nextSibling.nextElementSibling;
+                        nextSibling.previousElementSibling.remove();
+                        continue;
+                    }
+                    nextSibling.style.display = 'none';
+                    if (nextSibling.className === 'close_project') {
+                        expanded[nextSibling.getAttribute('data-project-id')] = 0;
+                        nextSibling.className = 'open_project';
+                        if (subProjects[nextSibling.getAttribute('data-project-id')].length) {
+                            setText(nextSibling, stringFill('\u00a0', 3 * nextSibling.getAttribute('data-level')) + '+');
+                        }
+                        nextSibling.setAttribute('data-expanded', 0);
+                    }
+                    nextSibling = nextSibling.nextElementSibling;
+                } /*}}}*/
+            // Expand /*{{{*/
+            } else {
+                this.setAttribute('data-expanded', 1);
+                expanded[this.getAttribute('data-project-id')] = 1;
+                if (subProjects[this.getAttribute('data-project-id')].length) {
+                    this.className = 'close_project';
+                    numSpaces = 3 * this.getAttribute('data-level');
+                    setText(this, stringFill('\u00a0', numSpaces) + '-' + '\u00a0');
+                }
+                count = 0;
+                while (nextSibling.getAttribute('data-level') !== this.getAttribute('data-level')) {
+                    nextLevel = nextSibling.getAttribute('data-level');
+                    // Make sure that we are still only one level deeper than the expanded element /*{{{*/
+                    if (nextLevel) {
+                        while ((!nextLevel) ||
+                            nextLevel.toString() !== (parseInt(this.getAttribute('data-level'), 10) + 1).toString()) {
+                            if (nextLevel && nextLevel.toString() === this.getAttribute('data-level')) {break;}
+                            nextSibling = nextSibling.nextElementSibling;
+                            nextLevel = nextSibling.getAttribute('data-level');
+                        }
+                    } /*}}}*/
+                    if (nextSibling.getAttribute('data-level') === this.getAttribute('data-level')) {break;}
+                    nextSibling.style.display = 'inline';
+                    count++;
+                    // If at end of elements for this project, add new line /*{{{*/
+                    if (count == 3) {
+                        count = 0;
+                        parent.insertBefore(document.createElement('br'), nextSibling.nextElementSibling);
+                        nextSibling = nextSibling.nextElementSibling;
+                    } /*}}}*/
+                    nextSibling = nextSibling.nextElementSibling;
+                }
+            } /*}}}*/
+        }; /*}}}*/
+
         for (subp = 0; subp < subProjects[project.id].length; subp++) { /*{{{*/
+            parent.setAttribute('data-current-sub-' + level, subp);
             subpr = subProjects[project.id][subp];
-            subpA = document.createElement('a');
-            subpA.className = 'normal_text';
-            if (useNightTheme()) {switchToNight(subpA);}
-            subpA.href = '#';
-            subpA.setAttribute('data-project', JSON.stringify(subpr));
-            subpA.onclick = function() {
-                openProject(taskView, JSON.parse(this.getAttribute('data-project')));
-            };
-            setText(subpA, subpr.name);
-            subprojectsP.appendChild(subpA);
-
-            if (subp != (subProjects[project.id].length - 1)) {
-                tmpP = document.createElement('p');
-                tmpP.className = 'normal_text';
-                tmpP.style.display = 'inline';
-                setText(tmpP, ',\u00a0');
-                if (useNightTheme()) {switchToNight(tmpP);}
-                subprojectsP.appendChild(tmpP);
-            }
+            addProject(parent, subpr, level + 1, projectsByID, projectHierarchy, subProjects, tasks);
+            subp = parent.getAttribute('data-current-sub-' + level);
         } /*}}}*/
-
-        if (useNightTheme()) {switchToNight(subprojectsP);}
-
-        taskView.appendChild(subprojectsP);
-    } else {
-        taskView.appendChild(document.createElement('br'));
-        taskView.appendChild(document.createElement('br'));
     } /*}}}*/
+} /*}}}*/
 
-    // Get task list /*{{{*/
-    out = getTasksInProject(project.id);
-    urgent = out[0];
-    other = out[1];
-    normal = out[2];
-    urgent.sort(sortTasksByPriority);
-    other.sort(sortTasksByPriority);
-    out = tasksToHTML(urgent, normal, other, 0);
-    urgentHeader = out[0];
-    urgentHR = out[1];
-    urgentTasks = out[2];
-    normalTasks = out[3];
-    otherHeader = out[4];
-    otherHR = out[5];
-    otherTasks = out[6]; /*}}}*/
+function populateUpcoming(taskView) { /*{{{*/
+    deleteAllChildren(taskView, 1);
+
+    upcomingP = document.createElement('p');
+    upcomingP.className = 'normal_section_header';
+    setText(upcomingP, 'Upcoming tasks');
+    upcomingP.style.marginTop = '0px';
+
+    if (useNightTheme()) {switchToNight(upcomingP);}
+
+    taskView.appendChild(upcomingP);
 
     // Add new task button /*{{{*/
     newTaskP = document.createElement('p');
@@ -879,9 +1136,8 @@ function openProject(taskView, project) { /*{{{*/
     newTaskP.style.cssFloat = 'right';
     newTaskP.style.marginBottom = '2px';
     newTaskButton = document.createElement('button');
-    newTaskButton.setAttribute('this-project-id', project.id);
     newTaskButton.onclick = function() {
-        openTask(makeBlankTask(this.getAttribute('this-project-id')), taskView, 'project');
+        openTask(makeBlankTask('-1'), taskView, 'overview');
     }
     setText(newTaskButton, 'Create task');
     newTaskP.appendChild(newTaskButton);
@@ -890,197 +1146,26 @@ function openProject(taskView, project) { /*{{{*/
 
     taskView.appendChild(newTaskP); /*}}}*/
 
-    // If no tasks, add whitespace /*{{{*/
-    if (urgent.length == 0 && other.length == 0 && normal.length == 0) {
-        taskView.appendChild(document.createElement('br'));
-        taskView.appendChild(document.createElement('br'));
-    } /*}}}*/
+    // Tasks sorted by deadline, priority, then name /*{{{*/
+    // sortedTask is two-dimensional array, but project is
+    // inconsequential for the task view, so flatten them
+    urgent = flatten(sortedTasks[0]);
+    other = flatten(sortedTasks[1]);
+    normal = flatten(sortedTasks[2]);
+    urgent.sort(sortTasksByPriority);
+    other.sort(sortTasksByPriority); /*}}}*/
+
+    // Create HTML elements from tasks /*{{{*/
+    out = tasksToHTML(urgent, normal, other, 1);
+    urgentHeader = out[0];
+    urgentHR = out[1];
+    urgentTasks = out[2];
+    normalTasks = out[3];
+    otherHeader = out[4];
+    otherHR = out[5];
+    otherTasks = out[6]; /*}}}*/
 
     addHTMLTasks(taskView, urgentHeader, urgentHR, urgentTasks, normalTasks, otherHeader, otherHR, otherTasks);
-
-    return;
-
-    // Show project's tasks - legacy, leaving for reference /*{{{*/
-    // Add new task button /*{{{*/
-    newTaskButton = document.createElement('button');
-    newTaskButton.onclick = function() {
-        openTask(makeBlankTask(project.id), taskView);
-    }
-    setText(newTaskButton, 'Create task');
-
-    if (useNightTheme()) {switchToNight(newTaskButton);} /*}}}*/
-
-    // If no subprojects, need an extra two line /*{{{*/
-    if (!subProjects[project.id]) {
-        taskView.appendChild(document.createElement('br'));
-        taskView.appendChild(document.createElement('br'));
-    }
-    taskView.appendChild(newTaskButton);
-    taskView.appendChild(document.createElement('br')); /*}}}*/
-
-    // Order tasks alphabetically then by urgent, normal, other /*{{{*/
-    myTasks = new Array();
-    myUrgent = sortedTasks[0][project.id];
-    myOther = sortedTasks[1][project.id];
-    myNormal = sortedTasks[2][project.id];
-    if (myUrgent) {
-        myUrgent.sort(function(a, b) {return (a.name > b.name);});
-        myUrgent.forEach(function(e) {myTasks.push(e);});
-    }
-    if (myNormal) {
-        myNormal.sort(function(a, b) {return (a.name > b.name);});
-        myNormal.forEach(function(e) {myTasks.push(e);});
-    }
-    if (myOther) {
-        myOther.sort(function(a, b) {return (a.name > b.name);});
-        myOther.forEach(function(e) {myTasks.push(e);});
-    } /*}}}*/
-
-    // Add tasks table /*{{{*/
-    if (myTasks.length > 0) {
-        taskView.appendChild(document.createElement('br'));
-
-        tasksTable = document.createElement('table');
-        tasksTable.className = 'notes';
-
-        // Create table header /*{{{*/
-        tasksHeader = document.createElement('tr');
-        tasksTitleCell = document.createElement('th');
-        tasksTitleCell.style.width = '100%';
-        setText(tasksTitleCell, 'Task');
-        tasksPriCell = document.createElement('th');
-        setText(tasksPriCell, 'Priority');
-        tasksDeadCell = document.createElement('th');
-        setText(tasksDeadCell, 'Deadline');
-        tasksDelCell = document.createElement('th');
-        setText(tasksDelCell, 'Delete');
-        tasksHeader.appendChild(tasksTitleCell);
-        tasksHeader.appendChild(tasksPriCell);
-        tasksHeader.appendChild(tasksDeadCell);
-        tasksHeader.appendChild(tasksDelCell);
-
-        tasksTable.appendChild(tasksHeader); /*}}}*/
-
-        // Create table rows /*{{{*/
-        for (taskNum = 0; taskNum < myTasks.length; taskNum++) {
-            task = myTasks[taskNum];
-
-            // Create task row /*{{{*/
-            taskRow = document.createElement('tr');
-            taskRow.style.textAlign = 'center';
-            titleCell = document.createElement('td');
-            titleCell.style.textAlign = 'left';
-            taskLink = document.createElement('a');
-            taskLink.className = 'normal_text';
-            taskLink.href = '#';
-            taskLink.setAttribute('data-task', JSON.stringify(task));
-            taskLink.onclick = function() {
-                myTask = JSON.parse(this.getAttribute('data-task'));
-                openTask(myTask, taskView);
-            };
-            if (useNightTheme()) {switchToNight(taskLink);}
-            setText(taskLink, task.name);
-            titleCell.appendChild(taskLink);
-            priCell = document.createElement('td');
-            priCell.style.paddingRight = '8px';
-            setText(priCell, task.priority);
-            deadText = 0;
-            if (task.is_urgent) {deadText = 'ASAP';}
-            else if (task.is_other) {deadText = 'When convenient';}
-            else {
-                d = deadlineToDate(task.deadline);
-                time = getTimeFromString(d.toString());
-                deadText = d.getUTCFullYear() + '-' + d.getUTCMonth() + '-' +
-                           d.getUTCDate() + ' ' + time;
-            }
-            deadCell = document.createElement('td');
-            deadCell.style.whiteSpace = 'nowrap';
-            deadCell.style.paddingRight = '8px';
-            setText(deadCell, deadText);
-            delCell = document.createElement('td');
-            delCell.style.paddingRight = '8px';
-            delLink = document.createElement('a');
-            delLink.href = '#';
-            delLink.setAttribute('data-task', JSON.stringify(task));
-            delLink.onclick = function() {
-                t = JSON.parse(this.getAttribute('data-task'));
-                conf = confirm('Are you sure you want to delete task "' + t.name + '"?');
-                if (conf) {deleteTask(this.getAttribute('data-task'), taskView, false);}
-            };
-            delImg = document.createElement('img');
-            delImg.src = 'images/x.png';
-            delImg.alt = 'Remove task';
-            delLink.appendChild(delImg);
-            delCell.appendChild(delLink); /*}}}*/
-
-            taskRow.appendChild(titleCell);
-            taskRow.appendChild(priCell);
-            taskRow.appendChild(deadCell);
-            taskRow.appendChild(delCell);
-
-            tasksTable.appendChild(taskRow);
-        } /*}}}*/
-
-        if (useNightTheme()) {switchToNight(tasksTable);}
-
-        taskView.appendChild(tasksTable);
-    } /*}}}*/ /*}}}*/
-} /*}}}*/
-
-function deleteProject(projectID, viewMode, taskView) { /*{{{*/
-    // Verify project can be deleted and user wants to /*{{{*/
-    n = projectsByID[projectID].name;
-    if (n === 'Default') {
-        alert('The default project can\'t be deleted!');
-        exit;
-    }
-    conf = confirm('Are you sure you want to delete project \'' + n + '\'?');
-    if (!conf) {return;} /*}}}*/
-
-    // Delete project /*{{{*/
-    deleteProjectReq = createPostReq('tasks.cgi', false);
-    deleteProjectReq.onreadystatechange = function() { /*{{{*/
-        if (this.readyState == 4 && this.status == 200) {
-            if (this.responseText != 'success') {
-                alert('Project deletion failed with error ' + this.responseText);
-            }
-        }
-    }; /*}}}*/
-    deleteProjectReq.send('mode=4&id=' + projectID); /*}}}*/
-
-    // Reset view /*{{{*/
-    fetchTaskData();
-    if (viewMode === 'project') {populateUpcoming(taskView);}
-    populateProjects(taskView.parentElement.children[0].children[0]); /*}}}*/
-} /*}}}*/
-
-function deleteTask(task, taskView, returnToOverview) { /*{{{*/
-    t = JSON.parse(task);
-    deleteTaskReq = createPostReq('tasks.cgi', false);
-
-    deleteTaskReq.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) {
-            if (this.responseText == 'success') { /*{{{*/
-                fetchTaskData();
-
-                if (returnToOverview != '0') {
-                    populateUpcoming(taskView);
-                } else {
-                    openProject(taskView, projectsByID[t.project]);
-                } /*}}}*/
-            } else { /*{{{*/
-                e = taskView.getElementsByClassName('error')[0];
-                if (e) {
-                    e.style.color = 'red';
-                    setText(e, 'Failed to delete task');
-                } else {
-                    alert('Failed to delete task!');
-                }
-            } /*}}}*/
-        }
-    };
-
-    deleteTaskReq.send('mode=3&id=' + t.id);
 } /*}}}*/
 
 function openTask(task, taskView, redirectView) { /*{{{*/
@@ -1485,86 +1570,310 @@ function openTask(task, taskView, redirectView) { /*{{{*/
     taskView.appendChild(errorText); /*}}}*/ /*}}}*/
 } /*}}}*/
 
-function fetchTaskData() { /*{{{*/
-    getTasksReq = createPostReq('tasks.cgi', false);
-    getTasksReq.send('mode=0');
-    if (getTasksReq.responseText === 'noauth') {
-        alert('Session timed out! Please copy any unsaved changes then refresh the page.');
-    } else if (getTasksReq.responseText === 'Bad request!') {
-        alert('Invalid request! Please copy any unsaved changes then refresh the page.');
-    }
-    rootProjects.length = 0;
-    subProjects.length = 0;
-    data = JSON.parse(getTasksReq.responseText);
-    projects = data[0];
-    parseProjects();
-    tasks = data[1];
-    sortedTasks = organizeTasks(tasks);
-} /*}}}*/
+function openProject(taskView, project) { /*{{{*/
+    deleteAllChildren(taskView, 1);
 
-function getSubprojects(projectID, projectIDs) { /*{{{*/
-    projectIDs.push(projectID);
-    if (subProjects[projectID]) {
-        for (subp = 0; subp < subProjects[projectID].length; subp++) {
-            projectIDs = getSubprojects(subProjects[projectID][subp].id, projectIDs);
-        }
-    }
+    // Display current project tree /*{{{*/
+    taskView.parentElement.children[0].setAttribute('data-project-id', project.id);
+    c = 'black';
+    if (useNightTheme()) {c = 'silver';}
+    projLinks = createProjectLinks(project.id, c, 1, 1);
+    addProjectLinks(projLinks, c, taskView, true); /*}}}*/
 
-    return projectIDs;
-} /*}}}*/
+    // Delete project button /*{{{*/
+    removeProjectLink = document.createElement('a');
+    removeProjectLink.className = 'blank';
+    removeProjectLink.href = '#';
+    removeProjectLink.setAttribute('data-project-id', project.id);
+    removeProjectLink.setAttribute('data-project-name', project.name);
+    removeProjectLink.onclick = function() { /*{{{*/
+        deleteProject(this.getAttribute('data-project-id'), 'project', taskView);
+    }; /*}}}*/
+    removeProjectImg = document.createElement('img');
+    removeProjectImg.src = 'images/x.png';
+    removeProjectImg.alt = 'Remove project';
+    removeProjectImg.title = 'Remove project';
+    removeProjectLink.appendChild(document.createTextNode('\u00a0\u00a0'));
+    removeProjectLink.appendChild(removeProjectImg);
 
-function getTasksInProject(projectID) { /*{{{*/
-    projectTasks = [[], [], []];
-    projectIDs = [projectID];
-    if (subProjects[projectID]) {projectIDs = getSubprojects(projectID, []);}
+    taskView.appendChild(removeProjectLink); /*}}}*/
 
-    // For each project /*{{{*/
-    for (p = 0; p < projectIDs.length; p++) {
-        // For each kind of task
-        for (taskGroup = 0; taskGroup < sortedTasks.length; taskGroup++) {
-            // If tasks exist, add them to the list
-            if (!sortedTasks[taskGroup][projectIDs[p]]) {continue;}
-            sortedTasks[taskGroup][projectIDs[p]].map(function(t) {projectTasks[taskGroup].push(t);});
-        }
+    // Create subproject list /*{{{*/
+    if (subProjects[project.id]) {
+        subProjects[project.id].sort(function(a, b) {return a.name > b.name;});
+        subprojectsP = document.createElement('p');
+        subprojectsP.style.className = 'normal_text';
+        tmpP = document.createElement('p');
+        tmpP.className = 'normal_text';
+        tmpP.style.fontSize = '120%';
+        tmpP.style.marginBottom = '0px';
+        setText(tmpP, 'Subprojects:');
+        if (useNightTheme()) {switchToNight(tmpP);}
+        subprojectsP.appendChild(tmpP);
+        tmpP = document.createElement('p');
+        tmpP.className = 'normal_text';
+        tmpP.style.fontSize = '120%';
+        tmpP.style.display = 'inline';
+        setText(tmpP, '\u00a0\u00a0\u00a0');
+        subprojectsP.appendChild(tmpP);
+        for (subp = 0; subp < subProjects[project.id].length; subp++) { /*{{{*/
+            subpr = subProjects[project.id][subp];
+            subpA = document.createElement('a');
+            subpA.className = 'normal_text';
+            if (useNightTheme()) {switchToNight(subpA);}
+            subpA.href = '#';
+            subpA.setAttribute('data-project', JSON.stringify(subpr));
+            subpA.onclick = function() {
+                openProject(taskView, JSON.parse(this.getAttribute('data-project')));
+            };
+            setText(subpA, subpr.name);
+            subprojectsP.appendChild(subpA);
+
+            if (subp != (subProjects[project.id].length - 1)) {
+                tmpP = document.createElement('p');
+                tmpP.className = 'normal_text';
+                tmpP.style.display = 'inline';
+                setText(tmpP, ',\u00a0');
+                if (useNightTheme()) {switchToNight(tmpP);}
+                subprojectsP.appendChild(tmpP);
+            }
+        } /*}}}*/
+
+        if (useNightTheme()) {switchToNight(subprojectsP);}
+
+        taskView.appendChild(subprojectsP);
+    } else {
+        taskView.appendChild(document.createElement('br'));
+        taskView.appendChild(document.createElement('br'));
     } /*}}}*/
 
-    return projectTasks;
-} /*}}}*/
+    // Get task list /*{{{*/
+    out = getTasksInProject(project.id);
+    urgent = out[0];
+    other = out[1];
+    normal = out[2];
+    urgent.sort(sortTasksByPriority);
+    other.sort(sortTasksByPriority);
+    out = tasksToHTML(urgent, normal, other, 0);
+    urgentHeader = out[0];
+    urgentHR = out[1];
+    urgentTasks = out[2];
+    normalTasks = out[3];
+    otherHeader = out[4];
+    otherHR = out[5];
+    otherTasks = out[6]; /*}}}*/
 
-function organizeTasks(tasks) { /*{{{*/
-    urgent = new Array();
-    other = new Array();
-    normal = new Array();
-    for (taskNum = 0; taskNum < tasks.length; taskNum++) {
-        task = tasks[taskNum];
-        if (task.is_urgent) { /*{{{*/
-            if (!urgent[task.project] || urgent[task.project].constructor.name !== 'Array') {
-                urgent[task.project] = new Array();
+    // Add new task button /*{{{*/
+    newTaskP = document.createElement('p');
+    newTaskP.style.display = 'inline';
+    newTaskP.style.cssFloat = 'right';
+    newTaskP.style.marginBottom = '2px';
+    newTaskButton = document.createElement('button');
+    newTaskButton.setAttribute('this-project-id', project.id);
+    newTaskButton.onclick = function() {
+        openTask(makeBlankTask(this.getAttribute('this-project-id')), taskView, 'project');
+    }
+    setText(newTaskButton, 'Create task');
+    newTaskP.appendChild(newTaskButton);
+
+    if (useNightTheme()) {switchToNight(newTaskButton);}
+
+    taskView.appendChild(newTaskP); /*}}}*/
+
+    // If no tasks, add whitespace /*{{{*/
+    if (urgent.length == 0 && other.length == 0 && normal.length == 0) {
+        taskView.appendChild(document.createElement('br'));
+        taskView.appendChild(document.createElement('br'));
+    } /*}}}*/
+
+    addHTMLTasks(taskView, urgentHeader, urgentHR, urgentTasks, normalTasks, otherHeader, otherHR, otherTasks);
+
+    return;
+
+    // Show project's tasks - legacy, leaving for reference /*{{{*/
+    // Add new task button /*{{{*/
+    newTaskButton = document.createElement('button');
+    newTaskButton.onclick = function() {
+        openTask(makeBlankTask(project.id), taskView);
+    }
+    setText(newTaskButton, 'Create task');
+
+    if (useNightTheme()) {switchToNight(newTaskButton);} /*}}}*/
+
+    // If no subprojects, need an extra two line /*{{{*/
+    if (!subProjects[project.id]) {
+        taskView.appendChild(document.createElement('br'));
+        taskView.appendChild(document.createElement('br'));
+    }
+    taskView.appendChild(newTaskButton);
+    taskView.appendChild(document.createElement('br')); /*}}}*/
+
+    // Order tasks alphabetically then by urgent, normal, other /*{{{*/
+    myTasks = new Array();
+    myUrgent = sortedTasks[0][project.id];
+    myOther = sortedTasks[1][project.id];
+    myNormal = sortedTasks[2][project.id];
+    if (myUrgent) {
+        myUrgent.sort(function(a, b) {return (a.name > b.name);});
+        myUrgent.forEach(function(e) {myTasks.push(e);});
+    }
+    if (myNormal) {
+        myNormal.sort(function(a, b) {return (a.name > b.name);});
+        myNormal.forEach(function(e) {myTasks.push(e);});
+    }
+    if (myOther) {
+        myOther.sort(function(a, b) {return (a.name > b.name);});
+        myOther.forEach(function(e) {myTasks.push(e);});
+    } /*}}}*/
+
+    // Add tasks table /*{{{*/
+    if (myTasks.length > 0) {
+        taskView.appendChild(document.createElement('br'));
+
+        tasksTable = document.createElement('table');
+        tasksTable.className = 'notes';
+
+        // Create table header /*{{{*/
+        tasksHeader = document.createElement('tr');
+        tasksTitleCell = document.createElement('th');
+        tasksTitleCell.style.width = '100%';
+        setText(tasksTitleCell, 'Task');
+        tasksPriCell = document.createElement('th');
+        setText(tasksPriCell, 'Priority');
+        tasksDeadCell = document.createElement('th');
+        setText(tasksDeadCell, 'Deadline');
+        tasksDelCell = document.createElement('th');
+        setText(tasksDelCell, 'Delete');
+        tasksHeader.appendChild(tasksTitleCell);
+        tasksHeader.appendChild(tasksPriCell);
+        tasksHeader.appendChild(tasksDeadCell);
+        tasksHeader.appendChild(tasksDelCell);
+
+        tasksTable.appendChild(tasksHeader); /*}}}*/
+
+        // Create table rows /*{{{*/
+        for (taskNum = 0; taskNum < myTasks.length; taskNum++) {
+            task = myTasks[taskNum];
+
+            // Create task row /*{{{*/
+            taskRow = document.createElement('tr');
+            taskRow.style.textAlign = 'center';
+            titleCell = document.createElement('td');
+            titleCell.style.textAlign = 'left';
+            taskLink = document.createElement('a');
+            taskLink.className = 'normal_text';
+            taskLink.href = '#';
+            taskLink.setAttribute('data-task', JSON.stringify(task));
+            taskLink.onclick = function() {
+                myTask = JSON.parse(this.getAttribute('data-task'));
+                openTask(myTask, taskView);
+            };
+            if (useNightTheme()) {switchToNight(taskLink);}
+            setText(taskLink, task.name);
+            titleCell.appendChild(taskLink);
+            priCell = document.createElement('td');
+            priCell.style.paddingRight = '8px';
+            setText(priCell, task.priority);
+            deadText = 0;
+            if (task.is_urgent) {deadText = 'ASAP';}
+            else if (task.is_other) {deadText = 'When convenient';}
+            else {
+                d = deadlineToDate(task.deadline);
+                time = getTimeFromString(d.toString());
+                deadText = d.getUTCFullYear() + '-' + d.getUTCMonth() + '-' +
+                           d.getUTCDate() + ' ' + time;
             }
-            urgent[task.project].push(task); /*}}}*/
-        } else if (task.is_other) { /*{{{*/
-            if (!other[task.project] || other[task.project].constructor.name !== 'Array') {
-                other[task.project] = new Array();
-            }
-            other[task.project].push(task); /*}}}*/
-        } else { /*{{{*/
-            if (!normal[task.project] || normal[task.project].constructor.name !== 'Array') {
-                normal[task.project] = new Array();
-            }
-            normal[task.project].push(task);
+            deadCell = document.createElement('td');
+            deadCell.style.whiteSpace = 'nowrap';
+            deadCell.style.paddingRight = '8px';
+            setText(deadCell, deadText);
+            delCell = document.createElement('td');
+            delCell.style.paddingRight = '8px';
+            delLink = document.createElement('a');
+            delLink.href = '#';
+            delLink.setAttribute('data-task', JSON.stringify(task));
+            delLink.onclick = function() {
+                t = JSON.parse(this.getAttribute('data-task'));
+                conf = confirm('Are you sure you want to delete task "' + t.name + '"?');
+                if (conf) {deleteTask(this.getAttribute('data-task'), taskView, false);}
+            };
+            delImg = document.createElement('img');
+            delImg.src = 'images/x.png';
+            delImg.alt = 'Remove task';
+            delLink.appendChild(delImg);
+            delCell.appendChild(delLink); /*}}}*/
+
+            taskRow.appendChild(titleCell);
+            taskRow.appendChild(priCell);
+            taskRow.appendChild(deadCell);
+            taskRow.appendChild(delCell);
+
+            tasksTable.appendChild(taskRow);
         } /*}}}*/
-    }
 
-    return [urgent, other, normal];
+        if (useNightTheme()) {switchToNight(tasksTable);}
+
+        taskView.appendChild(tasksTable);
+    } /*}}}*/ /*}}}*/
 } /*}}}*/
 
-function sortTasksByPriority(t1, t2) { /*{{{*/
-    if (t1.priority == t2.priority) {
-        return (t1.name > t2.name) ? 1 : -1;
-    }
-    return (t1.priority > t2.priority) ? 1 : -1;
+function deleteTask(task, taskView, returnToOverview) { /*{{{*/
+    t = JSON.parse(task);
+    deleteTaskReq = createPostReq('tasks.cgi', false);
+
+    deleteTaskReq.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            if (this.responseText == 'success') { /*{{{*/
+                fetchTaskData();
+
+                if (returnToOverview != '0') {
+                    populateUpcoming(taskView);
+                } else {
+                    openProject(taskView, projectsByID[t.project]);
+                } /*}}}*/
+            } else { /*{{{*/
+                e = taskView.getElementsByClassName('error')[0];
+                if (e) {
+                    e.style.color = 'red';
+                    setText(e, 'Failed to delete task');
+                } else {
+                    alert('Failed to delete task!');
+                }
+            } /*}}}*/
+        }
+    };
+
+    deleteTaskReq.send('mode=3&id=' + t.id);
 } /*}}}*/
 
+function deleteProject(projectID, viewMode, taskView) { /*{{{*/
+    // Verify project can be deleted and user wants to /*{{{*/
+    n = projectsByID[projectID].name;
+    if (n === 'Default') {
+        alert('The default project can\'t be deleted!');
+        exit;
+    }
+    conf = confirm('Are you sure you want to delete project \'' + n + '\'?');
+    if (!conf) {return;} /*}}}*/
+
+    // Delete project /*{{{*/
+    deleteProjectReq = createPostReq('tasks.cgi', false);
+    deleteProjectReq.onreadystatechange = function() { /*{{{*/
+        if (this.readyState == 4 && this.status == 200) {
+            if (this.responseText != 'success') {
+                alert('Project deletion failed with error ' + this.responseText);
+            }
+        }
+    }; /*}}}*/
+    deleteProjectReq.send('mode=4&id=' + projectID); /*}}}*/
+
+    // Reset view /*{{{*/
+    fetchTaskData();
+    if (viewMode === 'project') {populateUpcoming(taskView);}
+    populateProjects(taskView.parentElement.children[0].children[0]); /*}}}*/
+} /*}}}*/
+
+/* DOM Creation *//*{{{*/
 function projectsToSelect(projectID) { /*{{{*/
    projectSelect = document.createElement('select');
     for (root = 0; root < rootProjects.length; root++) { /*{{{*/
@@ -1577,23 +1886,6 @@ function projectsToSelect(projectID) { /*{{{*/
 
     if (useNightTheme()) {switchToNight(projectSelect);}
     return projectSelect;
-} /*}}}*/
-
-function addOptionTree(projects, level, select, projectID) { /*{{{*/
-    for (s = 0; s < projects.length; s++) {
-        p = projects[s];
-        addOption(p, level + 1, select, projectID);
-        if (subProjects[p.id]) {addOptionTree(subProjects[p.id], level + 1, select, projectID);}
-    }
-} /*}}}*/
-
-function addOption(project, level, select, projectID) { /*{{{*/
-    opt = document.createElement('option');
-    opt.value = project.id;
-    if (project.id == projectID) {opt.selected = 'selected';}
-    setText(opt, stringFill('\u00a0', 3 * level) + project.name);
-    if (useNightTheme()) {switchToNight(opt);}
-    select.appendChild(opt);
 } /*}}}*/
 
 function tasksToHTML(urgent, normal, other, fromOverview) { /*{{{*/
@@ -1723,159 +2015,102 @@ function addHTMLTasks(taskView, urgentHeader, urgentHR, urgentTasks, normalTasks
     } /*}}}*/
 } /*}}}*/
 
-function parseProjects() { /*{{{*/
-    defaultProject = -1;
-    for (project = 0; project < projects.length; project++) { /*{{{*/
-        p = projects[project];
-        projectsByID[p.id] = p;
-        projectHierarchy[p.id] = p.parent;
-        if (p.name == 'Default') {defaultProject = p; continue;}
-        if (!p.parent) {
-            rootProjects.push(p);
-            continue;
-        } else if (!subProjects[p.parent]) {
-            subProjects[p.parent] = new Array();
-        }
-        subProjects[p.parent].push(p);
+function addTask(task, parent, showTime, fromOverview) { /*{{{*/
+    color = 0;
+    if (task.priority > colors.length) {
+        color = colors[colors.length - 1];
+    } else {
+        color = colors[task.priority - 1];
+    }
+
+    projLinks = createProjectLinks(task.project, color, 4, false);
+
+    // If normal, should have a deadline /*{{{*/
+    taskDate = 0;
+    if (showTime === true) {
+        taskDate = document.createElement('p');
+        taskDate.style.display = 'inline';
+        taskDate.style.color = color;
+
+        deadline = task.deadline;
+        deadline = deadline.replace('-', '/');
+        deadline = deadline.replace('-', '/');
+        deadline = deadline.split('+')[0];
+        d = new Date(deadline);
+        time = getTimeFromString(d.toString());
+        setText(taskDate, time + stringFill('\u00a0', 2));
     } /*}}}*/
-    rootProjects.sort(function(p1, p2) {return (p1.name > p2.name);});
-    rootProjects.splice(0, 0, defaultProject);
+
+    // Create task link /*{{{*/
+    taskElem = document.createElement('p');
+    taskElem.className = 'normal_text';
+    taskElem.appendChild(document.createTextNode(stringFill('\u00a0', 4)));
+    taskElem.style.height = '20px';
+    taskElem.style.marginTop = '0px';
+    taskElem.style.marginBottom = '5px';
+    taskLink = document.createElement('a');
+    taskLink.className = 'normal_text';
+    taskLink.style.color = color;
+    taskLink.style.fontWeight = 'bold';
+    taskLink.href = '#';
+    taskLink.setAttribute('data-task', JSON.stringify(task));
+    taskLink.onclick = function() { /*{{{*/
+        taskView = this.parentElement.parentElement.parentElement;
+        openTask(JSON.parse(this.getAttribute('data-task')), taskView, redirectView);
+    }; /*}}}*/
+    setText(taskLink, task.name);
+    taskProj = document.createElement('p');
+    taskProj.style.color = color;
+    taskProj.style.display = 'inline';
+
+    addProjectLinks(projLinks, color, taskProj, false); /*}}}*/
+
+    // Create delete task /*{{{*/
+    delTaskP = document.createElement('p');
+    delTaskP.style.display = 'inline';
+    setText(delTaskP, '\u00a0\u00a0');
+    delTaskImg = document.createElement('img');
+    delTaskImg.src = 'images/x.png';
+    delTaskImg.title = 'Delete task';
+    delTaskImg.alt = 'Delete task';
+    delTaskLink = document.createElement('a');
+    delTaskLink.href = '#';
+    delTaskLink.setAttribute('data-task', JSON.stringify(task));
+    delTaskLink.setAttribute('data-from-overview', fromOverview);
+    delTaskLink.onclick = function() { /*{{{*/
+        t = JSON.parse(this.getAttribute('data-task'));
+        conf = confirm('Are you sure you want to delete task "' + t.name + '"?');
+        if (!conf) {return;}
+        deleteTask(this.getAttribute('data-task'), parent.parentElement, this.getAttribute('data-from-overview'));
+    }; /*}}}*/
+    delTaskLink.appendChild(delTaskImg);
+    delTaskP.appendChild(delTaskLink); /*}}}*/
+
+    if (showTime === true) {taskElem.appendChild(taskDate);}
+    taskElem.appendChild(taskLink);
+    taskElem.appendChild(taskProj);
+    taskElem.appendChild(delTaskP);
+
+    if (useNightTheme()) {switchToNight(taskElem, taskLink, taskProj, delTaskP, delTaskLink);}
+
+    parent.appendChild(taskElem);
 } /*}}}*/
 
-function populateProjects(projectsList) { /*{{{*/
-    deleteAllChildren(projectsList);
-
-    // Create project list headers /*{{{*/
-    projectsListHeader = document.createElement('span');
-    upcomingTitle = document.createElement('p');
-    upcomingTitle.className = 'normal_section_header';
-    upcomingTitle.style.marginTop = '5px';
-    upcomingTitle.style.marginBottom = '10px';
-    upcomingLink = document.createElement('a');
-    upcomingLink.className = 'normal_section_header';
-    upcomingLink.href = '#';
-    upcomingLink.onclick = function() { /*{{{*/
-        this.parentElement.parentElement.parentElement.parentElement.setAttribute('data-project-id', -1);
-        // First three arguments don't need to be stored, since if they are modified
-        // it will be with updated information
-        taskView = this.parentElement.parentElement.parentElement.parentElement.parentElement.children[1];
-        fetchTaskData();
-
-        populateUpcoming(taskView);
-
-        // Check if task wraps by comparing offsettops through DOM
-        spans = taskView.getElementsByTagName('span');
-        // For each set of tasks (urgent, normal, other)
-        for (s = 0; s < spans.length; s++) {
-            span = spans[s];
-            // For each task/header in them /*{{{*/
-            for (pNum = 0; pNum < span.childElementCount; pNum++) {
-                p = span.children[pNum];
-                // Eliminate headers
-                if (p.className.search('normal_text') === -1) {continue;}
-                offset = p.children[0].offsetTop;
-                breakLine = 0;
-                // For each of their children /*{{{*/
-                for (cNum = 1; cNum < p.childElementCount; cNum++) {
-                    c = p.children[cNum];
-                    childBreakFound = 0
-                    // If it has children (some do, some don't) /*{{{*/
-                    if (c.childElementCount) {
-                        for (c2Num = 0; c2Num < c.childElementCount; c2Num++) {
-                            c2 = c.children[c2Num];
-                            if (c2.offsetTop > offset) {
-                                childBreakFound = 1;
-                                break;
-                            }
-                        }
-                    } /*}}}*/
-
-                    if (childBreakFound || c.offsetTop > offset) {
-                        breakLine = 1;
-                        break;
-                    }
-                } /*}}}*/
-
-                if (breakLine) { /*{{{*/
-                    if (span.children[pNum + 1]) {
-                        span.insertBefore(document.createElement('br'), span.children[pNum + 1]);
-                    } else {
-                        span.appendChild(document.createElement('br'));
-                    }
-                } /*}}}*/
-            } /*}}}*/
-        }
-    } /*}}}*/
-    setText(upcomingLink, 'Overview');
-    upcomingTitle.appendChild(upcomingLink);
-
-    projectsTitle = document.createElement('p');
-    projectsTitle.className = 'normal_section_header';
-    projectsTitle.style.marginTop = '5px';
-    projectsTitle.style.marginBottom = '10px';
-    setText(projectsTitle, 'Projects:');
-
-    if (useNightTheme()) {switchToNight(upcomingTitle, upcomingLink, projectsTitle);}
-
-    projectsListHeader.appendChild(upcomingTitle);
-    projectsListHeader.appendChild(projectsTitle);
-    projectsList.appendChild(projectsListHeader); /*}}}*/
-
-    // Create project list
-    for (project = 0; project < rootProjects.length; project++) {
-        currentRoot = rootProjects[project];
-        addProject(projectsList, currentRoot, 0);
+function addOptionTree(projects, level, select, projectID) { /*{{{*/
+    for (s = 0; s < projects.length; s++) {
+        p = projects[s];
+        addOption(p, level + 1, select, projectID);
+        if (subProjects[p.id]) {addOptionTree(subProjects[p.id], level + 1, select, projectID);}
     }
 } /*}}}*/
 
-function populateUpcoming(taskView) { /*{{{*/
-    deleteAllChildren(taskView, 1);
-
-    upcomingP = document.createElement('p');
-    upcomingP.className = 'normal_section_header';
-    setText(upcomingP, 'Upcoming tasks');
-    upcomingP.style.marginTop = '0px';
-
-    if (useNightTheme()) {switchToNight(upcomingP);}
-
-    taskView.appendChild(upcomingP);
-
-    // Add new task button /*{{{*/
-    newTaskP = document.createElement('p');
-    newTaskP.style.display = 'inline';
-    newTaskP.style.cssFloat = 'right';
-    newTaskP.style.marginBottom = '2px';
-    newTaskButton = document.createElement('button');
-    newTaskButton.onclick = function() {
-        openTask(makeBlankTask('-1'), taskView, 'overview');
-    }
-    setText(newTaskButton, 'Create task');
-    newTaskP.appendChild(newTaskButton);
-
-    if (useNightTheme()) {switchToNight(newTaskButton);}
-
-    taskView.appendChild(newTaskP); /*}}}*/
-
-    // Tasks sorted by deadline, priority, then name /*{{{*/
-    // sortedTask is two-dimensional array, but project is
-    // inconsequential for the task view, so flatten them
-    urgent = flatten(sortedTasks[0]);
-    other = flatten(sortedTasks[1]);
-    normal = flatten(sortedTasks[2]);
-    urgent.sort(sortTasksByPriority);
-    other.sort(sortTasksByPriority); /*}}}*/
-
-    // Create HTML elements from tasks /*{{{*/
-    out = tasksToHTML(urgent, normal, other, 1);
-    urgentHeader = out[0];
-    urgentHR = out[1];
-    urgentTasks = out[2];
-    normalTasks = out[3];
-    otherHeader = out[4];
-    otherHR = out[5];
-    otherTasks = out[6]; /*}}}*/
-
-    addHTMLTasks(taskView, urgentHeader, urgentHR, urgentTasks, normalTasks, otherHeader, otherHR, otherTasks);
+function addOption(project, level, select, projectID) { /*{{{*/
+    opt = document.createElement('option');
+    opt.value = project.id;
+    if (project.id == projectID) {opt.selected = 'selected';}
+    setText(opt, stringFill('\u00a0', 3 * level) + project.name);
+    if (useNightTheme()) {switchToNight(opt);}
+    select.appendChild(opt);
 } /*}}}*/
 
 function createProjectLinks(projectID, color, levelsToRoot, isTitle) { /*{{{*/
@@ -1958,238 +2193,7 @@ function addProjectLinks(projLinks, color, parent, isTitle) { /*{{{*/
         setText(tmpP, '&gt;');
         parent.appendChild(tmpP);
     } /*}}}*/
-} /*}}}*/
-
-function addProject(parent, project, level) { /*{{{*/
-    /* Create and add this project to the list
-       In state preservation, level == 0 means root project
-       Since some conditions account for the level == 0 part,
-       then project.id doesn't need to be checked since what actually matters
-       is that its parent is expanded, not itself
-       The parts that set the '+'+ or '-' text do not care if the project
-       is a root or sub project, and therefore the ID must be checked
-       in addition to the parent
-    */
-
-    // Expand project button /*{{{*/
-    expandProject = document.createElement('a');
-    // Only change color if we are expanded
-    if (expanded[project.id] && subProjects[project.id] && subProjects[project.id].length) {
-        expandProject.className = 'close_project';
-        expandProject.setAttribute('data-expanded', 1);
-    } else {
-        expandProject.className = 'open_project';
-        expandProject.setAttribute('data-expanded', 0);
-    }
-    expandProject.setAttribute('data-project-id', project.id);
-    expandProject.setAttribute('data-level', level);
-    setText(expandProject, stringFill('\u00a0', 3 * level) + '~'); /*}}}*/
-
-    // Open project text /*{{{*/
-    openProjectLink = document.createElement('a');
-    openProjectLink.href = '#';
-    openProjectLink.style.textDecoration = 'none';
-    openProjectLink.setAttribute('data-project', JSON.stringify(project));
-    openProjectLink.onclick = function() { /*{{{*/
-        taskView = this.parentElement.parentElement.parentElement.children[1];
-        openProj = JSON.parse(this.getAttribute('data-project'));
-        openProject(taskView, openProj);
-    }; /*}}}*/
-    projectName = document.createElement('p');
-    projectName.className = 'project_name';
-    setText(projectName, '\u00a0' + project.name);
-    openProjectLink.appendChild(projectName); /*}}}*/
-
-    // Delete project button /*{{{*/
-    removeProjectLink = document.createElement('a');
-    removeProjectLink.className = 'blank';
-    removeProjectLink.href = '#';
-    removeProjectLink.setAttribute('data-project-id', project.id);
-    removeProjectLink.setAttribute('data-project-name', project.name);
-    removeProjectLink.onclick = function() { /*{{{*/
-        taskView = this.parentElement.parentElement.parentElement.children[1];
-        deleteProject(this.getAttribute('data-project-id'), 'tree', taskView);
-    }; /*}}}*/
-    removeProjectImg = document.createElement('img');
-    removeProjectImg.src = 'images/x.png';
-    removeProjectImg.alt = 'Remove project';
-    removeProjectImg.title = 'Remove project';
-    removeProjectLink.appendChild(document.createTextNode('\u00a0\u00a0'));
-    removeProjectLink.appendChild(removeProjectImg);
-
-    if (useNightTheme()) {switchToNight(projectName);}
-    if (level !== 0 && !expanded[project.parent]) {
-        expandProject.style.display = 'none';
-        openProjectLink.style.display = 'none';
-        removeProjectLink.style.display = 'none';
-    }
-
-    parent.appendChild(expandProject);
-    parent.appendChild(openProjectLink);
-    parent.appendChild(removeProjectLink);
-    if (level === 0 || expanded[project.parent] == 1) {parent.appendChild(document.createElement('br'));} /*}}}*/
-
-    // If there are actually projects to expand /*{{{*/
-    if (subProjects[project.id] && subProjects[project.id].length) {
-        if (expanded[project.id] && subProjects[project.id].length) {
-            setText(expandProject, stringFill('\u00a0', 3 * level) + '-' + '\u00a0');
-        } else if (subProjects[project.id].length) {
-            setText(expandProject, stringFill('\u00a0', 3 * level) + '+');
-        }
-        expandProject.href = '#';
-        expandProject.onclick = function() { /*{{{*/
-            nextSibling = this.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling;
-            // Collapse /*{{{*/
-            if (this.getAttribute('data-expanded') == 1) {
-                this.setAttribute('data-expanded', 0);
-                this.className = 'open_project';
-                if (subProjects[this.getAttribute('data-project-id')].length) {
-                    setText(this, stringFill('\u00a0', 3 * this.getAttribute('data-level')) + '+');
-                }
-                expanded[this.getAttribute('data-project-id')] = 0;
-                // Make all sub-nodes invisible
-                while (!nextSibling.getAttribute('data-level') || nextSibling.getAttribute('data-level') > this.getAttribute('data-level')) {
-                    // If a br, remove it and continue
-                    if (nextSibling.tagName == 'BR') {
-                        nextSibling = nextSibling.nextElementSibling;
-                        nextSibling.previousElementSibling.remove();
-                        continue;
-                    }
-                    nextSibling.style.display = 'none';
-                    if (nextSibling.className === 'close_project') {
-                        expanded[nextSibling.getAttribute('data-project-id')] = 0;
-                        nextSibling.className = 'open_project';
-                        if (subProjects[nextSibling.getAttribute('data-project-id')].length) {
-                            setText(nextSibling, stringFill('\u00a0', 3 * nextSibling.getAttribute('data-level')) + '+');
-                        }
-                        nextSibling.setAttribute('data-expanded', 0);
-                    }
-                    nextSibling = nextSibling.nextElementSibling;
-                } /*}}}*/
-            // Expand /*{{{*/
-            } else {
-                this.setAttribute('data-expanded', 1);
-                expanded[this.getAttribute('data-project-id')] = 1;
-                if (subProjects[this.getAttribute('data-project-id')].length) {
-                    this.className = 'close_project';
-                    numSpaces = 3 * this.getAttribute('data-level');
-                    setText(this, stringFill('\u00a0', numSpaces) + '-' + '\u00a0');
-                }
-                count = 0;
-                while (nextSibling.getAttribute('data-level') !== this.getAttribute('data-level')) {
-                    nextLevel = nextSibling.getAttribute('data-level');
-                    // Make sure that we are still only one level deeper than the expanded element /*{{{*/
-                    if (nextLevel) {
-                        while ((!nextLevel) ||
-                            nextLevel.toString() !== (parseInt(this.getAttribute('data-level'), 10) + 1).toString()) {
-                            if (nextLevel && nextLevel.toString() === this.getAttribute('data-level')) {break;}
-                            nextSibling = nextSibling.nextElementSibling;
-                            nextLevel = nextSibling.getAttribute('data-level');
-                        }
-                    } /*}}}*/
-                    if (nextSibling.getAttribute('data-level') === this.getAttribute('data-level')) {break;}
-                    nextSibling.style.display = 'inline';
-                    count++;
-                    // If at end of elements for this project, add new line /*{{{*/
-                    if (count == 3) {
-                        count = 0;
-                        parent.insertBefore(document.createElement('br'), nextSibling.nextElementSibling);
-                        nextSibling = nextSibling.nextElementSibling;
-                    } /*}}}*/
-                    nextSibling = nextSibling.nextElementSibling;
-                }
-            } /*}}}*/
-        }; /*}}}*/
-
-        for (subp = 0; subp < subProjects[project.id].length; subp++) { /*{{{*/
-            parent.setAttribute('data-current-sub-' + level, subp);
-            subpr = subProjects[project.id][subp];
-            addProject(parent, subpr, level + 1, projectsByID, projectHierarchy, subProjects, tasks);
-            subp = parent.getAttribute('data-current-sub-' + level);
-        } /*}}}*/
-    } /*}}}*/
-} /*}}}*/
-
-function addTask(task, parent, showTime, fromOverview) { /*{{{*/
-    color = 0;
-    if (task.priority > colors.length) {
-        color = colors[colors.length - 1];
-    } else {
-        color = colors[task.priority - 1];
-    }
-
-    projLinks = createProjectLinks(task.project, color, 4, false);
-
-    // If normal, should have a deadline /*{{{*/
-    taskDate = 0;
-    if (showTime === true) {
-        taskDate = document.createElement('p');
-        taskDate.style.display = 'inline';
-        taskDate.style.color = color;
-
-        deadline = task.deadline;
-        deadline = deadline.replace('-', '/');
-        deadline = deadline.replace('-', '/');
-        deadline = deadline.split('+')[0];
-        d = new Date(deadline);
-        time = getTimeFromString(d.toString());
-        setText(taskDate, time + stringFill('\u00a0', 2));
-    } /*}}}*/
-
-    // Create task link /*{{{*/
-    taskElem = document.createElement('p');
-    taskElem.className = 'normal_text';
-    taskElem.appendChild(document.createTextNode(stringFill('\u00a0', 4)));
-    taskElem.style.height = '20px';
-    taskElem.style.marginTop = '0px';
-    taskElem.style.marginBottom = '5px';
-    taskLink = document.createElement('a');
-    taskLink.className = 'normal_text';
-    taskLink.style.color = color;
-    taskLink.style.fontWeight = 'bold';
-    taskLink.href = '#';
-    taskLink.setAttribute('data-task', JSON.stringify(task));
-    taskLink.onclick = function() { /*{{{*/
-        taskView = this.parentElement.parentElement.parentElement;
-        openTask(JSON.parse(this.getAttribute('data-task')), taskView, redirectView);
-    }; /*}}}*/
-    setText(taskLink, task.name);
-    taskProj = document.createElement('p');
-    taskProj.style.color = color;
-    taskProj.style.display = 'inline';
-
-    addProjectLinks(projLinks, color, taskProj, false); /*}}}*/
-
-    // Create delete task /*{{{*/
-    delTaskP = document.createElement('p');
-    delTaskP.style.display = 'inline';
-    setText(delTaskP, '\u00a0\u00a0');
-    delTaskImg = document.createElement('img');
-    delTaskImg.src = 'images/x.png';
-    delTaskImg.title = 'Delete task';
-    delTaskImg.alt = 'Delete task';
-    delTaskLink = document.createElement('a');
-    delTaskLink.href = '#';
-    delTaskLink.setAttribute('data-task', JSON.stringify(task));
-    delTaskLink.setAttribute('data-from-overview', fromOverview);
-    delTaskLink.onclick = function() { /*{{{*/
-        t = JSON.parse(this.getAttribute('data-task'));
-        conf = confirm('Are you sure you want to delete task "' + t.name + '"?');
-        if (!conf) {return;}
-        deleteTask(this.getAttribute('data-task'), parent.parentElement, this.getAttribute('data-from-overview'));
-    }; /*}}}*/
-    delTaskLink.appendChild(delTaskImg);
-    delTaskP.appendChild(delTaskLink); /*}}}*/
-
-    if (showTime === true) {taskElem.appendChild(taskDate);}
-    taskElem.appendChild(taskLink);
-    taskElem.appendChild(taskProj);
-    taskElem.appendChild(delTaskP);
-
-    if (useNightTheme()) {switchToNight(taskElem, taskLink, taskProj, delTaskP, delTaskLink);}
-
-    parent.appendChild(taskElem);
-} /*}}}*/ /*}}}*/
+} /*}}}*//*}}}*/ /*}}}*/
 
 /* Account Management */ /*{{{*/
 function viewAccount() { /*{{{*/
