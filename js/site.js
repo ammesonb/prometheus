@@ -11,11 +11,22 @@ var projectsByID = [];
 var projectHierarchy = []; /*}}}*/
 
 function updateJS() {/*{{{*/
-   var docHeadObj = document.getElementsByTagName("head")[0];
-   var newScript = document.createElement("script");
-   newScript.type = "text/javascript";
-   newScript.src = 'js/site.js';
-   docHeadObj.appendChild(newScript);
+    var docHeadObj = document.getElementsByTagName("head")[0];
+    var newScript = document.createElement("script");
+    newScript.type = "text/javascript";
+    newScript.src = 'js/site.js';
+    docHeadObj.appendChild(newScript);
+    
+    currentTabs = document.getElementsByClassName('tab');
+    services = [];
+    for (t = 0; t < currentTabs.length; t++) {
+        tID = currentTabs[t].getAttribute('data-id');
+        if (!tID) {continue;}
+        service = tID.split('_')[0];
+        if (services.indexOf(service) == -1) {services.push(service);}
+    }
+
+    if (services.indexOf('tasks') != -1) {setTimeout(function() {fetchTaskData();}, 1000);}
 }/*}}}*/
 
 function createPostReq(url, mode) { /*{{{*/
@@ -173,7 +184,7 @@ function switchTab(tabID) { /*{{{*/
 function openNotes() { /*{{{*/
     // Create notes panel /*{{{*/
     notes = document.createElement('div');
-    id = 'notes' + new Date().getTime();
+    id = 'notes_' + new Date().getTime();
     notes.id = id;
     notes.className = 'notes';
     notes.style.display = 'none';
