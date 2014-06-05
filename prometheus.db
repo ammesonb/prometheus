@@ -221,6 +221,45 @@ ALTER SEQUENCE projects_id_seq OWNED BY projects.id;
 
 
 --
+-- Name: reminders; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE reminders (
+    id integer NOT NULL,
+    message character varying NOT NULL,
+    type character varying NOT NULL,
+    job_id integer,
+    next timestamp with time zone NOT NULL,
+    repeat character varying,
+    duration character varying,
+    user_id integer
+);
+
+
+ALTER TABLE public.reminders OWNER TO root;
+
+--
+-- Name: reminders_id_seq; Type: SEQUENCE; Schema: public; Owner: root
+--
+
+CREATE SEQUENCE reminders_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.reminders_id_seq OWNER TO root;
+
+--
+-- Name: reminders_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: root
+--
+
+ALTER SEQUENCE reminders_id_seq OWNED BY reminders.id;
+
+
+--
 -- Name: services; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
@@ -371,6 +410,13 @@ ALTER TABLE ONLY projects ALTER COLUMN id SET DEFAULT nextval('projects_id_seq':
 -- Name: id; Type: DEFAULT; Schema: public; Owner: root
 --
 
+ALTER TABLE ONLY reminders ALTER COLUMN id SET DEFAULT nextval('reminders_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: root
+--
+
 ALTER TABLE ONLY services ALTER COLUMN id SET DEFAULT nextval('services_id_seq'::regclass);
 
 
@@ -418,6 +464,14 @@ ALTER TABLE ONLY notes
 
 ALTER TABLE ONLY projects
     ADD CONSTRAINT projects_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: reminders_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY reminders
+    ADD CONSTRAINT reminders_pkey PRIMARY KEY (id);
 
 
 --
@@ -527,6 +581,14 @@ ALTER TABLE ONLY projects
 
 ALTER TABLE ONLY projects
     ADD CONSTRAINT projects_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);
+
+
+--
+-- Name: reminders_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY reminders
+    ADD CONSTRAINT reminders_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);
 
 
 --

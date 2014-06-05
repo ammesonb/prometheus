@@ -8,18 +8,24 @@ var projects = [];
 var rootProjects = [];
 var subProjects = [];
 var projectsByID = [];
-var projectHierarchy = []; /*}}}*/
+var projectHierarchy = [];
+var reminders = [];
+/*}}}*/
+
+function element(e) {/*{{{*/
+    return document.createElement(e);
+}/*}}}*/
 
 function update() {/*{{{*/
     var docHeadObj = document.getElementsByTagName("head")[0];
-    var newScript = document.createElement("script");
+    var newScript = element("script");
     newScript.type = "text/javascript";
     newScript.src = 'js/site.js';
     docHeadObj.appendChild(newScript);
 
     document.getElementsByTagName('link')[0].remove();
 
-    var newStyle = document.createElement("link");
+    var newStyle = element("link");
     newStyle.rel = "stylesheet";
     newStyle.type = "text/css";
     newStyle.href = "res/style.css";
@@ -59,20 +65,20 @@ function login() { /*{{{*/
 
     c = CryptoJS.SHA512(b.value).toString();
 
-    f = document.createElement('form');
+    f = element('form');
     f.method = 'POST';
     f.action = 'login.cgi';
-    i1 = document.createElement('input');
+    i1 = element('input');
     i1.name = 'a';
     i1.type = 'text';
     i1.value = a.value;
-    i2 = document.createElement('input');
+    i2 = element('input');
     i2.name = 'c';
     i2.type = 'password';
     i2.value = c;
     f.appendChild(i1);
     f.appendChild(i2);
-    i3 = document.createElement('input');
+    i3 = element('input');
     i3.type = 'hidden';
     i3.name = 't';
     i3.value = jstz.determine().name();
@@ -145,29 +151,29 @@ function deleteAllChildren(elem, removeAll) { /*{{{*/
     }
 } /*}}}*/
 
-function setText(element, text) { /*{{{*/
-    element.innerText = text;
-    element.innerHTML = text;
+function setText(elem, text) { /*{{{*/
+    elem.innerText = text;
+    elem.innerHTML = text;
 } /*}}}*/
 
 /* Tabs */ /*{{{*/
-function addTab(element, tabElement) { /*{{{*/
-    tabElement.className = 'tab ' + element.id;
-    tabLink = document.createElement('a');
+function addTab(elem, tabElement) { /*{{{*/
+    tabElement.className = 'tab ' + elem.id;
+    tabLink = element('a');
     tabLink.href = '#';
     tabLink.appendChild(tabElement);
-    x = document.createElement('img');
+    x = element('img');
     x.src = 'images/x.png';
     x.alt = 'Close tab';
     x.title = 'Close tab';
-    x.setAttribute('data-id', element.id);
+    x.setAttribute('data-id', elem.id);
     x.onclick = function() {
         closeTab(this.getAttribute('data-id'));
     };
     setText(tabElement, tabElement.innerText + '\u00a0');
     tabElement.appendChild(x);
     document.getElementById('tabs').appendChild(tabLink);
-    document.getElementById('main').appendChild(element);
+    document.getElementById('main').appendChild(elem);
 } /*}}}*/
 
 function closeTab(tabID) { /*{{{*/
@@ -191,30 +197,30 @@ function switchTab(tabID) { /*{{{*/
 /* Notes */ /*{{{*/
 function openNotes() { /*{{{*/
     // Create notes panel /*{{{*/
-    notes = document.createElement('div');
+    notes = element('div');
     id = 'notes_' + new Date().getTime();
     notes.id = id;
     notes.className = 'notes';
     notes.style.display = 'none';
 
-    notesList = document.createElement('div');
+    notesList = element('div');
     notesList.className = 'notes_list';
     notes.appendChild(notesList);
 
-    notesEditor = document.createElement('div');
+    notesEditor = element('div');
     notesEditor.setAttribute('data-note-id', -1);
     notesEditor.className = 'notes_editor';
     notes.appendChild(notesEditor); /*}}}*/
 
     // Create table to display notes in /*{{{*/
-    notesTable = document.createElement('table');
+    notesTable = element('table');
     notesTable.className = 'notes';
     if (useNightTheme()) {notesTable.className += ' night';}
 
-    headerRow = document.createElement('tr');
-    tableTitle = document.createElement('th');
+    headerRow = element('tr');
+    tableTitle = element('th');
     setText(tableTitle, 'Title');
-    tableMTime = document.createElement('th');
+    tableMTime = element('th');
     setText(tableMTime, 'Last Modified');
     headerRow.appendChild(tableTitle);
     headerRow.appendChild(tableMTime);
@@ -223,24 +229,24 @@ function openNotes() { /*{{{*/
     notesList.appendChild(notesTable); /*}}}*/
 
     // Create editor pane /*{{{*/
-    titleDesc = document.createElement('p');
+    titleDesc = element('p');
     titleDesc.className = 'form_label';
     setText(titleDesc, 'Title:');
 
-    noteTitle = document.createElement('input');
+    noteTitle = element('input');
     noteTitle.className = 'note_title';
     noteTitle.type = 'text';
     noteTitle.name = 'title';
 
-    textDesc = document.createElement('p');
+    textDesc = element('p');
     textDesc.className = 'form_label';
     setText(textDesc, 'Note:');
 
-    noteText = document.createElement('textarea');
+    noteText = element('textarea');
     noteText.className = 'note_editor';
     noteText.name = 'text';
 
-    saveButton = document.createElement('button');
+    saveButton = element('button');
     saveButton.className = 'left_action';
     setText(saveButton, 'Save');
     saveButton.onclick = function() { /*{{{*/
@@ -325,7 +331,7 @@ function openNotes() { /*{{{*/
         }, 1000); /*}}}*/
     }; /*}}}*/
 
-    cancelButton = document.createElement('button');
+    cancelButton = element('button');
     cancelButton.className = 'left_action';
     setText(cancelButton, 'Cancel');
     cancelButton.onclick = function() { /*{{{*/
@@ -347,7 +353,7 @@ function openNotes() { /*{{{*/
         } /*}}}*/
     }; /*}}}*/
 
-    createButton = document.createElement('button');
+    createButton = element('button');
     createButton.className = 'right_action';
     createButton.style.marginRight = '10px';
     setText(createButton, 'Create note');
@@ -370,7 +376,7 @@ function openNotes() { /*{{{*/
         } /*}}}*/
     }; /*}}}*/
 
-    errorText = document.createElement('p');
+    errorText = element('p');
     errorText.className = 'error_text';
 
     if (useNightTheme()) {
@@ -379,7 +385,7 @@ function openNotes() { /*{{{*/
 
     notesEditor.appendChild(titleDesc);
     notesEditor.appendChild(noteTitle);
-    notesEditor.appendChild(document.createElement('br'));
+    notesEditor.appendChild(element('br'));
     notesEditor.appendChild(textDesc);
     notesEditor.appendChild(noteText);
     notesEditor.appendChild(saveButton);
@@ -397,7 +403,7 @@ function openNotes() { /*{{{*/
     req.send('mode=0'); /*}}}*/
 
     // Create actual note tab /*{{{*/
-    noteTab = document.createElement('div');
+    noteTab = element('div');
     setText(noteTab, 'Notes');
     noteTab.className = 'tab';
     noteTab.setAttribute('data-id', id);
@@ -422,7 +428,7 @@ function populateNotes(data, notesTable, notesEditor, resize) { /*{{{*/
     notes = JSON.parse(data);
     for (n = 0; n < notes.length; n++) { /*{{{*/
         note = notes[n];
-        r = document.createElement('tr');
+        r = element('tr');
         r.setAttribute('data-note', JSON.stringify(note));
 
         // Select appropriate note /*{{{*/
@@ -460,39 +466,39 @@ function populateNotes(data, notesTable, notesEditor, resize) { /*{{{*/
             this.style.fontStyle = 'normal';
         }; /*}}}*/
 
-        title = document.createElement('td');
+        title = element('td');
         title.style.paddingRight = '5px';
         title.style.maxWidth = notesTable.clientWidth * 0.3 + 'px';
         title.style.wordWrap = 'break-word';
-        titleUnderline = document.createElement('u');
+        titleUnderline = element('u');
         titleUnderline.className = 'note_blank';
         if (selected) {
             titleUnderline.className = 'note_edit';
             if (useNightTheme()) {switchToNight(titleUnderline);}
         }
-        titleText = document.createElement('span');
+        titleText = element('span');
         titleText.className = 'normal';
         setText(titleText, note.title);
         titleUnderline.appendChild(titleText);
         title.appendChild(titleUnderline);
 
-        mtime = document.createElement('td');
-        mtimeUnderline = document.createElement('u');
+        mtime = element('td');
+        mtimeUnderline = element('u');
         mtimeUnderline.className = 'note_blank';
         if (selected) {
             mtimeUnderline.className = 'note_edit';
             if (useNightTheme()) {switchToNight(mtimeUnderline);}
         }
-        mtimeText = document.createElement('span');
+        mtimeText = element('span');
         mtimeText.className = 'normal';
         setText(mtimeText, note.mtime.split('\.')[0]);
         mtimeUnderline.appendChild(mtimeText);
         mtime.appendChild(mtimeUnderline);
-        a = document.createElement('a');
+        a = element('a');
         a.href = '#';
         a.style.cssFloat = 'right';
         a.style.paddingRight = '5px';
-        i = document.createElement('img');
+        i = element('img');
         i.src = 'images/x.png';
         i.alt = 'Delete note';
         i.title = 'Delete note';
@@ -755,22 +761,22 @@ function getSubprojects(projectID, projectIDs) { /*{{{*/
 /* DOM Manipulation */
 function openTasks() { /*{{{*/
     id = 'tasks_' + new Date().getTime();
-    taskPanel = document.createElement('div');
+    taskPanel = element('div');
     taskPanel.className = 'tasks';
     taskPanel.id = id;
 
     // Create panel skeleton /*{{{*/
     // Section headers /*{{{*/
-    projectsPanel = document.createElement('div');
+    projectsPanel = element('div');
     projectsPanel.className = 'project_panel';
     projectsPanel.setAttribute('data-project-id', -1);
 
-    projectsList = document.createElement('div');
+    projectsList = element('div');
     projectsList.className = 'project_list'; /*}}}*/
 
     // Create new project input/button /*{{{*/
-    newProject = document.createElement('span');
-    newProjectName = document.createElement('input');
+    newProject = element('span');
+    newProjectName = element('input');
     newProjectName.className = 'new_project';
     newProjectName.value = 'Enter new project name';
     newProjectName.onfocus = function() { /*{{{*/
@@ -779,7 +785,7 @@ function openTasks() { /*{{{*/
     newProjectName.onblur = function() { /*{{{*/
         if (this.value === '') {this.value = 'Enter new project name';}
     }; /*}}}*/
-    saveNewProject = document.createElement('a');
+    saveNewProject = element('a');
     saveNewProject.className = 'save_project';
     saveNewProject.href = '#';
     saveNewProject.onclick = function() { /*{{{*/
@@ -813,13 +819,13 @@ function openTasks() { /*{{{*/
     newProject.appendChild(saveNewProject); /*}}}*/
 
     // Upcoming panel /*{{{*/
-    upcoming = document.createElement('div');
+    upcoming = element('div');
     upcoming.className = 'task_view';
     upcoming.setAttribute('project_level', 0);
 
-    upcomingU = document.createElement('u');
+    upcomingU = element('u');
     upcomingU.className = 'note_edit';
-    upcomingP = document.createElement('p');
+    upcomingP = element('p');
     upcomingP.className = 'normal_section_header';
     setText(upcomingP, 'Upcoming tasks');
     upcomingP.style.marginTop = '5px';
@@ -841,7 +847,7 @@ function openTasks() { /*{{{*/
     populateUpcoming(upcoming); /*}}}*/
 
     // Add tab and panel /*{{{*/
-    taskTab = document.createElement('div');
+    taskTab = element('div');
     setText(taskTab, 'Task List');
     taskTab.className = 'tab';
     taskTab.setAttribute('data-id', id);
@@ -892,9 +898,9 @@ function openTasks() { /*{{{*/
 
             if (breakLine) { /*{{{*/
                 if (span.children[pNum + 1]) {
-                    span.insertBefore(document.createElement('br'), span.children[pNum + 1]);
+                    span.insertBefore(element('br'), span.children[pNum + 1]);
                 } else {
-                    span.appendChild(document.createElement('br'));
+                    span.appendChild(element('br'));
                 }
             } /*}}}*/
         } /*}}}*/
@@ -905,12 +911,12 @@ function populateProjects(projectsList) { /*{{{*/
     deleteAllChildren(projectsList);
 
     // Create project list headers /*{{{*/
-    projectsListHeader = document.createElement('span');
-    upcomingTitle = document.createElement('p');
+    projectsListHeader = element('span');
+    upcomingTitle = element('p');
     upcomingTitle.className = 'normal_section_header';
     upcomingTitle.style.marginTop = '5px';
     upcomingTitle.style.marginBottom = '10px';
-    upcomingLink = document.createElement('a');
+    upcomingLink = element('a');
     upcomingLink.className = 'normal_section_header';
     upcomingLink.href = '#';
     upcomingLink.onclick = function() { /*{{{*/
@@ -957,9 +963,9 @@ function populateProjects(projectsList) { /*{{{*/
 
                 if (breakLine) { /*{{{*/
                     if (span.children[pNum + 1]) {
-                        span.insertBefore(document.createElement('br'), span.children[pNum + 1]);
+                        span.insertBefore(element('br'), span.children[pNum + 1]);
                     } else {
-                        span.appendChild(document.createElement('br'));
+                        span.appendChild(element('br'));
                     }
                 } /*}}}*/
             } /*}}}*/
@@ -968,7 +974,7 @@ function populateProjects(projectsList) { /*{{{*/
     setText(upcomingLink, 'Overview');
     upcomingTitle.appendChild(upcomingLink);
 
-    projectsTitle = document.createElement('p');
+    projectsTitle = element('p');
     projectsTitle.className = 'normal_section_header';
     projectsTitle.style.marginTop = '5px';
     projectsTitle.style.marginBottom = '10px';
@@ -999,7 +1005,7 @@ function addProject(parent, project, level) { /*{{{*/
     */
 
     // Expand project button /*{{{*/
-    expandProject = document.createElement('a');
+    expandProject = element('a');
     // Only change color if we are expanded
     if (expanded[project.id] && subProjects[project.id] && subProjects[project.id].length) {
         expandProject.className = 'close_project';
@@ -1013,7 +1019,7 @@ function addProject(parent, project, level) { /*{{{*/
     setText(expandProject, stringFill('\u00a0', 3 * level) + '~'); /*}}}*/
 
     // Open project text /*{{{*/
-    openProjectLink = document.createElement('a');
+    openProjectLink = element('a');
     openProjectLink.href = '#';
     openProjectLink.style.textDecoration = 'none';
     openProjectLink.setAttribute('data-project', JSON.stringify(project));
@@ -1022,13 +1028,13 @@ function addProject(parent, project, level) { /*{{{*/
         openProj = JSON.parse(this.getAttribute('data-project'));
         openProject(taskView, openProj);
     }; /*}}}*/
-    projectName = document.createElement('p');
+    projectName = element('p');
     projectName.className = 'project_name';
     setText(projectName, '\u00a0' + project.name);
     openProjectLink.appendChild(projectName); /*}}}*/
 
     // Delete project button /*{{{*/
-    removeProjectLink = document.createElement('a');
+    removeProjectLink = element('a');
     removeProjectLink.className = 'blank';
     removeProjectLink.href = '#';
     removeProjectLink.setAttribute('data-project-id', project.id);
@@ -1037,7 +1043,7 @@ function addProject(parent, project, level) { /*{{{*/
         taskView = this.parentElement.parentElement.parentElement.children[1];
         deleteProject(this.getAttribute('data-project-id'), 'tree', taskView);
     }; /*}}}*/
-    removeProjectImg = document.createElement('img');
+    removeProjectImg = element('img');
     removeProjectImg.src = 'images/x.png';
     removeProjectImg.alt = 'Remove project';
     removeProjectImg.title = 'Remove project';
@@ -1054,7 +1060,7 @@ function addProject(parent, project, level) { /*{{{*/
     parent.appendChild(expandProject);
     parent.appendChild(openProjectLink);
     parent.appendChild(removeProjectLink);
-    if (level === 0 || expanded[project.parent] == 1) {parent.appendChild(document.createElement('br'));} /*}}}*/
+    if (level === 0 || expanded[project.parent] == 1) {parent.appendChild(element('br'));} /*}}}*/
 
     // If there are actually projects to expand /*{{{*/
     if (subProjects[project.id] && subProjects[project.id].length) {
@@ -1120,7 +1126,7 @@ function addProject(parent, project, level) { /*{{{*/
                     // If at end of elements for this project, add new line /*{{{*/
                     if (count == 3) {
                         count = 0;
-                        parent.insertBefore(document.createElement('br'), nextSibling.nextElementSibling);
+                        parent.insertBefore(element('br'), nextSibling.nextElementSibling);
                         nextSibling = nextSibling.nextElementSibling;
                     } /*}}}*/
                     nextSibling = nextSibling.nextElementSibling;
@@ -1140,7 +1146,7 @@ function addProject(parent, project, level) { /*{{{*/
 function populateUpcoming(taskView) { /*{{{*/
     deleteAllChildren(taskView, 1);
 
-    upcomingP = document.createElement('p');
+    upcomingP = element('p');
     upcomingP.className = 'normal_section_header';
     setText(upcomingP, 'Upcoming tasks');
     upcomingP.style.marginTop = '0px';
@@ -1150,11 +1156,11 @@ function populateUpcoming(taskView) { /*{{{*/
     taskView.appendChild(upcomingP);
 
     // Add new task button /*{{{*/
-    newTaskP = document.createElement('p');
+    newTaskP = element('p');
     newTaskP.style.display = 'inline';
     newTaskP.style.cssFloat = 'right';
     newTaskP.style.marginBottom = '2px';
-    newTaskButton = document.createElement('button');
+    newTaskButton = element('button');
     newTaskButton.onclick = function() {
         openTask(makeBlankTask('-1'), taskView, 'overview');
     }
@@ -1203,7 +1209,7 @@ function openTask(task, taskView, redirectView) { /*{{{*/
 
     // Add this task /*{{{*/
     if (task.project !== -1) {
-        tmpP = document.createElement('p');
+        tmpP = element('p');
         tmpP.style.display = 'inline';
         tmpP.style.color = c;
         setText(tmpP, '\u00a0:\u00a0');
@@ -1212,7 +1218,7 @@ function openTask(task, taskView, redirectView) { /*{{{*/
         taskView.appendChild(tmpP);
     }
 
-    tmpP = document.createElement('p');
+    tmpP = element('p');
     tmpP.style.display = 'inline';
     tmpP.style.color = c;
     setText(tmpP, task.name);
@@ -1233,10 +1239,10 @@ function openTask(task, taskView, redirectView) { /*{{{*/
 
     // Delete task button, if not new /*{{{*/
     if (task.id != -1) {
-        deleteTaskElem = document.createElement('p');
+        deleteTaskElem = element('p');
         deleteTaskElem.style.display = 'inline';
         setText(deleteTaskElem, '\u00a0\u00a0');
-        deleteTaskLink = document.createElement('a');
+        deleteTaskLink = element('a');
         deleteTaskLink.href = '#';
         deleteTaskLink.setAttribute('data-task', JSON.stringify(task));
         deleteTaskLink.onclick = function() { /*{{{*/
@@ -1244,7 +1250,7 @@ function openTask(task, taskView, redirectView) { /*{{{*/
             conf = confirm('Are you sure you want to delete task "' + t.name + '"?');
             if (conf) {deleteTask(this.getAttribute('data-task'), taskView, false);}
         }; /*}}}*/
-        deleteTaskImg = document.createElement('img');
+        deleteTaskImg = element('img');
         deleteTaskImg.src = 'images/x.png';
         deleteTaskImg.title = 'Delete task';
         deleteTaskImg.alt = 'Delete task';
@@ -1253,8 +1259,8 @@ function openTask(task, taskView, redirectView) { /*{{{*/
         taskView.appendChild(deleteTaskElem);
     } /*}}}*/
 
-    taskView.appendChild(document.createElement('br'));
-    taskView.appendChild(document.createElement('br'));
+    taskView.appendChild(element('br'));
+    taskView.appendChild(element('br'));
 
     // Create task edit GUI /*{{{*/
     // Project /*{{{*/
@@ -1267,31 +1273,31 @@ function openTask(task, taskView, redirectView) { /*{{{*/
     taskView.appendChild(projectSelect); /*}}}*/
 
     // Title /*{{{*/
-    titleLabel = document.createElement('p');
+    titleLabel = element('p');
     titleLabel.className = 'normal_text form_label';
     setText(titleLabel, 'Task\u00a0name:\u00a0')
-    titleInput = document.createElement('input');
+    titleInput = element('input');
     titleInput.style.width = '75%';
     titleInput.value = task.name; /*}}}*/
 
     // Description /*{{{*/
-    descLabel = document.createElement('p');
+    descLabel = element('p');
     descLabel.className = 'normal_text form_label';
     setText(descLabel, 'Task\u00a0Description:');
-    descInput = document.createElement('textarea');
+    descInput = element('textarea');
     descInput.style.width = '90%';
     descInput.style.height = '30%';
     descInput.value = task.description; /*}}}*/
 
     // Priority /*{{{*/
-    priLabel = document.createElement('p');
+    priLabel = element('p');
     priLabel.className = 'normal_text form_label';
     priLabel.style.display = 'inline';
     setText(priLabel, 'Task\u00a0Priority\u00a0(High to low):\u00a0\u00a0');
 
-    priInput = document.createElement('select');
+    priInput = element('select');
     for (o = 1; o <= 12; o++) {
-        opt = document.createElement('option');
+        opt = element('option');
         setText(opt, o);
         opt.value = o;
         if (o == task.priority) {opt.selected = true;}
@@ -1301,11 +1307,11 @@ function openTask(task, taskView, redirectView) { /*{{{*/
 
     // Deadline /*{{{*/
     // Elements /*{{{*/
-    deadlineGroup = document.createElement('fieldset');
+    deadlineGroup = element('fieldset');
     deadlineGroup.style.width = '92%';
-    deadlineLabel = document.createElement('legend');
+    deadlineLabel = element('legend');
     setText(deadlineLabel, 'Deadline');
-    urgentRadio = document.createElement('input');
+    urgentRadio = element('input');
     urgentRadio.name = 'deadline';
     urgentRadio.type = 'radio';
     urgentRadio.value = 'u';
@@ -1317,11 +1323,11 @@ function openTask(task, taskView, redirectView) { /*{{{*/
 
         e.readOnly = true;
     }; /*}}}*/
-    urgentLabel = document.createElement('p');
+    urgentLabel = element('p');
     urgentLabel.className = 'normal_text';
     urgentLabel.style.display = 'inline';
     setText(urgentLabel, 'ASAP');
-    otherRadio = document.createElement('input');
+    otherRadio = element('input');
     otherRadio.name = 'deadline';
     otherRadio.type = 'radio';
     otherRadio.value = 's';
@@ -1333,22 +1339,22 @@ function openTask(task, taskView, redirectView) { /*{{{*/
 
         e.readOnly = true;
     }; /*}}}*/
-    otherLabel = document.createElement('p');
+    otherLabel = element('p');
     otherLabel.className = 'normal_text';
     otherLabel.style.display = 'inline';
     setText(otherLabel, 'No deadline');
-    dateRadio = document.createElement('input');
+    dateRadio = element('input');
     dateRadio.name = 'deadline';
     dateRadio.type = 'radio';
     dateRadio.value = 'd';
     dateRadio.onclick = function() { /*{{{*/
         this.nextElementSibling.nextElementSibling.disabled = false;
     }; /*}}}*/
-    dateLabel = document.createElement('p');
+    dateLabel = element('p');
     dateLabel.className = 'normal_text';
     dateLabel.style.display = 'inline';
     setText(dateLabel, 'Date\u00a0');
-    dateInput = document.createElement('input');
+    dateInput = element('input');
     dateInput.className = 'normal_text';
     dateInput.type = 'datetime-local'; /*}}}*/
     dateInput.onclick = function() {
@@ -1429,11 +1435,11 @@ function openTask(task, taskView, redirectView) { /*{{{*/
     } /*}}}*/
 
     // Create save and cancel buttons /*{{{*/
-    errorText = document.createElement('p');
+    errorText = element('p');
     errorText.className = 'error';
     errorText.style.display = 'inline';
     setText(errorText, '\u00a0');
-    saveButton = document.createElement('button');
+    saveButton = element('button');
     saveButton.setAttribute('data-task-id', task.id);
     saveButton.setAttribute('data-redirect', redirectView);
     if (task.project == -1) {
@@ -1486,7 +1492,7 @@ function openTask(task, taskView, redirectView) { /*{{{*/
                          '&p=' + this.getAttribute('data-task-priority') + '&d=' + this.getAttribute('data-task-deadline'));
     }; /*}}}*/
 
-    cancelButton = document.createElement('button');
+    cancelButton = element('button');
     setText(cancelButton, 'Cancel');
     cancelButton.onclick = function() { /*{{{*/
         if (task.project != -1) {
@@ -1577,12 +1583,12 @@ function openTask(task, taskView, redirectView) { /*{{{*/
     taskView.appendChild(titleInput);
     taskView.appendChild(descLabel);
     taskView.appendChild(descInput);
-    taskView.appendChild(document.createElement('br'));
-    taskView.appendChild(document.createElement('br'));
+    taskView.appendChild(element('br'));
+    taskView.appendChild(element('br'));
     taskView.appendChild(priLabel);
     taskView.appendChild(priInput);
     taskView.appendChild(deadlineGroup);
-    taskView.appendChild(document.createElement('br'));
+    taskView.appendChild(element('br'));
     taskView.appendChild(saveButton);
     taskView.appendChild(document.createTextNode('\u00a0\u00a0'));
     taskView.appendChild(cancelButton);
@@ -1601,7 +1607,7 @@ function openProject(taskView, project) { /*{{{*/
     addProjectLinks(projLinks, c, taskView, true); /*}}}*/
 
     // Delete project button /*{{{*/
-    removeProjectLink = document.createElement('a');
+    removeProjectLink = element('a');
     removeProjectLink.className = 'blank';
     removeProjectLink.href = '#';
     removeProjectLink.setAttribute('data-project-id', project.id);
@@ -1609,7 +1615,7 @@ function openProject(taskView, project) { /*{{{*/
     removeProjectLink.onclick = function() { /*{{{*/
         deleteProject(this.getAttribute('data-project-id'), 'project', taskView);
     }; /*}}}*/
-    removeProjectImg = document.createElement('img');
+    removeProjectImg = element('img');
     removeProjectImg.src = 'images/x.png';
     removeProjectImg.alt = 'Remove project';
     removeProjectImg.title = 'Remove project';
@@ -1621,16 +1627,16 @@ function openProject(taskView, project) { /*{{{*/
     // Create subproject list /*{{{*/
     if (subProjects[project.id]) {
         subProjects[project.id].sort(function(a, b) {return a.name > b.name;});
-        subprojectsP = document.createElement('p');
+        subprojectsP = element('p');
         subprojectsP.style.className = 'normal_text';
-        tmpP = document.createElement('p');
+        tmpP = element('p');
         tmpP.className = 'normal_text';
         tmpP.style.fontSize = '120%';
         tmpP.style.marginBottom = '0px';
         setText(tmpP, 'Subprojects:');
         if (useNightTheme()) {switchToNight(tmpP);}
         subprojectsP.appendChild(tmpP);
-        tmpP = document.createElement('p');
+        tmpP = element('p');
         tmpP.className = 'normal_text';
         tmpP.style.fontSize = '120%';
         tmpP.style.display = 'inline';
@@ -1638,7 +1644,7 @@ function openProject(taskView, project) { /*{{{*/
         subprojectsP.appendChild(tmpP);
         for (subp = 0; subp < subProjects[project.id].length; subp++) { /*{{{*/
             subpr = subProjects[project.id][subp];
-            subpA = document.createElement('a');
+            subpA = element('a');
             subpA.className = 'normal_text';
             if (useNightTheme()) {switchToNight(subpA);}
             subpA.href = '#';
@@ -1650,7 +1656,7 @@ function openProject(taskView, project) { /*{{{*/
             subprojectsP.appendChild(subpA);
 
             if (subp != (subProjects[project.id].length - 1)) {
-                tmpP = document.createElement('p');
+                tmpP = element('p');
                 tmpP.className = 'normal_text';
                 tmpP.style.display = 'inline';
                 setText(tmpP, ',\u00a0');
@@ -1663,8 +1669,8 @@ function openProject(taskView, project) { /*{{{*/
 
         taskView.appendChild(subprojectsP);
     } else {
-        taskView.appendChild(document.createElement('br'));
-        taskView.appendChild(document.createElement('br'));
+        taskView.appendChild(element('br'));
+        taskView.appendChild(element('br'));
     } /*}}}*/
 
     // Get task list /*{{{*/
@@ -1684,11 +1690,11 @@ function openProject(taskView, project) { /*{{{*/
     otherTasks = out[6]; /*}}}*/
 
     // Add new task button /*{{{*/
-    newTaskP = document.createElement('p');
+    newTaskP = element('p');
     newTaskP.style.display = 'inline';
     newTaskP.style.cssFloat = 'right';
     newTaskP.style.marginBottom = '2px';
-    newTaskButton = document.createElement('button');
+    newTaskButton = element('button');
     newTaskButton.setAttribute('this-project-id', project.id);
     newTaskButton.onclick = function() {
         openTask(makeBlankTask(this.getAttribute('this-project-id')), taskView, 'project');
@@ -1704,8 +1710,8 @@ function openProject(taskView, project) { /*{{{*/
 
     // If no tasks, add whitespace /*{{{*/
     if (urgent.length == 0 && other.length == 0 && normal.length == 0) {
-        taskView.appendChild(document.createElement('br'));
-        taskView.appendChild(document.createElement('br'));
+        taskView.appendChild(element('br'));
+        taskView.appendChild(element('br'));
     } /*}}}*/
 
     addHTMLTasks(taskView, urgentHeader, urgentHR, urgentTasks, normalTasks, otherHeader, otherHR, otherTasks);
@@ -1714,7 +1720,7 @@ function openProject(taskView, project) { /*{{{*/
 
     // Show project's tasks - legacy, leaving for reference /*{{{*/
     // Add new task button /*{{{*/
-    newTaskButton = document.createElement('button');
+    newTaskButton = element('button');
     newTaskButton.onclick = function() {
         openTask(makeBlankTask(project.id), taskView);
     }
@@ -1726,11 +1732,11 @@ function openProject(taskView, project) { /*{{{*/
 
     // If no subprojects, need an extra two line /*{{{*/
     if (!subProjects[project.id]) {
-        taskView.appendChild(document.createElement('br'));
-        taskView.appendChild(document.createElement('br'));
+        taskView.appendChild(element('br'));
+        taskView.appendChild(element('br'));
     }
     taskView.appendChild(newTaskButton);
-    taskView.appendChild(document.createElement('br')); /*}}}*/
+    taskView.appendChild(element('br')); /*}}}*/
 
     // Order tasks alphabetically then by urgent, normal, other /*{{{*/
     myTasks = new Array();
@@ -1752,21 +1758,21 @@ function openProject(taskView, project) { /*{{{*/
 
     // Add tasks table /*{{{*/
     if (myTasks.length > 0) {
-        taskView.appendChild(document.createElement('br'));
+        taskView.appendChild(element('br'));
 
-        tasksTable = document.createElement('table');
+        tasksTable = element('table');
         tasksTable.className = 'notes';
 
         // Create table header /*{{{*/
-        tasksHeader = document.createElement('tr');
-        tasksTitleCell = document.createElement('th');
+        tasksHeader = element('tr');
+        tasksTitleCell = element('th');
         tasksTitleCell.style.width = '100%';
         setText(tasksTitleCell, 'Task');
-        tasksPriCell = document.createElement('th');
+        tasksPriCell = element('th');
         setText(tasksPriCell, 'Priority');
-        tasksDeadCell = document.createElement('th');
+        tasksDeadCell = element('th');
         setText(tasksDeadCell, 'Deadline');
-        tasksDelCell = document.createElement('th');
+        tasksDelCell = element('th');
         setText(tasksDelCell, 'Delete');
         tasksHeader.appendChild(tasksTitleCell);
         tasksHeader.appendChild(tasksPriCell);
@@ -1780,11 +1786,11 @@ function openProject(taskView, project) { /*{{{*/
             task = myTasks[taskNum];
 
             // Create task row /*{{{*/
-            taskRow = document.createElement('tr');
+            taskRow = element('tr');
             taskRow.style.textAlign = 'center';
-            titleCell = document.createElement('td');
+            titleCell = element('td');
             titleCell.style.textAlign = 'left';
-            taskLink = document.createElement('a');
+            taskLink = element('a');
             taskLink.className = 'normal_text';
             taskLink.href = '#';
             taskLink.setAttribute('data-task', JSON.stringify(task));
@@ -1795,7 +1801,7 @@ function openProject(taskView, project) { /*{{{*/
             if (useNightTheme()) {switchToNight(taskLink);}
             setText(taskLink, task.name);
             titleCell.appendChild(taskLink);
-            priCell = document.createElement('td');
+            priCell = element('td');
             priCell.style.paddingRight = '8px';
             setText(priCell, task.priority);
             deadText = 0;
@@ -1807,13 +1813,13 @@ function openProject(taskView, project) { /*{{{*/
                 deadText = d.getUTCFullYear() + '-' + d.getUTCMonth() + '-' +
                            d.getUTCDate() + ' ' + time;
             }
-            deadCell = document.createElement('td');
+            deadCell = element('td');
             deadCell.style.whiteSpace = 'nowrap';
             deadCell.style.paddingRight = '8px';
             setText(deadCell, deadText);
-            delCell = document.createElement('td');
+            delCell = element('td');
             delCell.style.paddingRight = '8px';
-            delLink = document.createElement('a');
+            delLink = element('a');
             delLink.href = '#';
             delLink.setAttribute('data-task', JSON.stringify(task));
             delLink.onclick = function() {
@@ -1821,7 +1827,7 @@ function openProject(taskView, project) { /*{{{*/
                 conf = confirm('Are you sure you want to delete task "' + t.name + '"?');
                 if (conf) {deleteTask(this.getAttribute('data-task'), taskView, false);}
             };
-            delImg = document.createElement('img');
+            delImg = element('img');
             delImg.src = 'images/x.png';
             delImg.alt = 'Remove task';
             delLink.appendChild(delImg);
@@ -1899,7 +1905,7 @@ function deleteProject(projectID, viewMode, taskView) { /*{{{*/
 
 /* DOM Creation *//*{{{*/
 function projectsToSelect(projectID) { /*{{{*/
-   projectSelect = document.createElement('select');
+   projectSelect = element('select');
     for (root = 0; root < rootProjects.length; root++) { /*{{{*/
         currentRoot = rootProjects[root];
         addOption(currentRoot, 0, projectSelect, projectID);
@@ -1915,16 +1921,16 @@ function projectsToSelect(projectID) { /*{{{*/
 function tasksToHTML(urgent, normal, other, fromOverview) { /*{{{*/
     redirectView = (fromOverview == 1) ? 'overview' : 'project';
     // Create urgent tasks /*{{{*/
-    urgentHeader = document.createElement('p');
+    urgentHeader = element('p');
     urgentHeader.className = 'normal_section_header';
     urgentHeader.style.fontWeight = 'bold';
     urgentHeader.style.marginBottom = '0px';
     setText(urgentHeader, 'ASAP');
 
-    urgentHR = document.createElement('hr');
+    urgentHR = element('hr');
     urgentHR.className = 'task_divider';
 
-    urgentTasks = document.createElement('span');
+    urgentTasks = element('span');
     for (taskNum = 0; taskNum < urgent.length; taskNum++) {
         task = urgent[taskNum];
         addTask(task, urgentTasks, false, fromOverview, redirectView);
@@ -1940,7 +1946,7 @@ function tasksToHTML(urgent, normal, other, fromOverview) { /*{{{*/
     });
 
     currentDate = 0;
-    normalTasks = document.createElement('span');
+    normalTasks = element('span');
     for (taskNum = 0; taskNum < normal.length; taskNum++) {
         task = normal[taskNum];
 
@@ -1949,13 +1955,13 @@ function tasksToHTML(urgent, normal, other, fromOverview) { /*{{{*/
         if (d.toLocaleDateString() != currentDate) {
             currentDate = d.toLocaleDateString();
 
-            dateHeader = document.createElement('p');
+            dateHeader = element('p');
             dateHeader.className = 'normal_section_header';
             dateHeader.style.fontWeight = 'bold';
             dateHeader.style.marginBottom = '0px';
             setText(dateHeader, d.toDateString());
 
-            dateHR = document.createElement('hr');
+            dateHR = element('hr');
             dateHR.className = 'task_divider';
             if (useNightTheme()) {
                 switchToNight(dateHeader, dateHR);
@@ -1968,16 +1974,16 @@ function tasksToHTML(urgent, normal, other, fromOverview) { /*{{{*/
     } /*}}}*/
 
     // Create other tasks /*{{{*/
-    otherHeader = document.createElement('p');
+    otherHeader = element('p');
     otherHeader.className = 'normal_section_header';
     otherHeader.style.fontWeight = 'bold';
     otherHeader.style.marginBottom = '0px';
     setText(otherHeader, 'When Possible');
 
-    otherHR = document.createElement('hr');
+    otherHR = element('hr');
     otherHR.className = 'task_divider';
 
-    otherTasks = document.createElement('span');
+    otherTasks = element('span');
     for (taskNum = 0; taskNum < other.length; taskNum++) {
         task = other[taskNum];
         addTask(task, otherTasks, false, fromOverview, redirectView);
@@ -1993,8 +1999,8 @@ function addHTMLTasks(taskView, urgentHeader, urgentHR, urgentTasks, normalTasks
         taskView.appendChild(urgentHeader);
         if (isFirefox()) { /*{{{*/
             urgentHR.style.marginTop = '10px';
-            taskView.appendChild(document.createElement('br'));
-            taskView.appendChild(document.createElement('br'));
+            taskView.appendChild(element('br'));
+            taskView.appendChild(element('br'));
         } /*}}}*/
         taskView.appendChild(urgentHR);
         taskView.appendChild(urgentTasks);
@@ -2007,8 +2013,8 @@ function addHTMLTasks(taskView, urgentHeader, urgentHR, urgentTasks, normalTasks
             }
             taskView.appendChild(normalTasks.children[0]);
             if (urgent.length == 0) {
-                taskView.appendChild(document.createElement('br'));
-                taskView.appendChild(document.createElement('br'));
+                taskView.appendChild(element('br'));
+                taskView.appendChild(element('br'));
             }
         } /*}}}*/
         taskView.appendChild(normalTasks);
@@ -2018,8 +2024,8 @@ function addHTMLTasks(taskView, urgentHeader, urgentHR, urgentTasks, normalTasks
         taskView.appendChild(otherHeader);
         if (isFirefox() && urgent.length === 0 && normal.length === 0) { /*{{{*/
             otherHR.style.marginTop = '10px';
-            taskView.appendChild(document.createElement('br'));
-            taskView.appendChild(document.createElement('br'));
+            taskView.appendChild(element('br'));
+            taskView.appendChild(element('br'));
         } /*}}}*/
         taskView.appendChild(otherHR);
         taskView.appendChild(otherTasks);
@@ -2027,7 +2033,7 @@ function addHTMLTasks(taskView, urgentHeader, urgentHR, urgentTasks, normalTasks
 
     // If no tasks in any section /*{{{*/
     if (urgent.length === 0 && normal.length === 0 && other.length === 0) {
-        blank = document.createElement('p');
+        blank = element('p');
         blank.className = 'normal_text';
         blank.style.marginTop = '0px';
         blank.style.fontStyle = 'italic';
@@ -2052,7 +2058,7 @@ function addTask(task, parent, showTime, fromOverview) { /*{{{*/
     // If normal, should have a deadline /*{{{*/
     taskDate = 0;
     if (showTime === true) {
-        taskDate = document.createElement('p');
+        taskDate = element('p');
         taskDate.style.display = 'inline';
         taskDate.style.color = color;
 
@@ -2066,13 +2072,13 @@ function addTask(task, parent, showTime, fromOverview) { /*{{{*/
     } /*}}}*/
 
     // Create task link /*{{{*/
-    taskElem = document.createElement('p');
+    taskElem = element('p');
     taskElem.className = 'normal_text';
     taskElem.appendChild(document.createTextNode(stringFill('\u00a0', 4)));
     taskElem.style.height = '20px';
     taskElem.style.marginTop = '0px';
     taskElem.style.marginBottom = '5px';
-    taskLink = document.createElement('a');
+    taskLink = element('a');
     taskLink.className = 'normal_text';
     taskLink.style.color = color;
     taskLink.style.fontWeight = 'bold';
@@ -2083,21 +2089,21 @@ function addTask(task, parent, showTime, fromOverview) { /*{{{*/
         openTask(JSON.parse(this.getAttribute('data-task')), taskView, redirectView);
     }; /*}}}*/
     setText(taskLink, task.name);
-    taskProj = document.createElement('p');
+    taskProj = element('p');
     taskProj.style.color = color;
     taskProj.style.display = 'inline';
 
     addProjectLinks(projLinks, color, taskProj, false); /*}}}*/
 
     // Create delete task /*{{{*/
-    delTaskP = document.createElement('p');
+    delTaskP = element('p');
     delTaskP.style.display = 'inline';
     setText(delTaskP, '\u00a0\u00a0');
-    delTaskImg = document.createElement('img');
+    delTaskImg = element('img');
     delTaskImg.src = 'images/x.png';
     delTaskImg.title = 'Delete task';
     delTaskImg.alt = 'Delete task';
-    delTaskLink = document.createElement('a');
+    delTaskLink = element('a');
     delTaskLink.href = '#';
     delTaskLink.setAttribute('data-task', JSON.stringify(task));
     delTaskLink.setAttribute('data-from-overview', fromOverview);
@@ -2129,7 +2135,7 @@ function addOptionTree(projects, level, select, projectID) { /*{{{*/
 } /*}}}*/
 
 function addOption(project, level, select, projectID) { /*{{{*/
-    opt = document.createElement('option');
+    opt = element('option');
     opt.value = project.id;
     if (project.id == projectID) {opt.selected = 'selected';}
     setText(opt, stringFill('\u00a0', 3 * level) + project.name);
@@ -2149,7 +2155,7 @@ function createProjectLinks(projectID, color, levelsToRoot, isTitle) { /*{{{*/
 
     // If this is a title, add an overview link /*{{{*/
     if (isTitle) {
-        overviewLink = document.createElement('a');
+        overviewLink = element('a');
         overviewLink.className = 'normal_text';
         overviewLink.href = '#';
         overviewLink.style.whiteSpace = 'nowrap';
@@ -2167,7 +2173,7 @@ function createProjectLinks(projectID, color, levelsToRoot, isTitle) { /*{{{*/
 } /*}}}*/
 
 function createProjectLink(project, levelsToRoot) { /*{{{*/
-    projAnchor = document.createElement('a');
+    projAnchor = element('a');
     projAnchor.className = 'normal_text';
     projAnchor.href = '#';
     projAnchor.style.whiteSpace = 'nowrap';
@@ -2187,7 +2193,7 @@ function createProjectLink(project, levelsToRoot) { /*{{{*/
 function addProjectLinks(projLinks, color, parent, isTitle) { /*{{{*/
     // Add opening bracket /*{{{*/
     if (!isTitle) {
-        tmpP = document.createElement('p');
+        tmpP = element('p');
         tmpP.style.display = 'inline';
         tmpP.style.color = color;
         setText(tmpP, '\u00a0\u00a0\u00a0&lt;');
@@ -2200,7 +2206,7 @@ function addProjectLinks(projLinks, color, parent, isTitle) { /*{{{*/
         parent.appendChild(projLink);
         // If not on last link
         if (link != (projLinks.length - 1)) {
-            tmpP = document.createElement('p');
+            tmpP = element('p');
             tmpP.style.display = 'inline';
             tmpP.style.color = color;
             setText(tmpP, '\u00a0: ');
@@ -2211,7 +2217,7 @@ function addProjectLinks(projLinks, color, parent, isTitle) { /*{{{*/
 
     // Add closing bracket /*{{{*/
     if (!isTitle) {
-        tmpP = document.createElement('p');
+        tmpP = element('p');
         tmpP.style.display = 'inline';
         tmpP.style.color = color;
         setText(tmpP, '&gt;');
@@ -2220,53 +2226,97 @@ function addProjectLinks(projLinks, color, parent, isTitle) { /*{{{*/
 } /*}}}*//*}}}*/ /*}}}*/
 
 /* Reminders *//*{{{*/
-function openReminders() {/*{{{*/
-    // Create reminders panel skeleton /*{{{*/
-    reminders = document.createElement('div');
-    id = 'reminders_' + new Date().getTime();
-    reminders.id = id;
-    reminders.className = 'reminders';
-    reminders.style.display = 'none';
+function fetchReminders() {/*{{{*/
+    getRemindersReq = createPostReq('reminders.cgi', false);
+    getRemindersReq.send('mode=0');
+    if (getRemindersReq.responseText == 'noauth') {
+        alert('Session timed out! Please copy any unsaved changes then refresh the page.');
+    } else if (getRemindersReq.responseText == 'Bad request!') {
+        alert('Invalid request! Please copy any unsaved changes then refresh the page.');
+    }
+    reminders = JSON.parse(getRemindersReq.responseText);
+}/*}}}*/
 
-    reminderList = document.createElement('div');
-    reminderList.className = 'reminder_list';
-    reminders.appendChild(reminderList);
+function populateReminderList(list) {/*{{{*/
+    deleteAllChildren(list);
 
-    reminderEditor = document.createElement('div');
-    reminderEditor.setAttribute('data-reminder-id', -1);
-    reminderEditor.className = 'reminder_editor';
-    reminders.appendChild(reminderEditor); /*}}}*/
-
-    remindersHeader = document.createElement('p');
+    remindersHeader = element('p');
     remindersHeader.className = 'normal_section_header';
     setText(remindersHeader, 'Reminders:');
 
-    // Create reminders table
-    remindersTable = document.createElement('table');
+    // Create reminders table/*{{{*/
+    remindersTable = element('table');
     remindersTable.className = 'notes';
-    remindersHRow = document.createElement('tr');
-    remindersNameCell = document.createElement('td');
-    setText(remindersNameCell, 'Name');
-    remindersHRow.appendChild(remindersNameCell);
-    remindersTimeCell = document.createElement('td');
-    setText(remindersTimeCell, 'Time');
-    remindersHRow.appendChild(remindersTimeCell);
+    remindersHRow = element('tr');
+    textCell = element('th');
+    setText(textCell, 'Text');
+    remindersHRow.appendChild(textCell);
+    timeCell = element('th');
+    setText(timeCell, 'Time');
+    remindersHRow.appendChild(timeCell);
 
     remindersTable.appendChild(remindersHRow);
 
     reminderList.appendChild(remindersHeader);
-    reminderList.appendChild(remindersTable);
+    list.appendChild(remindersTable);/*}}}*/
 
-    if (useNightTheme()) {switchToNight(reminderList, reminderEditor, remindersHeader, remindersTable, remindersNameCell, remindersTimeCell);}
+    if (useNightTheme()) {switchToNight(list, reminderEditor, remindersHeader, remindersTable, textCell, timeCell);}
+
+    // Add reminder data/*{{{*/
+    for (rNum = 0; rNum < reminders.length; rNum++) {
+        reminder = reminders[rNum];
+        row = element('tr');
+        textCell = element('td');
+        setText(textCell, reminder.text);
+        row.appendChild(textCell);
+        timeCell = element('td');
+        setText(timeCell, reminder.next);
+        row.appendChild(timeCell);
+        deleteLink = element('a');
+        deleteLink.href = '#';
+        deleteLink.style.cssFloat = 'right';
+        deleteImg = element('img');
+        deleteImg.title = 'Delete reminder';
+        deleteImg.alt = 'Delete reminder';
+        deleteImg.src = 'images/x.png';
+        timeCell.appendChild(deleteLink);
+
+        if (useNightTheme()) {
+            switchToNight(textCell, timeCell);
+        }
+        remindersTable.appendChild(row);
+    }/*}}}*/
+}/*}}}*/
+
+function openReminders() {/*{{{*/
+    // Create reminders panel skeleton /*{{{*/
+    reminderPanel = element('div');
+    id = 'reminders_' + new Date().getTime();
+    reminderPanel.id = id;
+    reminderPanel.className = 'reminders';
+    reminderPanel.style.display = 'none';
+
+    reminderList = element('div');
+    reminderList.className = 'reminder_list';
+    reminderPanel.appendChild(reminderList);
+
+    reminderEditor = element('div');
+    reminderEditor.setAttribute('data-reminder-id', -1);
+    reminderEditor.className = 'reminder_editor';
+    reminderPanel.appendChild(reminderEditor); /*}}}*/
+
+    fetchReminders();
+
+    populateReminderList(reminderList);
 
     // Add tab/*{{{*/
-    reminderTab = document.createElement('div');
+    reminderTab = element('div');
     reminderTab.className = 'tab';
     setText(reminderTab, 'Reminders');
     reminderTab.setAttribute('data-id', id);
     reminderTab.onclick = function() {switchTab(this.getAttribute('data-id'));}
-    addTab(reminders, reminderTab);
-    reminders.style.display = 'block';
+    addTab(reminderPanel, reminderTab);
+    reminderPanel.style.display = 'block';
     switchTab(id);/*}}}*/
 }/*}}}*/
 
@@ -2275,7 +2325,7 @@ function openReminders() {/*{{{*/
 /* Account Management */ /*{{{*/
 function viewAccount() { /*{{{*/
     id = 'my_account_' + new Date().getTime();
-    accountPanel = document.createElement('div');
+    accountPanel = element('div');
     accountPanel.id = id;
 
     privilegesReq = createPostReq('account.cgi', false);
@@ -2286,7 +2336,7 @@ function viewAccount() { /*{{{*/
             data = data.split(';');
             accountType = data[0];
             services = data[1];
-            serviceP = document.createElement('p');
+            serviceP = element('p');
             serviceP.className = 'normal_text';
             setText(serviceP, 'You may access the following services: ' + services);
             if (useNightTheme()) {serviceP.className += ' night';}
@@ -2294,22 +2344,22 @@ function viewAccount() { /*{{{*/
 
             // If account isn't shared, show password box and theme
             if (accountType != 'shared') { /*{{{*/
-                passText = document.createElement('p');
+                passText = element('p');
                 passText.className = 'normal_section_header';
                 passText.style.paddingBottom = '0px';
                 passText.style.marginBottom = '10px';
                 setText(passText, 'Update Password');
 
                 // Divs for alignment /*{{{*/
-                pBox = document.createElement('div');
+                pBox = element('div');
                 pBox.style.display = 'inline-block';
                 pBox.style.textAlign = 'center';
                 pBox.className = 'normal';
-                iBox = document.createElement('div');
+                iBox = element('div');
                 iBox.style.textAlign = 'left'; /*}}}*/
 
                 // Text /*{{{*/
-                error_p = document.createElement('p');
+                error_p = element('p');
                 error_p.id = 'pass_error_' + id;
                 error_p.className = 'error';
                 error_p.style.fontWeight = 'bold';
@@ -2319,7 +2369,7 @@ function viewAccount() { /*{{{*/
                 error_p.style.marginBottom = '10px';
                 setText(error_p, '\u00a0');
 
-                p = document.createElement('p');
+                p = element('p');
                 p.style.display = 'inline-block';
                 p.style.textAlign = 'right';
                 p.style.paddingTop = '0px';
@@ -2328,13 +2378,13 @@ function viewAccount() { /*{{{*/
                 p.style.marginBottom = '0px'; /*}}}*/
 
                 // Inputs /*{{{*/
-                p1 = document.createElement('input');
+                p1 = element('input');
                 p1.type = 'password';
                 p1.id = 'pass_' + id;
                 p1.setAttribute('data-button-id', 'update_pass_' + id);
                 p1.setAttribute('data-other-input-id', 'pass_verify_' + id);
                 p1.setAttribute('data-error-id', 'pass_error_' + id);
-                p2 = document.createElement('input');
+                p2 = element('input');
                 p2.id = 'pass_verify_' + id;
                 p2.type = 'password';
                 p2.setAttribute('data-button-id', 'update_pass_' + id);
@@ -2392,7 +2442,7 @@ function viewAccount() { /*{{{*/
                     }
                 }; /*}}}*/
 
-                updateButton = document.createElement('button');
+                updateButton = element('button');
                 updateButton.id = 'update_pass_' + id;
                 updateButton.disabled = true;
                 updateButton.setAttribute('data-pass-id', 'pass_' + id);
@@ -2436,10 +2486,10 @@ function viewAccount() { /*{{{*/
                 // Add children /*{{{*/
                 p.appendChild(document.createTextNode('Enter password:\u00a0\u00a0'));
                 p.appendChild(p1);
-                p.appendChild(document.createElement('br'));
+                p.appendChild(element('br'));
                 p.appendChild(document.createTextNode('Enter password again:\u00a0\u00a0'));
                 p.appendChild(p2);
-                p.appendChild(document.createElement('br'));
+                p.appendChild(element('br'));
                 iBox.appendChild(p);
                 pBox.appendChild(error_p);
                 pBox.appendChild(iBox);
@@ -2451,23 +2501,23 @@ function viewAccount() { /*{{{*/
                 // Theme selection shouldn't be allowed for shared accounts
                 // to avoid conflict
                 // Elements /*{{{*/
-                themeP = document.createElement('p');
+                themeP = element('p');
                 themeP.className = 'normal_text';
                 setText(themeP, 'Night theme: ');
-                themeS = document.createElement('select');
+                themeS = element('select');
                 themeS.setAttribute('data-error-id', 'theme_error_' + id);
-                opt1 = document.createElement('option');
+                opt1 = element('option');
                 opt1.value = 0;
                 setText(opt1, 'Never');
-                opt2 = document.createElement('option');
+                opt2 = element('option');
                 opt2.value = 1;
                 setText(opt2, 'After 7 PM local time');
-                opt3 = document.createElement('option');
+                opt3 = element('option');
                 opt3.value = 2;
                 setText(opt3, 'Always');
                 opts = [opt1, opt2, opt3];
                 opts[document.body.getAttribute('data-night-theme')].selected = true;
-                themeError = document.createElement('span');
+                themeError = element('span');
                 themeError.id = 'theme_error_' + id;
                 themeError.className = 'error';
                 themeError.fontWeight = 'bold';
@@ -2518,7 +2568,7 @@ function viewAccount() { /*{{{*/
     privilegesReq.send('mode=0');
 
     // Create tab and display panel
-    accountTab = document.createElement('div');
+    accountTab = element('div');
     setText(accountTab, 'My Account');
     accountTab.className = 'tab';
     accountTab.setAttribute('data-id', id);
