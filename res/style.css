@@ -164,7 +164,40 @@ div.task_view { /*{{{*/
 div.task_view.night { /*{{{*/
     border: 1px solid silver;
     background-color: rgba(0, 0, 0, .3);
-} /*}}}*/ /*}}}*/
+} /*}}}*/
+
+div.reminder_list {/*{{{*/
+    position: absolute;
+    float: left;
+    top: 2%;
+    left: 1%;
+    width: 35%;
+    height: 96%;
+    border: 1px solid black;
+    padding-left: 5px;
+}/*}}}*/
+
+div.reminder_list.night {/*{{{*/
+    border: 1px solid silver;
+    background-color: rgba(0, 0, 0, .3);
+}/*}}}*/
+
+div.reminder_editor {/*{{{*/
+    position: absolute;
+    float: right;
+    top: 2%;
+    right: 1%;
+    width: 60%;
+    height: 96%;
+    border: 1px solid black;
+    padding-right: 5px;
+}/*}}}*/
+
+div.reminder_editor.night {/*{{{*/
+    border: 1px solid silver;
+    background-color: rgba(0, 0, 0, .3);
+}/*}}}*/
+/*}}}*/
 
 /* span */ /*{{{*/
 span.normal { /*{{{*/

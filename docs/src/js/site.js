@@ -10,12 +10,20 @@ var subProjects = [];
 var projectsByID = [];
 var projectHierarchy = []; /*}}}*/
 
-function updateJS() {/*{{{*/
+function update() {/*{{{*/
     var docHeadObj = document.getElementsByTagName("head")[0];
     var newScript = document.createElement("script");
     newScript.type = "text/javascript";
     newScript.src = 'js/site.js';
     docHeadObj.appendChild(newScript);
+
+    document.getElementsByTagName('link')[0].remove();
+
+    var newStyle = document.createElement("link");
+    newStyle.rel = "stylesheet";
+    newStyle.type = "text/css";
+    newStyle.href = "res/style.css";
+    docHeadObj.appendChild(newStyle);
     
     currentTabs = document.getElementsByClassName('tab');
     services = [];
@@ -2210,6 +2218,59 @@ function addProjectLinks(projLinks, color, parent, isTitle) { /*{{{*/
         parent.appendChild(tmpP);
     } /*}}}*/
 } /*}}}*//*}}}*/ /*}}}*/
+
+/* Reminders *//*{{{*/
+function openReminders() {/*{{{*/
+    // Create reminders panel skeleton /*{{{*/
+    reminders = document.createElement('div');
+    id = 'reminders_' + new Date().getTime();
+    reminders.id = id;
+    reminders.className = 'reminders';
+    reminders.style.display = 'none';
+
+    reminderList = document.createElement('div');
+    reminderList.className = 'reminder_list';
+    reminders.appendChild(reminderList);
+
+    reminderEditor = document.createElement('div');
+    reminderEditor.setAttribute('data-reminder-id', -1);
+    reminderEditor.className = 'reminder_editor';
+    reminders.appendChild(reminderEditor); /*}}}*/
+
+    remindersHeader = document.createElement('p');
+    remindersHeader.className = 'normal_section_header';
+    setText(remindersHeader, 'Reminders:');
+
+    // Create reminders table
+    remindersTable = document.createElement('table');
+    remindersTable.className = 'notes';
+    remindersHRow = document.createElement('tr');
+    remindersNameCell = document.createElement('td');
+    setText(remindersNameCell, 'Name');
+    remindersHRow.appendChild(remindersNameCell);
+    remindersTimeCell = document.createElement('td');
+    setText(remindersTimeCell, 'Time');
+    remindersHRow.appendChild(remindersTimeCell);
+
+    remindersTable.appendChild(remindersHRow);
+
+    reminderList.appendChild(remindersHeader);
+    reminderList.appendChild(remindersTable);
+
+    if (useNightTheme()) {switchToNight(reminderList, reminderEditor, remindersHeader, remindersTable, remindersNameCell, remindersTimeCell);}
+
+    // Add tab/*{{{*/
+    reminderTab = document.createElement('div');
+    reminderTab.className = 'tab';
+    setText(reminderTab, 'Reminders');
+    reminderTab.setAttribute('data-id', id);
+    reminderTab.onclick = function() {switchTab(this.getAttribute('data-id'));}
+    addTab(reminders, reminderTab);
+    reminders.style.display = 'block';
+    switchTab(id);/*}}}*/
+}/*}}}*/
+
+/*}}}*/
 
 /* Account Management */ /*{{{*/
 function viewAccount() { /*{{{*/

@@ -24,6 +24,7 @@ sub init { #{{{
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/sha512.js\"></script>\n";
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/css_browser_selector.js\"></script>\n";
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/jstz.js\"></script>\n";
+    $html .= $indent . "<script type=\"text/javascript\" src=\"js/shortcut.js\"></script>\n";
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/site.js\"></script>\n";
     $html .= $indent . "<script type=\"text/javascript\"> // #{{{
     window.onload = function() {
@@ -59,6 +60,7 @@ sub init { #{{{
                 switchToNight(document.getElementsByTagName('button')[0]);
             }
         } catch(e) {}
+        shortcut.add('Shift+Ctrl+U', function() {update();});
         document.body.style.visibility = 'visible';
     };
     </script>\n"; #}}}
