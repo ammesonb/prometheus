@@ -446,7 +446,7 @@ function populateNotes(data, notesTable, notesEditor, resize) { /*{{{*/
         r.onclick = function() { /*{{{*/
             editNote(JSON.parse(this.getAttribute('data-note')), this);
 
-            // Since just doing it once doesn't seem to be enough....
+            // Since doing it once doesn't seem to be enough....
             while (document.getElementsByClassName('note_edit').length !== 0) {
                 underlines = document.getElementsByClassName('note_edit');
                 for (u = 0; u < underlines.length; u++) {underlines[u].className = 'note_blank';}
@@ -2249,7 +2249,7 @@ function populateReminderList(list) {/*{{{*/
     remindersTable.className = 'notes';
     remindersHRow = element('tr');
     textCell = element('th');
-    setText(textCell, 'Text');
+    setText(textCell, 'Message');
     remindersHRow.appendChild(textCell);
     timeCell = element('th');
     setText(timeCell, 'Time');
@@ -2266,7 +2266,16 @@ function populateReminderList(list) {/*{{{*/
     for (rNum = 0; rNum < reminders.length; rNum++) {
         reminder = reminders[rNum];
         row = element('tr');
+        row.onmouseover = function() {/*{{{*/
+            this.style.fontWeight = 'bold';
+            this.style.fontStyle = 'italic';
+        };/*}}}*/
+        row.onmouseout = function() {/*{{{*/
+            this.style.fontWeight = 'normal';
+            this.style.fontStyle = 'normal';
+        }/*}}}*/
         textCell = element('td');
+        setText(textCell, reminder.message);
         row.appendChild(textCell);
         timeCell = element('td');
         setText(timeCell, reminder.next);
@@ -2286,6 +2295,8 @@ function populateReminderList(list) {/*{{{*/
             switchToNight(textCell, timeCell);
         }
         remindersTable.appendChild(row);
+
+        textCell.style.width = textCell.offsetWidth + 15 + 'px';
     }/*}}}*/
 }/*}}}*/
 
@@ -2308,8 +2319,6 @@ function openReminders() {/*{{{*/
 
     fetchReminders();
 
-    populateReminderList(reminderList);
-
     // Add tab/*{{{*/
     reminderTab = element('div');
     reminderTab.className = 'tab';
@@ -2319,6 +2328,8 @@ function openReminders() {/*{{{*/
     addTab(reminderPanel, reminderTab);
     reminderPanel.style.display = 'block';
     switchTab(id);/*}}}*/
+
+    populateReminderList(reminderList);
 }/*}}}*/
 
 /*}}}*/
