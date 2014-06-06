@@ -2267,18 +2267,19 @@ function populateReminderList(list) {/*{{{*/
         reminder = reminders[rNum];
         row = element('tr');
         textCell = element('td');
-        setText(textCell, reminder.text);
         row.appendChild(textCell);
         timeCell = element('td');
         setText(timeCell, reminder.next);
         row.appendChild(timeCell);
         deleteLink = element('a');
+        deleteLink.style.marginRight = '5px';
         deleteLink.href = '#';
         deleteLink.style.cssFloat = 'right';
         deleteImg = element('img');
         deleteImg.title = 'Delete reminder';
         deleteImg.alt = 'Delete reminder';
         deleteImg.src = 'images/x.png';
+        deleteLink.appendChild(deleteImg);
         timeCell.appendChild(deleteLink);
 
         if (useNightTheme()) {

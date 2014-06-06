@@ -25,7 +25,7 @@ if (not ($mode =~ /^[0-9]+$/)) {
 }
 
 if ($mode == 0) { #{{{
-    my $remindersRef = COMMON::searchTableSort($session, 'reminders', ['*'], ['user_id'], ['='], [$session->param('user_id')], [], 'text');
+    my $remindersRef = COMMON::searchTableSort($session, 'reminders', ['*'], ['user_id'], ['='], [$session->param('user_id')], [], 'message');
     my @reminders = @$remindersRef;
 
     print '[';

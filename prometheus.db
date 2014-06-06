@@ -95,6 +95,21 @@ $$;
 ALTER FUNCTION public.delete_project(projid integer) OWNER TO root;
 
 --
+-- Name: set_first_reminder_time(); Type: FUNCTION; Schema: public; Owner: root
+--
+
+CREATE FUNCTION set_first_reminder_time() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$ begin
+NEW.first = NEW.next;
+return NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.set_first_reminder_time() OWNER TO root;
+
+--
 -- Name: update_mtime(); Type: FUNCTION; Schema: public; Owner: root
 --
 
@@ -232,7 +247,10 @@ CREATE TABLE reminders (
     next timestamp with time zone NOT NULL,
     repeat character varying,
     duration character varying,
-    user_id integer
+    user_id integer NOT NULL,
+    recipient character varying,
+    subject character varying,
+    first timestamp with time zone
 );
 
 
@@ -557,6 +575,13 @@ CREATE TRIGGER add_default_services AFTER INSERT ON users FOR EACH ROW EXECUTE P
 --
 
 CREATE TRIGGER notes_update BEFORE UPDATE ON notes FOR EACH ROW EXECUTE PROCEDURE update_mtime();
+
+
+--
+-- Name: set_first_reminder_time_trigger; Type: TRIGGER; Schema: public; Owner: root
+--
+
+CREATE TRIGGER set_first_reminder_time_trigger BEFORE INSERT ON reminders FOR EACH ROW EXECUTE PROCEDURE set_first_reminder_time();
 
 
 --
