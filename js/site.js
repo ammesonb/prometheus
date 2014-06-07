@@ -2266,6 +2266,15 @@ function populateReminderList(list) {/*{{{*/
     for (rNum = 0; rNum < reminders.length; rNum++) {
         reminder = reminders[rNum];
         row = element('tr');
+        row.onclick = function() {
+            underlines = this.parentElement.getElementsByTagName('u');
+            for (u = 0; u < underlines.length; u++) {underlines[u].className = 'note_blank';}
+            underlines = this.getElementsByTagName('u');
+            for (u = 0; u < underlines.length; u++) {
+                underlines[u].className = 'note_edit';
+                if (useNightTheme()) {switchToNight(underlines[u]);}
+            }
+        };
         row.onmouseover = function() {/*{{{*/
             this.style.fontWeight = 'bold';
             this.style.fontStyle = 'italic';
@@ -2274,12 +2283,30 @@ function populateReminderList(list) {/*{{{*/
             this.style.fontWeight = 'normal';
             this.style.fontStyle = 'normal';
         }/*}}}*/
+
+        // Text cell/*{{{*/
         textCell = element('td');
-        setText(textCell, reminder.message);
-        row.appendChild(textCell);
+        textUnderline = element('u');
+        textUnderline.className = 'note_blank';
+        textSpan = element('span');
+        textSpan.className = 'normal';
+        setText(textSpan, reminder.message);
+        textUnderline.appendChild(textSpan);
+        textCell.appendChild(textUnderline);
+        row.appendChild(textCell);/*}}}*/
+
+        // Time cell/*{{{*/
         timeCell = element('td');
-        setText(timeCell, reminder.next);
-        row.appendChild(timeCell);
+        timeUnderline = element('u');
+        timeUnderline.className = 'note_blank';
+        timeSpan = element('span');
+        timeSpan.className = 'normal';
+        setText(timeSpan, reminder.next);
+        timeUnderline.appendChild(timeSpan);
+        timeCell.appendChild(timeUnderline);
+        row.appendChild(timeCell);/*}}}*/
+        
+        // Delete link/*{{{*/
         deleteLink = element('a');
         deleteLink.style.marginRight = '5px';
         deleteLink.href = '#';
@@ -2289,10 +2316,10 @@ function populateReminderList(list) {/*{{{*/
         deleteImg.alt = 'Delete reminder';
         deleteImg.src = 'images/x.png';
         deleteLink.appendChild(deleteImg);
-        timeCell.appendChild(deleteLink);
+        timeCell.appendChild(deleteLink);/*}}}*/
 
         if (useNightTheme()) {
-            switchToNight(textCell, timeCell);
+            switchToNight(textCell, textUnderline, textSpan, timeCell, timeUnderline, timeSpan);
         }
         remindersTable.appendChild(row);
 
