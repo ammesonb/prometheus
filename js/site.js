@@ -2344,6 +2344,55 @@ function openReminders() {/*{{{*/
     reminderEditor.className = 'reminder_editor';
     reminderPanel.appendChild(reminderEditor); /*}}}*/
 
+    // Creates reminder editing and opens a new one/*{{{*/
+    type = element('p');
+    type.style.display = 'inline-block';
+    type.style.marginTop = '20px';
+    setText(type, 'Reminder type:\u00a0\u00a0');
+
+    typeSelect = element('select');
+    eOpt = element('option');
+    setText(eOpt, 'Email');
+    eOpt.value = 'e';
+    typeSelect.appendChild(eOpt);
+    if (username == 'root') {
+        sOpt = element('option');
+        setText(sOpt, 'SMS');
+        sOpt.value = 's';
+        typeSelect.appendChild(sOpt);
+    }
+
+    recipientText = element('p');
+    recipientText.style.display = 'inline-block';
+    setText(recipientText, 'Recipient:\u00a0\u00a0');
+    recipient = element('input');
+
+    subjectText = element('p');
+    subjectText.style.display = 'inline-block';
+    setText(subjectText, '\u00a0\u00a0\u00a0\u00a0Subject:\u00a0\u00a0');
+    subject = element('input');
+
+    messageText = element('p');
+    setText(messageText, '\u00a0Message:');
+    message = element('textarea');
+    message.style.position = 'relative';
+    message.style.width = '60%';
+    message.style.height = '30%';
+
+    if (useNightTheme()) {switchToNight(type, typeSelect, recipientText, recipient, subjectText, subject, messageText, message);}
+    reminderEditor.appendChild(type);
+    reminderEditor.appendChild(typeSelect);
+    reminderEditor.appendChild(element('br'));
+    reminderEditor.appendChild(recipientText);
+    reminderEditor.appendChild(recipient);
+    reminderEditor.appendChild(element('br'));
+    reminderEditor.appendChild(subjectText);
+    reminderEditor.appendChild(subject);
+    reminderEditor.appendChild(element('br'));
+    reminderEditor.appendChild(messageText);
+    reminderEditor.appendChild(message);
+    /*}}}*/
+
     fetchReminders();
 
     // Add tab/*{{{*/
@@ -2356,6 +2405,7 @@ function openReminders() {/*{{{*/
     reminderPanel.style.display = 'block';
     switchTab(id);/*}}}*/
 
+    message.style.left = subject.offsetLeft + 'px';
     populateReminderList(reminderList);
 }/*}}}*/
 

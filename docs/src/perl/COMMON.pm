@@ -27,6 +27,7 @@ sub init { #{{{
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/shortcut.js\"></script>\n";
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/site.js\"></script>\n";
     $html .= $indent . "<script type=\"text/javascript\"> // #{{{
+    var username = '" . $session->param('user') . "';
     window.onload = function() {
         document.body.style.backgroundSize = window.innerWidth + \"px \" + window.innerHeight + \"px\";
         theme = document.body.getAttribute('data-night-theme');
