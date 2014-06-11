@@ -16,6 +16,62 @@ function element(e) {/*{{{*/
     return document.createElement(e);
 }/*}}}*/
 
+function createDateInput() {/*{{{*/
+    dateInput = element('input');
+    dateInput.className = 'normal_text';
+    dateInput.type = 'datetime-local'; 
+    dateInput.onclick = function() {/*{{{*/
+        this.readOnly = false;
+        this.previousElementSibling.previousElementSibling.checked = true;
+    }/*}}}*/
+
+    // If datetime input type isn't supported /*{{{*/
+    if (dateInput.type == 'text') {
+        if (dateInput.value === '') {
+            dateInput.value = 'YYYY-MM-DD HH:MM';
+        } else {dateInput.value = dateInput.value.replace('T', ' ');}
+        dateInput.onchange = function() { /*{{{*/
+            year = /[0-9]{4}-/;
+            month = /(0[1-9]|1[12])-/;
+            date = /(0[1-9]|[12][0-9]|3[01])-/;
+            hour = / ([01][0-9]|2[0-3]):/;
+            minute = /[0-5][0-9]/;
+            yearValid = 1;
+            monthValid = 1;
+            dateValid = 1;
+            hourValid = 1;
+            minuteValid = 1;
+
+            v = dateInput.value;
+            newValue = '';
+            // Verify date and time validity, reset if invalid otherwise keep /*{{{*/
+            if (!year.test(v.substr(0, 5))) {
+                yearValid = 0;
+                newValue += 'YYYY-';
+            } else {newValue += v.substr(0, 5);}
+            if (!month.test(v.substr(5, 3))) {
+                monthValid = 0;
+                newValue += 'MM-';
+            } else {newValue += v.substr(5, 3);}
+            if (!date.test(v.substr(8, 2))) {
+                dateValid = 0;
+                newValue += 'DD';
+            } else {newValue += v.substr(8, 2);}
+            if (!hour.test(v.substr(10, 4))) {
+                hourValid = 0;
+                newValue += ' HH:';
+            } else {newValue += v.substr(10, 4);}
+            if (!minute.test(v.substr(14, 2))) {
+                minuteValid = 0;
+                newValue += 'MM';
+            } else {newValue += v.substr(14, 2);}
+            dateInput.value = newValue; /*}}}*/
+        } /*}}}*/
+    } /*}}}*/
+
+    return dateInput;
+}/*}}}*/
+
 function update() {/*{{{*/
     var docHeadObj = document.getElementsByTagName("head")[0];
     var newScript = element("script");
@@ -1306,7 +1362,7 @@ function openTask(task, taskView, redirectView) { /*{{{*/
     } /*}}}*/
 
     // Deadline /*{{{*/
-    // Elements /*{{{*/
+    // Elements 
     deadlineGroup = element('fieldset');
     deadlineGroup.style.width = '92%';
     deadlineLabel = element('legend');
@@ -1354,13 +1410,7 @@ function openTask(task, taskView, redirectView) { /*{{{*/
     dateLabel.className = 'normal_text';
     dateLabel.style.display = 'inline';
     setText(dateLabel, 'Date\u00a0');
-    dateInput = element('input');
-    dateInput.className = 'normal_text';
-    dateInput.type = 'datetime-local'; /*}}}*/
-    dateInput.onclick = function() {
-        this.readOnly = false;
-        this.previousElementSibling.previousElementSibling.checked = true;
-    }
+    dateInput = createDateInput();
 
     // Add defaults to deadline fields /*{{{*/
     if (task.is_urgent) {urgentRadio.defaultChecked = true; dateInput.readOnly = true;}
@@ -1374,50 +1424,6 @@ function openTask(task, taskView, redirectView) { /*{{{*/
                    pad(d.getUTCDate().toString(), 2, '0', 'f') +
                    'T' + time;
         dateInput.value = deadline;
-    } /*}}}*/
-
-    // If datetime input type isn't supported /*{{{*/
-    if (dateInput.type == 'text') {
-        if (dateInput.value === '') {
-            dateInput.value = 'YYYY-MM-DD HH:MM';
-        } else {dateInput.value = dateInput.value.replace('T', ' ');}
-        dateInput.onchange = function() { /*{{{*/
-            year = /[0-9]{4}-/;
-            month = /(0[1-9]|1[12])-/;
-            date = /(0[1-9]|[12][0-9]|3[01])-/;
-            hour = / ([01][0-9]|2[0-3]):/;
-            minute = /[0-5][0-9]/;
-            yearValid = 1;
-            monthValid = 1;
-            dateValid = 1;
-            hourValid = 1;
-            minuteValid = 1;
-
-            v = dateInput.value;
-            newValue = '';
-            // Verify date and time validity, reset if invalid otherwise keep /*{{{*/
-            if (!year.test(v.substr(0, 5))) {
-                yearValid = 0;
-                newValue += 'YYYY-';
-            } else {newValue += v.substr(0, 5);}
-            if (!month.test(v.substr(5, 3))) {
-                monthValid = 0;
-                newValue += 'MM-';
-            } else {newValue += v.substr(5, 3);}
-            if (!date.test(v.substr(8, 2))) {
-                dateValid = 0;
-                newValue += 'DD';
-            } else {newValue += v.substr(8, 2);}
-            if (!hour.test(v.substr(10, 4))) {
-                hourValid = 0;
-                newValue += ' HH:';
-            } else {newValue += v.substr(10, 4);}
-            if (!minute.test(v.substr(14, 2))) {
-                minuteValid = 0;
-                newValue += 'MM';
-            } else {newValue += v.substr(14, 2);}
-            dateInput.value = newValue; /*}}}*/
-        } /*}}}*/
     } /*}}}*/
 
     deadlineGroup.appendChild(deadlineLabel);
