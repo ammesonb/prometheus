@@ -2351,11 +2351,10 @@ function openReminders() {/*{{{*/
     reminderPanel.appendChild(reminderEditor); /*}}}*/
 
     // Creates reminder editing and opens a new one/*{{{*/
-    type = element('p');
+    type = element('p');/*{{{*/
     type.style.display = 'inline-block';
     type.style.marginTop = '20px';
     setText(type, 'Reminder type:\u00a0\u00a0');
-
     typeSelect = element('select');
     eOpt = element('option');
     setText(eOpt, 'Email');
@@ -2366,29 +2365,29 @@ function openReminders() {/*{{{*/
         setText(sOpt, 'SMS');
         sOpt.value = 's';
         typeSelect.appendChild(sOpt);
-    }
+    }/*}}}*/
 
-    recipientText = element('p');
+    recipientText = element('p');/*{{{*/
     recipientText.style.display = 'inline-block';
     setText(recipientText, 'Recipient:\u00a0\u00a0');
-    recipient = element('input');
+    recipient = element('input');/*}}}*/
 
-    subjectText = element('p');
+    subjectText = element('p');/*{{{*/
     subjectText.style.display = 'inline-block';
     setText(subjectText, '\u00a0\u00a0\u00a0\u00a0Subject:\u00a0\u00a0');
-    subject = element('input');
+    subject = element('input');/*}}}*/
 
-    messageText = element('p');
+    messageText = element('p');/*{{{*/
     setText(messageText, '\u00a0Message:');
     message = element('textarea');
     message.style.position = 'relative';
     message.style.width = '60%';
-    message.style.height = '30%';
+    message.style.height = '30%';/*}}}*/
 
-    startText = element('p');
+    startText = element('p');/*{{{*/
     startText.style.display = 'inline-block';
     setText(startText, 'First notification:&nbsp;');
-    startTime = createDateInput();
+    startTime = createDateInput();/*}}}*/
 
     once = element('input');/*{{{*/
     once.type = 'radio';
@@ -2412,6 +2411,7 @@ function openReminders() {/*{{{*/
     dailyRate = element('input');
     dailyRate.style.width = '50px';
     dailyRate.type = 'number';
+    dailyRate.name = 'daily';
     dailyRate.value = 1;
     dailyRate.min = 1;
     dailyText2 = element('p');
@@ -2432,6 +2432,7 @@ function openReminders() {/*{{{*/
     weeklyRate = element('input');
     weeklyRate.style.width = '50px';
     weeklyRate.type = 'number';
+    weeklyRate.name = 'weekly';
     weeklyRate.value = 1;
     weeklyRate.min = 1;
     weeklyText2 = element('p');
@@ -2521,6 +2522,7 @@ function openReminders() {/*{{{*/
     monthlyRate = element('input');
     monthlyRate.style.width = '50px';
     monthlyRate.type = 'number';
+    monthlyRate.name = 'monthly';
     monthlyRate.value = 1;
     monthlyRate.min = 1;
     monthlyText2 = element('p');
@@ -2541,6 +2543,7 @@ function openReminders() {/*{{{*/
     yearlyRate = element('input');
     yearlyRate.style.width = '50px';
     yearlyRate.type = 'number';
+    yearlyRate.name = 'yearly';
     yearlyRate.value = 1;
     yearlyRate.min = 1;
     yearlyText2 = element('p');
@@ -2561,6 +2564,7 @@ function openReminders() {/*{{{*/
     finiteCount = element('input');
     finiteCount.style.width = '50px';
     finiteCount.type = 'number';
+    finiteCount.name = 'count';
     finiteCount.value = 1;
     finiteCount.min = 1;
     finiteText2 = element('p');
@@ -2578,7 +2582,8 @@ function openReminders() {/*{{{*/
     deadlineText.style.marginTop = '5px';
     deadlineText.style.marginBottom = '5px';
     setText(deadlineText, 'End on\u00a0\u00a0');
-    deadlineDay = createDateInput();/*}}}*/
+    deadlineDay = createDateInput();
+    deadlineDay.name = 'day';/*}}}*/
 
     never = element('input');/*{{{*/
     never.type = 'radio';
