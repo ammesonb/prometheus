@@ -2371,6 +2371,16 @@ function openReminders() {/*{{{*/
         setText(sOpt, 'SMS');
         sOpt.value = 's';
         typeSelect.appendChild(sOpt);
+    }
+    typeSelect.onchange = function() {
+        next = this.nextElementSibling;
+        while (next.name != 'message') {
+            if (next.tagName === 'INPUT') {
+                if (this.value === 's') {next.disabled = true; next.value = 'N/A';}
+                else {next.disabled = false; next.value = '';}
+            }
+            next = next.nextElementSibling;
+        }
     }/*}}}*/
 
     recipientText = element('p');/*{{{*/
@@ -2386,6 +2396,7 @@ function openReminders() {/*{{{*/
     messageText = element('p');/*{{{*/
     setText(messageText, '\u00a0Message:');
     message = element('textarea');
+    message.name = 'message';
     message.style.position = 'relative';
     message.style.width = '60%';
     message.style.height = '30%';/*}}}*/
@@ -2393,7 +2404,8 @@ function openReminders() {/*{{{*/
     startText = element('p');/*{{{*/
     startText.style.display = 'inline-block';
     setText(startText, 'First notification:&nbsp;');
-    startTime = createDateInput();/*}}}*/
+    startTime = createDateInput();
+    startTime.name = 'first';/*}}}*/
 
     once = element('input');/*{{{*/
     once.type = 'radio';
