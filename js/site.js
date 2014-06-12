@@ -72,6 +72,12 @@ function createDateInput() {/*{{{*/
     return dateInput;
 }/*}}}*/
 
+function verifyNum(value, min, max) {/*{{{*/
+    if (isNaN(value)) {return 1;}
+    else if (min <= parseInt(value) && parseInt(value) <= max) {return value;}
+    else {return 1;}
+}/*}}}*/
+
 function update() {/*{{{*/
     var docHeadObj = document.getElementsByTagName("head")[0];
     var newScript = element("script");
@@ -2414,6 +2420,7 @@ function openReminders() {/*{{{*/
     dailyRate.name = 'daily';
     dailyRate.value = 1;
     dailyRate.min = 1;
+    dailyRate.onblur = function() {this.value = verifyNum(this.value, 1, 9999);}
     dailyText2 = element('p');
     dailyText2.style.display = 'inline-block';
     dailyText2.style.marginTop = '2px';
@@ -2435,6 +2442,7 @@ function openReminders() {/*{{{*/
     weeklyRate.name = 'weekly';
     weeklyRate.value = 1;
     weeklyRate.min = 1;
+    weeklyRate.onblur = function() {this.value = verifyNum(this.value, 1, 9999);}
     weeklyText2 = element('p');
     weeklyText2.style.display = 'inline-block';
     weeklyText2.style.marginTop = '2px';
@@ -2525,6 +2533,7 @@ function openReminders() {/*{{{*/
     monthlyRate.name = 'monthly';
     monthlyRate.value = 1;
     monthlyRate.min = 1;
+    monthlyRate.onblur = function() {this.value = verifyNum(this.value, 1, 9999);}
     monthlyText2 = element('p');
     monthlyText2.style.display = 'inline-block';
     monthlyText2.style.marginTop = '5px';
@@ -2546,6 +2555,7 @@ function openReminders() {/*{{{*/
     yearlyRate.name = 'yearly';
     yearlyRate.value = 1;
     yearlyRate.min = 1;
+    yearlyRate.onblur = function() {this.value = verifyNum(this.value, 1, 9999);}
     yearlyText2 = element('p');
     yearlyText2.style.display = 'inline-block';
     yearlyText2.style.marginTop = '5px';
@@ -2567,6 +2577,7 @@ function openReminders() {/*{{{*/
     finiteCount.name = 'count';
     finiteCount.value = 1;
     finiteCount.min = 1;
+    finiteCount.onblur = function() {this.value = verifyNum(this.value, 1, 9999);}
     finiteText2 = element('p');
     finiteText2.style.display = 'inline-block';
     finiteText2.style.marginTop = '5px';
