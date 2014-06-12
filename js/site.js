@@ -2385,7 +2385,229 @@ function openReminders() {/*{{{*/
     message.style.width = '60%';
     message.style.height = '30%';
 
-    if (useNightTheme()) {switchToNight(type, typeSelect, recipientText, recipient, subjectText, subject, messageText, message);}
+    startText = element('p');
+    startText.style.display = 'inline-block';
+    setText(startText, 'First notification:&nbsp;');
+    startTime = createDateInput();
+
+    once = element('input');/*{{{*/
+    once.type = 'radio';
+    once.name = 'repeat';
+    once.value = 'o';
+    onceText = element('p');
+    onceText.style.display = 'inline-block';
+    onceText.style.marginTop = '5px';
+    onceText.style.marginBottom = '5px';
+    setText(onceText, 'Remind me once');/*}}}*/
+
+    daily = element('input');/*{{{*/
+    daily.type = 'radio';
+    daily.name = 'repeat';
+    daily.value = 'd';
+    dailyText = element('p');
+    dailyText.style.display = 'inline-block';
+    dailyText.style.marginTop = '5px';
+    dailyText.style.marginBottom = '5px';
+    setText(dailyText, 'Remind me every\u00a0\u00a0')
+    dailyRate = element('input');
+    dailyRate.style.width = '50px';
+    dailyRate.type = 'number';
+    dailyRate.value = 1;
+    dailyRate.min = 1;
+    dailyText2 = element('p');
+    dailyText2.style.display = 'inline-block';
+    dailyText2.style.marginTop = '2px';
+    dailyText2.style.marginBottom = '2px';
+    setText(dailyText2, '\u00a0\u00a0days');/*}}}*/
+
+    weekly = element('input');/*{{{*/
+    weekly.type = 'radio';
+    weekly.name = 'repeat';
+    weekly.value = 'w';
+    weeklyText = element('p');
+    weeklyText.style.display = 'inline-block';
+    weeklyText.style.marginTop = '5px';
+    weeklyText.style.marginBottom = '5px';
+    setText(weeklyText, 'Remind me every\u00a0\u00a0')
+    weeklyRate = element('input');
+    weeklyRate.style.width = '50px';
+    weeklyRate.type = 'number';
+    weeklyRate.value = 1;
+    weeklyRate.min = 1;
+    weeklyText2 = element('p');
+    weeklyText2.style.display = 'inline-block';
+    weeklyText2.style.marginTop = '2px';
+    weeklyText2.style.marginBottom = '2px';
+    setText(weeklyText2, '\u00a0\u00a0weeks');/*}}}*/
+
+    weekAlt = element('p');/*{{{*/
+    weekAlt.style.display = 'inline-block';
+    weekAlt.style.marginTop = '5px';
+    weekAlt.style.marginBottom = '5px';
+    setText(weekAlt, '\u00a0\u00a0\u00a0\u00a0OR\u00a0\u00a0');
+
+    su = element('input');/*{{{*/
+    su.type = 'checkbox';
+    su.name = 'repeat_day';
+    suText = element('p');
+    suText.style.display = 'inline-block';
+    suText.style.marginTop = '5px';
+    suText.style.marginBottom = '5px';
+    setText(suText, 'Sunday\u00a0\u00a0');/*}}}*/
+
+    m = element('input');/*{{{*/
+    m.type = 'checkbox';
+    m.name = 'repeat_day';
+    mText = element('p');
+    mText.style.display = 'inline-block';
+    mText.style.marginTop = '5px';
+    mText.style.marginBottom = '5px';
+    setText(mText, 'Monday\u00a0\u00a0');/*}}}*/
+
+    tu = element('input');/*{{{*/
+    tu.type = 'checkbox';
+    tu.name = 'repeat_day';
+    tuText = element('p');
+    tuText.style.display = 'inline-block';
+    tuText.style.marginTop = '5px';
+    tuText.style.marginBottom = '5px';
+    setText(tuText, 'Tuesday\u00a0\u00a0');/*}}}*/
+
+    w = element('input');/*{{{*/
+    w.type = 'checkbox';
+    w.name = 'repeat_day';
+    wText = element('p');
+    wText.style.display = 'inline-block';
+    wText.style.marginTop = '5px';
+    wText.style.marginBottom = '5px';
+    setText(wText, 'Wednesday\u00a0\u00a0');/*}}}*/
+
+    th = element('input');/*{{{*/
+    th.type = 'checkbox';
+    th.name = 'repeat_day';
+    thText = element('p');
+    thText.style.display = 'inline-block';
+    thText.style.marginTop = '5px';
+    thText.style.marginBottom = '5px';
+    setText(thText, 'Thursday\u00a0\u00a0');/*}}}*/
+
+    f = element('input');/*{{{*/
+    f.type = 'checkbox';
+    f.name = 'repeat_day';
+    fText = element('p');
+    fText.style.display = 'inline-block';
+    fText.style.marginTop = '5px';
+    fText.style.marginBottom = '5px';
+    setText(fText, 'Friday\u00a0\u00a0');/*}}}*/
+
+    sa = element('input');/*{{{*/
+    sa.type = 'checkbox';
+    sa.name = 'repeat_day';
+    saText = element('p');
+    saText.style.display = 'inline-block';
+    saText.style.marginTop = '5px';
+    saText.style.marginBottom = '5px';
+    setText(saText, 'Saturday\u00a0\u00a0');/*}}}*//*}}}*/
+
+    monthly = element('input');/*{{{*/
+    monthly.type = 'radio';
+    monthly.name = 'repeat';
+    monthly.value = 'm';
+    monthlyText = element('p');
+    monthlyText.style.display = 'inline-block';
+    monthlyText.style.marginTop = '5px';
+    monthlyText.style.marginBottom = '5px';
+    setText(monthlyText, 'Remind me every\u00a0\u00a0')
+    monthlyRate = element('input');
+    monthlyRate.style.width = '50px';
+    monthlyRate.type = 'number';
+    monthlyRate.value = 1;
+    monthlyRate.min = 1;
+    monthlyText2 = element('p');
+    monthlyText2.style.display = 'inline-block';
+    monthlyText2.style.marginTop = '5px';
+    monthlyText2.style.marginBottom = '5px';
+    setText(monthlyText2, '\u00a0\u00a0months');/*}}}*/
+
+    yearly = element('input');/*{{{*/
+    yearly.type = 'radio';
+    yearly.name = 'repeat';
+    yearly.value = 'y';
+    yearlyText = element('p');
+    yearlyText.style.display = 'inline-block';
+    yearlyText.style.marginTop = '5px';
+    yearlyText.style.marginBottom = '5px';
+    setText(yearlyText, 'Remind me every\u00a0\u00a0')
+    yearlyRate = element('input');
+    yearlyRate.style.width = '50px';
+    yearlyRate.type = 'number';
+    yearlyRate.value = 1;
+    yearlyRate.min = 1;
+    yearlyText2 = element('p');
+    yearlyText2.style.display = 'inline-block';
+    yearlyText2.style.marginTop = '5px';
+    yearlyText2.style.marginBottom = '5px';
+    setText(yearlyText2, '\u00a0\u00a0years');/*}}}*/
+
+    finite = element('input');/*{{{*/
+    finite.type = 'radio';
+    finite.name = 'duration';
+    finite.value = 'f';
+    finiteText = element('p');
+    finiteText.style.display = 'inline-block';
+    finiteText.style.marginTop = '5px';
+    finiteText.style.marginBottom = '5px';
+    setText(finiteText, 'End after\u00a0\u00a0');
+    finiteCount = element('input');
+    finiteCount.style.width = '50px';
+    finiteCount.type = 'number';
+    finiteCount.value = 1;
+    finiteCount.min = 1;
+    finiteText2 = element('p');
+    finiteText2.style.display = 'inline-block';
+    finiteText2.style.marginTop = '5px';
+    finiteText2.style.marginBottom = '5px';
+    setText(finiteText2, '\u00a0\u00a0occurences');/*}}}*/
+
+    deadline = element('input');/*{{{*/
+    deadline.type = 'radio';
+    deadline.name = 'duration';
+    deadline.value = 'd';
+    deadlineText = element('p');
+    deadlineText.style.display = 'inline-block';
+    deadlineText.style.marginTop = '5px';
+    deadlineText.style.marginBottom = '5px';
+    setText(deadlineText, 'End on\u00a0\u00a0');
+    deadlineDay = createDateInput();/*}}}*/
+
+    never = element('input');/*{{{*/
+    never.type = 'radio';
+    never.name = 'duration';
+    never.value = 'n';
+    neverText = element('p');
+    neverText.style.display = 'inline-block';
+    neverText.style.marginTop = '5px';
+    neverText.style.marginBottom = '5px';
+    setText(neverText, 'Indefinitely');/*}}}*/
+
+    if (useNightTheme()) {/*{{{*/
+        switchToNight(
+            type, typeSelect, recipientText, recipient,
+            subjectText, subject, messageText, message,
+            startText, startTime,
+            once, onceText,
+            daily, dailyText, dailyRate, dailyText2,
+            weekly, weeklyText, weeklyRate, weeklyText2,
+            weekAlt, su, suText, m, mText, tu, tuText, w, wText, th, thText, f, fText, sa, saText,
+            monthly, monthlyText, monthlyRate, monthlyText2,
+            yearly, yearlyText, yearlyRate, yearlyText2,
+            finite, finiteText, finiteCount, finiteText2,
+            deadline, deadlineText, deadlineDay,
+            never, neverText
+        );
+    }/*}}}*/
+
+    // Add elements/*{{{*/
     reminderEditor.appendChild(type);
     reminderEditor.appendChild(typeSelect);
     reminderEditor.appendChild(element('br'));
@@ -2397,6 +2619,64 @@ function openReminders() {/*{{{*/
     reminderEditor.appendChild(element('br'));
     reminderEditor.appendChild(messageText);
     reminderEditor.appendChild(message);
+    reminderEditor.appendChild(element('br'));
+    reminderEditor.appendChild(startText);/*{{{*/
+    reminderEditor.appendChild(startTime);
+    reminderEditor.appendChild(element('br'));
+    reminderEditor.appendChild(once);
+    reminderEditor.appendChild(onceText);
+    reminderEditor.appendChild(element('br'));
+    reminderEditor.appendChild(daily);
+    reminderEditor.appendChild(dailyText);
+    reminderEditor.appendChild(dailyRate);
+    reminderEditor.appendChild(dailyText2);
+    reminderEditor.appendChild(element('br'));
+    reminderEditor.appendChild(weekly);
+    reminderEditor.appendChild(weeklyText);
+    reminderEditor.appendChild(weeklyRate);
+    reminderEditor.appendChild(weeklyText2);
+    reminderEditor.appendChild(element('br'));
+    reminderEditor.appendChild(weekAlt);/*{{{*/
+    reminderEditor.appendChild(su);
+    reminderEditor.appendChild(suText);
+    reminderEditor.appendChild(m);
+    reminderEditor.appendChild(mText);
+    reminderEditor.appendChild(m);
+    reminderEditor.appendChild(mText);
+    reminderEditor.appendChild(tu);
+    reminderEditor.appendChild(tuText);
+    reminderEditor.appendChild(w);
+    reminderEditor.appendChild(wText);
+    reminderEditor.appendChild(th);
+    reminderEditor.appendChild(thText);
+    reminderEditor.appendChild(f);
+    reminderEditor.appendChild(fText);
+    reminderEditor.appendChild(sa);
+    reminderEditor.appendChild(saText);/*}}}*/
+    reminderEditor.appendChild(element('br'));
+    reminderEditor.appendChild(monthly);
+    reminderEditor.appendChild(monthlyText);
+    reminderEditor.appendChild(monthlyRate);
+    reminderEditor.appendChild(monthlyText2);
+    reminderEditor.appendChild(element('br'));
+    reminderEditor.appendChild(yearly);
+    reminderEditor.appendChild(yearlyText);
+    reminderEditor.appendChild(yearlyRate);
+    reminderEditor.appendChild(yearlyText2);/*}}}*/
+    reminderEditor.appendChild(element('br'));
+    reminderEditor.appendChild(element('br'));
+    reminderEditor.appendChild(finite);
+    reminderEditor.appendChild(finiteText);
+    reminderEditor.appendChild(finiteCount);
+    reminderEditor.appendChild(finiteText2);
+    reminderEditor.appendChild(element('br'));
+    reminderEditor.appendChild(deadline);
+    reminderEditor.appendChild(deadlineText);
+    reminderEditor.appendChild(deadlineDay);
+    reminderEditor.appendChild(element('br'));
+    reminderEditor.appendChild(never);
+    reminderEditor.appendChild(neverText);
+    /*}}}*/
     /*}}}*/
 
     fetchReminders();
