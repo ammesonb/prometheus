@@ -74,7 +74,7 @@ function createDateInput() {/*{{{*/
 
 function verifyNum(value, min, max) {/*{{{*/
     if (isNaN(value)) {return 1;}
-    else if (min <= parseInt(value) && parseInt(value) <= max) {return value;}
+    else if (min <= parseInt(value, 10) && parseInt(value, 10) <= max) {return value;}
     else {return 1;}
 }/*}}}*/
 
@@ -2493,7 +2493,7 @@ function openReminders() {/*{{{*/
     su = element('input');/*{{{*/
     su.type = 'checkbox';
     su.name = 'repeat_day';
-    su.value = 'su';
+    su.value = '0';
     suText = element('p');
     suText.style.display = 'inline-block';
     suText.style.marginTop = '5px';
@@ -2503,7 +2503,7 @@ function openReminders() {/*{{{*/
     m = element('input');/*{{{*/
     m.type = 'checkbox';
     m.name = 'repeat_day';
-    m.value = 'm';
+    m.value = '1';
     mText = element('p');
     mText.style.display = 'inline-block';
     mText.style.marginTop = '5px';
@@ -2513,7 +2513,7 @@ function openReminders() {/*{{{*/
     tu = element('input');/*{{{*/
     tu.type = 'checkbox';
     tu.name = 'repeat_day';
-    tu.value = 'tu';
+    tu.value = '2';
     tuText = element('p');
     tuText.style.display = 'inline-block';
     tuText.style.marginTop = '5px';
@@ -2523,7 +2523,7 @@ function openReminders() {/*{{{*/
     w = element('input');/*{{{*/
     w.type = 'checkbox';
     w.name = 'repeat_day';
-    w.value = 'w';
+    w.value = '3';
     wText = element('p');
     wText.style.display = 'inline-block';
     wText.style.marginTop = '5px';
@@ -2533,7 +2533,7 @@ function openReminders() {/*{{{*/
     th = element('input');/*{{{*/
     th.type = 'checkbox';
     th.name = 'repeat_day';
-    th.value = 'th';
+    th.value = '4';
     thText = element('p');
     thText.style.display = 'inline-block';
     thText.style.marginTop = '5px';
@@ -2543,7 +2543,7 @@ function openReminders() {/*{{{*/
     f = element('input');/*{{{*/
     f.type = 'checkbox';
     f.name = 'repeat_day';
-    f.value = 'f';
+    f.value = '5';
     fText = element('p');
     fText.style.display = 'inline-block';
     fText.style.marginTop = '5px';
@@ -2553,7 +2553,7 @@ function openReminders() {/*{{{*/
     sa = element('input');/*{{{*/
     sa.type = 'checkbox';
     sa.name = 'repeat_day';
-    sa.value = 'sa';
+    sa.value = '6';
     saText = element('p');
     saText.style.display = 'inline-block';
     saText.style.marginTop = '5px';
@@ -2800,32 +2800,31 @@ function openReminder(reminder, reminderEditor) {/*{{{*/
                 e.value = reminder.message;
             } else if (e.name == 'first') {
                 e.value = reminder.first;
-            } else if (e.name == 'repeat' && e.value == repeatMode) {
+            } else if (e.name == 'repeat' && e.value == repeatMode) {/*{{{*/
                 e.checked = true;
                 if (repeatCount.indexOf('[') == -1) {
                     n = e.nextElementSibling;
-                    while (n.tagName != 'INPUT') {n = n.nextElementSibling;}
+                    while (n.tagName != 'INPUT' || n.type != 'number') {n = n.nextElementSibling;}
                     n.value = repeatCount;
                 } else {
-                    days = repeatCount.substr(1, repeatCount.length - 2);
-                    days = days.split(',');
+                    days = repeatCount;
                     checkboxNum = 0;
-                    while (n.value != 'sa') {
+                    while (n.value != 'm') {
                         if (n.type == 'checkbox') {
-                            if (days.indexOf(checkboxNum) != -1) {n.checked = true;}
+                            if (days.indexOf(n.value) != -1) {n.checked = true;}
                             checkboxNum++;
                         }
                         n = n.nextElementSibling;
                     }
-                }
-            } else if (e.name == 'duration' && e.value == endMode) {
+                }/*}}}*/
+            } else if (e.name == 'duration' && e.value == endMode) {/*{{{*/
                 e.checked = true;
                 if (endCount.length) {
                     n = e.nextElementSibling;
                     while (n.tagName != 'INPUT') {n = n.nextElementSibling;}
                     n.value = endCount;
                 }
-            }
+            }/*}}}*/
         }
     }
 }/*}}}*/
