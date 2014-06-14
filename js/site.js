@@ -23,7 +23,7 @@ function createDateInput() {/*{{{*/
     dateInput.onclick = function() {/*{{{*/
         this.readOnly = false;
         this.previousElementSibling.previousElementSibling.checked = true;
-    }/*}}}*/
+    };/*}}}*/
 
     // If datetime input type isn't supported /*{{{*/
     if (dateInput.type == 'text') {
@@ -2249,6 +2249,18 @@ function fetchReminders() {/*{{{*/
     reminders = JSON.parse(getRemindersReq.responseText);
 }/*}}}*/
 
+function makeBlankReminder(type) {/*{{{*/
+    reminder = new Object();
+    reminder.id = -1;
+    reminder.message = '';
+    reminder.type = type;
+    if (type == 'e') {reminder.recipient = ''; reminder.subject = '';}
+    reminder.first = '';
+    reminder.repeat = 'o';
+    reminder.duration = '1';
+    return reminder;
+}/*}}}*/
+
 function populateReminderList(list) {/*{{{*/
     deleteAllChildren(list);
 
@@ -2278,6 +2290,7 @@ function populateReminderList(list) {/*{{{*/
     for (rNum = 0; rNum < reminders.length; rNum++) {
         reminder = reminders[rNum];
         row = element('tr');
+        row.setAttribute('data-reminder', JSON.stringify(reminder));
         row.onclick = function() {
             underlines = this.parentElement.getElementsByTagName('u');
             for (u = 0; u < underlines.length; u++) {underlines[u].className = 'note_blank';}
@@ -2294,6 +2307,11 @@ function populateReminderList(list) {/*{{{*/
         row.onmouseout = function() {/*{{{*/
             this.style.fontWeight = 'normal';
             this.style.fontStyle = 'normal';
+        }/*}}}*/
+        row.onclick = function() {/*{{{*/
+            r = JSON.parse(this.getAttribute('data-reminder'));
+            reminderEditor = this.parentElement.parentElement.parentElement.children[1];
+            openReminder(r, reminderEditor);
         }/*}}}*/
 
         // Text cell/*{{{*/
@@ -2356,12 +2374,13 @@ function openReminders() {/*{{{*/
     reminderEditor.className = 'reminder_editor';
     reminderPanel.appendChild(reminderEditor); /*}}}*/
 
-    // Creates reminder editing and opens a new one/*{{{*/
+    // Creates reminder editor and opens a new one/*{{{*/
     type = element('p');/*{{{*/
     type.style.display = 'inline-block';
     type.style.marginTop = '20px';
     setText(type, 'Reminder type:\u00a0\u00a0');
     typeSelect = element('select');
+    typeSelect.name = 'type';
     eOpt = element('option');
     setText(eOpt, 'Email');
     eOpt.value = 'e';
@@ -2381,19 +2400,23 @@ function openReminders() {/*{{{*/
             }
             next = next.nextElementSibling;
         }
+        openReminder(makeBlankReminder(this.value));
     }/*}}}*/
 
     recipientText = element('p');/*{{{*/
     recipientText.style.display = 'inline-block';
     setText(recipientText, 'Recipient:\u00a0\u00a0');
-    recipient = element('input');/*}}}*/
+    recipient = element('input');
+    recipient.name = 'recipient';/*}}}*/
 
     subjectText = element('p');/*{{{*/
     subjectText.style.display = 'inline-block';
     setText(subjectText, '\u00a0\u00a0\u00a0\u00a0Subject:\u00a0\u00a0');
-    subject = element('input');/*}}}*/
+    subject = element('input');
+    subject.name = 'subject';/*}}}*/
 
     messageText = element('p');/*{{{*/
+    messageText.style.marginBottom = '0px';
     setText(messageText, '\u00a0Message:');
     message = element('textarea');
     message.name = 'message';
@@ -2470,6 +2493,7 @@ function openReminders() {/*{{{*/
     su = element('input');/*{{{*/
     su.type = 'checkbox';
     su.name = 'repeat_day';
+    su.value = 'su';
     suText = element('p');
     suText.style.display = 'inline-block';
     suText.style.marginTop = '5px';
@@ -2479,6 +2503,7 @@ function openReminders() {/*{{{*/
     m = element('input');/*{{{*/
     m.type = 'checkbox';
     m.name = 'repeat_day';
+    m.value = 'm';
     mText = element('p');
     mText.style.display = 'inline-block';
     mText.style.marginTop = '5px';
@@ -2488,6 +2513,7 @@ function openReminders() {/*{{{*/
     tu = element('input');/*{{{*/
     tu.type = 'checkbox';
     tu.name = 'repeat_day';
+    tu.value = 'tu';
     tuText = element('p');
     tuText.style.display = 'inline-block';
     tuText.style.marginTop = '5px';
@@ -2497,6 +2523,7 @@ function openReminders() {/*{{{*/
     w = element('input');/*{{{*/
     w.type = 'checkbox';
     w.name = 'repeat_day';
+    w.value = 'w';
     wText = element('p');
     wText.style.display = 'inline-block';
     wText.style.marginTop = '5px';
@@ -2506,6 +2533,7 @@ function openReminders() {/*{{{*/
     th = element('input');/*{{{*/
     th.type = 'checkbox';
     th.name = 'repeat_day';
+    th.value = 'th';
     thText = element('p');
     thText.style.display = 'inline-block';
     thText.style.marginTop = '5px';
@@ -2515,6 +2543,7 @@ function openReminders() {/*{{{*/
     f = element('input');/*{{{*/
     f.type = 'checkbox';
     f.name = 'repeat_day';
+    f.value = 'f';
     fText = element('p');
     fText.style.display = 'inline-block';
     fText.style.marginTop = '5px';
@@ -2524,6 +2553,7 @@ function openReminders() {/*{{{*/
     sa = element('input');/*{{{*/
     sa.type = 'checkbox';
     sa.name = 'repeat_day';
+    sa.value = 'sa';
     saText = element('p');
     saText.style.display = 'inline-block';
     saText.style.marginTop = '5px';
@@ -2618,6 +2648,15 @@ function openReminders() {/*{{{*/
     neverText.style.marginBottom = '5px';
     setText(neverText, 'Indefinitely');/*}}}*/
 
+    saveButton = element('button');
+    setText(saveButton, 'Save reminder');
+    saveButton.onclick = function() {
+    }
+
+    cancelButton = element('button');
+    setText(cancelButton, 'Cancel');
+    cancelButton.onclick = function() {openReminder(makeBlankReminder('e'));}
+
     if (useNightTheme()) {/*{{{*/
         switchToNight(
             type, typeSelect, recipientText, recipient,
@@ -2631,7 +2670,8 @@ function openReminders() {/*{{{*/
             yearly, yearlyText, yearlyRate, yearlyText2,
             finite, finiteText, finiteCount, finiteText2,
             deadline, deadlineText, deadlineDay,
-            never, neverText
+            never, neverText,
+            saveButton, cancelButton
         );
     }/*}}}*/
 
@@ -2704,7 +2744,15 @@ function openReminders() {/*{{{*/
     reminderEditor.appendChild(element('br'));
     reminderEditor.appendChild(never);
     reminderEditor.appendChild(neverText);
+    reminderEditor.appendChild(element('br'));
+    reminderEditor.appendChild(element('br'));
+    reminderEditor.appendChild(saveButton);
+    reminderEditor.appendChild(cancelButton);
+    reminderEditor.appendChild(element('br'));
+    reminderEditor.appendChild(document.createTextNode('\u00a0'));
     /*}}}*/
+
+    openReminder(makeBlankReminder('e'), reminderEditor);
     /*}}}*/
 
     fetchReminders();
@@ -2721,6 +2769,65 @@ function openReminders() {/*{{{*/
 
     message.style.left = subject.offsetLeft + 'px';
     populateReminderList(reminderList);
+}/*}}}*/
+
+function openReminder(reminder, reminderEditor) {/*{{{*/
+    reminderEditor.setAttribute('data-id', reminder.id);
+
+    repeatMode = reminder.repeat[0];
+    repeatCount = reminder.repeat.slice(1);
+    endMode = reminder.duration[0];
+    endCount = reminder.duration.slice(1);
+
+    elems = reminderEditor.children;
+    mode = '';
+    for (eNum = 0; eNum < elems.length; eNum++) {
+        e = elems[eNum];
+        if (e.tagName == 'SELECT') {mode = e.value;}
+        else if (e.tagName == 'INPUT') {
+            if (mode == 's') {
+                if (e.name == 'recipient' || e.name == 'subject') {
+                    e.value = 'N/A';
+                    e.disabled = true;
+                }
+            }
+
+            if (e.name == 'recipient') {
+                e.value = reminder.recipient;
+            } else if (e.name == 'subject') {
+                e.value = reminder.subject;
+            } else if (e.name == 'message') {
+                e.value = reminder.message;
+            } else if (e.name == 'first') {
+                e.value = reminder.first;
+            } else if (e.name == 'repeat' && e.value == repeatMode) {
+                e.checked = true;
+                if (repeatCount.indexOf('[') == -1) {
+                    n = e.nextElementSibling;
+                    while (n.tagName != 'INPUT') {n = n.nextElementSibling;}
+                    n.value = repeatCount;
+                } else {
+                    days = repeatCount.substr(1, repeatCount.length - 2);
+                    days = days.split(',');
+                    checkboxNum = 0;
+                    while (n.value != 'sa') {
+                        if (n.type == 'checkbox') {
+                            if (days.indexOf(checkboxNum) != -1) {n.checked = true;}
+                            checkboxNum++;
+                        }
+                        n = n.nextElementSibling;
+                    }
+                }
+            } else if (e.name == 'duration' && e.value == endMode) {
+                e.checked = true;
+                if (endCount.length) {
+                    n = e.nextElementSibling;
+                    while (n.tagName != 'INPUT') {n = n.nextElementSibling;}
+                    n.value = endCount;
+                }
+            }
+        }
+    }
 }/*}}}*/
 
 /*}}}*/
