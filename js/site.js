@@ -2799,7 +2799,11 @@ function openReminder(reminder, reminderEditor) {/*{{{*/
             } else if (e.name == 'message') {
                 e.value = reminder.message;
             } else if (e.name == 'first') {
-                e.value = reminder.first;
+                t = reminder.first;
+                t = t.replace(' ', 'T');
+                t = t.split(':');
+                t = t[0] + ':' + t[1];
+                e.value = t;
             } else if (e.name == 'repeat' && e.value == repeatMode) {/*{{{*/
                 e.checked = true;
                 if (repeatCount.indexOf('[') == -1) {
@@ -2822,6 +2826,11 @@ function openReminder(reminder, reminderEditor) {/*{{{*/
                 if (endCount.length) {
                     n = e.nextElementSibling;
                     while (n.tagName != 'INPUT') {n = n.nextElementSibling;}
+                    if (e.value == 'd') {
+                        endCount = endCount.replace(' ', 'T');
+                        endCount = endCount.split(':');
+                        endCount = endCount[0] + ':' + endCount[1];
+                    }
                     n.value = endCount;
                 }
             }/*}}}*/
