@@ -13,8 +13,11 @@ var reminders = [];
 /*}}}*/
 // Backend needs to be written
 // Save button needs to be connected
-// Add delete code
 // Need the perl script to update the database/schedule the at jobs (check timezones)
+
+function alertNoAuth() {/*{{{*/
+    alert('Session timed out! Please copy any unsaved changes then refresh the page.');
+}/*}}}*/
 
 function element(e) {/*{{{*/
     return document.createElement(e);
@@ -729,7 +732,7 @@ function fetchTaskData() { /*{{{*/
     getTasksReq = createPostReq('tasks.cgi', false);
     getTasksReq.send('mode=0');
     if (getTasksReq.responseText === 'noauth') {
-        alert('Session timed out! Please copy any unsaved changes then refresh the page.');
+        alertNoAuth();
     } else if (getTasksReq.responseText === 'Bad request!') {
         alert('Invalid request! Please copy any unsaved changes then refresh the page.');
     }
@@ -2343,6 +2346,28 @@ function populateReminderList(list) {/*{{{*/
         deleteLink.style.marginRight = '5px';
         deleteLink.href = '#';
         deleteLink.style.cssFloat = 'right';
+        deleteLink.setAttribute('data-id', reminder.id);
+        deleteLink.setAttribute('data-name', reminder.message);
+        deleteLink.onclick = function() {
+            conf = confirm('Are you sure you want to delete \'' + this.getAttribute('data-name') + '\'?');
+            if (!conf) {return;}
+            reminderList = this.parentElement.parentElement.parentElement.parentElement;
+            deleteReminderReq = createPostReq('reminders.cgi', false);
+
+            deleteReminderReq.onreadystatechange = function() {/*{{{*/
+                if (this.readyState == 4 && this.status == 200) {
+                    if (this.responseText == 'success') {
+                        populateReminderList(reminderList);
+                    } else if (this.responseText == 'noauth') {
+                        alertNoAuth();
+                    } else {
+                        alert('Failed to delete reminder!');
+                    }
+                }
+            }/*}}}*/
+
+            deleteReminderReq.send('mode=2&id=' + this.getAttribute('data-id'));
+        }
         deleteImg = element('img');
         deleteImg.title = 'Delete reminder';
         deleteImg.alt = 'Delete reminder';
