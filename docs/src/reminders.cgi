@@ -36,5 +36,7 @@ if ($mode == 0) { #{{{
         $count++;
     }
     print ']'; #}}}
+} elsif ($mode == 1) {
+} elsif ($mode == 2) {
 }
 exit;

@@ -11,6 +11,10 @@ var projectsByID = [];
 var projectHierarchy = [];
 var reminders = [];
 /*}}}*/
+// Backend needs to be written
+// Save button needs to be connected
+// Add delete code
+// Need the perl script to update the database/schedule the at jobs (check timezones)
 
 function element(e) {/*{{{*/
     return document.createElement(e);
@@ -2291,7 +2295,7 @@ function populateReminderList(list) {/*{{{*/
         reminder = reminders[rNum];
         row = element('tr');
         row.setAttribute('data-reminder', JSON.stringify(reminder));
-        row.onclick = function() {
+        row.onclick = function() {/*{{{*/
             underlines = this.parentElement.getElementsByTagName('u');
             for (u = 0; u < underlines.length; u++) {underlines[u].className = 'note_blank';}
             underlines = this.getElementsByTagName('u');
@@ -2299,7 +2303,10 @@ function populateReminderList(list) {/*{{{*/
                 underlines[u].className = 'note_edit';
                 if (useNightTheme()) {switchToNight(underlines[u]);}
             }
-        };
+            r = JSON.parse(this.getAttribute('data-reminder'));
+            reminderEditor = this.parentElement.parentElement.parentElement.children[1];
+            openReminder(r, reminderEditor);
+        };/*}}}*/
         row.onmouseover = function() {/*{{{*/
             this.style.fontWeight = 'bold';
             this.style.fontStyle = 'italic';
@@ -2307,11 +2314,6 @@ function populateReminderList(list) {/*{{{*/
         row.onmouseout = function() {/*{{{*/
             this.style.fontWeight = 'normal';
             this.style.fontStyle = 'normal';
-        }/*}}}*/
-        row.onclick = function() {/*{{{*/
-            r = JSON.parse(this.getAttribute('data-reminder'));
-            reminderEditor = this.parentElement.parentElement.parentElement.children[1];
-            openReminder(r, reminderEditor);
         }/*}}}*/
 
         // Text cell/*{{{*/
@@ -2655,7 +2657,7 @@ function openReminders() {/*{{{*/
 
     cancelButton = element('button');
     setText(cancelButton, 'Cancel');
-    cancelButton.onclick = function() {openReminder(makeBlankReminder('e'));}
+    cancelButton.onclick = function() {openReminder(makeBlankReminder('e'), this.parentElement);}
 
     if (useNightTheme()) {/*{{{*/
         switchToNight(
