@@ -34,7 +34,7 @@ function createDateInput() {/*{{{*/
 
     // If datetime input type isn't supported /*{{{*/
     if (dateInput.type == 'text') {
-        if (dateInput.value === '') {
+        if (dateInput.value == '') {
             dateInput.value = 'YYYY-MM-DD HH:MM';
         } else {dateInput.value = dateInput.value.replace('T', ' ');}
         dateInput.onchange = function() { /*{{{*/
@@ -49,7 +49,7 @@ function createDateInput() {/*{{{*/
             hourValid = 1;
             minuteValid = 1;
 
-            v = dateInput.value;
+            v = this.value;
             newValue = '';
             // Verify date and time validity, reset if invalid otherwise keep /*{{{*/
             if (!year.test(v.substr(0, 5))) {
@@ -72,7 +72,7 @@ function createDateInput() {/*{{{*/
                 minuteValid = 0;
                 newValue += 'MM';
             } else {newValue += v.substr(14, 2);}
-            dateInput.value = newValue; /*}}}*/
+            this.value = newValue; /*}}}*/
         } /*}}}*/
     } /*}}}*/
 
@@ -2264,7 +2264,7 @@ function makeBlankReminder(type) {/*{{{*/
     if (type == 'e') {reminder.recipient = ''; reminder.subject = '';}
     reminder.first = '';
     reminder.repeat = 'o';
-    reminder.duration = '1';
+    reminder.duration = 'f1';
     return reminder;
 }/*}}}*/
 
@@ -2427,7 +2427,7 @@ function openReminders() {/*{{{*/
             }
             next = next.nextElementSibling;
         }
-        openReminder(makeBlankReminder(this.value));
+        openReminder(makeBlankReminder(this.value), this.parentElement);
     }/*}}}*/
 
     recipientText = element('p');/*{{{*/
@@ -2678,6 +2678,12 @@ function openReminders() {/*{{{*/
     saveButton = element('button');
     setText(saveButton, 'Save reminder');
     saveButton.onclick = function() {
+        reminderEditor = this.parentElement;
+        type = reminderEditor.getElementsByTagName('select')[0].value;
+        if (type == 'e') {
+            recipient = reminderEditor.getElementsByName('recipient')[0].value;
+            subject = reminderEditor.getElementsByName('subject')[0].value;
+        }
     }
 
     cancelButton = element('button');
@@ -2827,9 +2833,11 @@ function openReminder(reminder, reminderEditor) {/*{{{*/
                 e.value = reminder.message;
             } else if (e.name == 'first') {
                 t = reminder.first;
-                t = t.replace(' ', 'T');
-                t = t.split(':');
-                t = t[0] + ':' + t[1];
+                if (t != '') {
+                    t = t.replace(' ', 'T');
+                    t = t.split(':');
+                    t = t[0] + ':' + t[1];
+                } else {t = 'YYYY-MM-DD HH:MM';}
                 e.value = t;
             } else if (e.name == 'repeat' && e.value == repeatMode) {/*{{{*/
                 e.checked = true;
