@@ -39,8 +39,8 @@ function createDateInput() {/*{{{*/
         } else {dateInput.value = dateInput.value.replace('T', ' ');}
         dateInput.onchange = function() { /*{{{*/
             year = /[0-9]{4}-/;
-            month = /(0[1-9]|1[12])-/;
-            date = /(0[1-9]|[12][0-9]|3[01])-/;
+            month = /(0[1-9]|1[0-2])-/;
+            date = /(0[1-9]|[12][0-9]|3[01])/;
             hour = / ([01][0-9]|2[0-3]):/;
             minute = /[0-5][0-9]/;
             yearValid = 1;
@@ -2677,18 +2677,60 @@ function openReminders() {/*{{{*/
 
     saveButton = element('button');
     setText(saveButton, 'Save reminder');
-    saveButton.onclick = function() {
+    saveButton.onclick = function() {/*{{{*/
         reminderEditor = this.parentElement;
+        errorP = reminderEditor.getElementsByClassName('error')[0];
+        setText(errorP, '\u00a0');
         type = reminderEditor.getElementsByTagName('select')[0].value;
-        if (type == 'e') {
-            recipient = reminderEditor.getElementsByName('recipient')[0].value;
-            subject = reminderEditor.getElementsByName('subject')[0].value;
-        }
-    }
+        inputs = reminderEditor.getElementsByTagName('input');
+        for (i = 0; i < inputs.length; i++) {/*{{{*/
+            input = inputs[i];
+            if (type == 'e') {/*{{{*/
+                if (input.name == 'recipient') {/*{{{*/
+                    recipient = input.value;
+                    if (recipient == '' ) {
+                        setText(errorP, 'You must specify at least one recipient');
+                        return;
+                    } else {
+                        recipients = recipient.split(',');
+                        for (r = 0; r < recipients.length; r++) {
+                            recip = recipients[r];
+                            if (!/ *[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}/.test(recip)) {
+                                setText(errorP, 'Recipient ' + r + ' is not valid');
+                                return;
+                            }
+                        }
+                    }/*}}}*/
+                } else if (input.name == 'subject') {/*{{{*/
+                    subject = input.value;
+                }/*}}}*/
+            }/*}}}*/
+
+            if (input.name == 'message') {/*{{{*/
+                message = input.value;
+                if (message == '' && type == 's') {
+                    setText(errorP, 'You must include a message');
+                    return;
+                }/*}}}*/
+            } else if (input.name == 'first') {/*{{{*/
+                first = input.value;
+                if (first.value == '' || /[a-zA-Z]/.test(first)) {
+                    setText(errorP, 'You must include a start time');
+                    return;
+                }/*}}}*/
+            }
+        }/*}}}*/
+
+    }/*}}}*/
 
     cancelButton = element('button');
     setText(cancelButton, 'Cancel');
     cancelButton.onclick = function() {openReminder(makeBlankReminder('e'), this.parentElement);}
+
+    errorP = element('p');
+    errorP.className = 'error';
+    errorP.style.display = 'inline-block';
+    setText(errorP, '\u00a0');
 
     if (useNightTheme()) {/*{{{*/
         switchToNight(
@@ -2780,9 +2822,10 @@ function openReminders() {/*{{{*/
     reminderEditor.appendChild(element('br'));
     reminderEditor.appendChild(element('br'));
     reminderEditor.appendChild(saveButton);
+    reminderEditor.appendChild(document.createTextNode('\u00a0\u00a0'));
     reminderEditor.appendChild(cancelButton);
-    reminderEditor.appendChild(element('br'));
-    reminderEditor.appendChild(document.createTextNode('\u00a0'));
+    reminderEditor.appendChild(document.createTextNode('\u00a0\u00a0'));
+    reminderEditor.appendChild(errorP);
     /*}}}*/
 
     openReminder(makeBlankReminder('e'), reminderEditor);
