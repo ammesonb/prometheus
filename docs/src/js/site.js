@@ -2482,7 +2482,7 @@ function openReminders() {/*{{{*/
     dailyRate.name = 'daily';
     dailyRate.value = 1;
     dailyRate.min = 1;
-    dailyRate.onblur = function() {this.value = verifyNum(this.value, 1, 9999);}
+    dailyRate.onblur = function() {this.value = verifyNum(this.value, 1, 9999);};
     dailyText2 = element('p');
     dailyText2.style.display = 'inline-block';
     dailyText2.style.marginTop = '2px';
@@ -2718,7 +2718,32 @@ function openReminders() {/*{{{*/
                     setText(errorP, 'You must include a start time');
                     return;
                 }/*}}}*/
-            }
+            } else if (input.name == 'repeat' && input.checked) {/*{{{*/
+                if (input.value == 'w') {/*{{{*/
+                    repeat = 'w';
+                    n = input.nextElementSibling;
+                    while (n.type != 'checkbox') {n = input.nextElementSibling;}
+                    days = [];
+                    while (n.type != 'radio') {
+                        if (n.type == 'checkbox' && n.checked) {days.push(n.value);}
+                    }
+                    if (days.length == 0) {repeat += input.nextElementSibling.nextElementSibling.value;}
+                    else {repeat += '[' + days.join('') + ']';}/*}}}*/
+                } else {/*{{{*/
+                    repeat = input.value + input.nextElementSibling.nextElementSibling.value;
+                }/*}}}*/
+                if (!/^[a-z][0-9\[\]]+$/.test(repeat)) {
+                    setText(errorP, 'Invalid repeat mode');
+                    return;
+                }/*}}}*/
+            } else if (input.name == 'duration' && input.checked) {/*{{{*/
+                if (input.value == 'n') {duration = 'n';}
+                else {duration = input.value + input.nextElementSibling.nextElementSibling.value;}
+                if (!/^[a-z][0-9:-]+$/.test(duration)) {
+                    setText(errorP, 'Invalid duration');
+                    return;
+                }
+            }/*}}}*/
         }/*}}}*/
 
     }/*}}}*/
@@ -2884,11 +2909,11 @@ function openReminder(reminder, reminderEditor) {/*{{{*/
                 e.value = t;
             } else if (e.name == 'repeat' && e.value == repeatMode) {/*{{{*/
                 e.checked = true;
-                if (repeatCount.indexOf('[') == -1) {
+                if (repeatCount.indexOf('[') == -1 && repeatMode != 'o') {
                     n = e.nextElementSibling;
                     while (n.tagName != 'INPUT' || n.type != 'number') {n = n.nextElementSibling;}
                     n.value = repeatCount;
-                } else {
+                } else if (repeatMode != 'o') {
                     days = repeatCount;
                     checkboxNum = 0;
                     while (n.value != 'm') {
