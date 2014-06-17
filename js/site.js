@@ -2722,24 +2722,27 @@ function openReminders() {/*{{{*/
                 if (input.value == 'w') {/*{{{*/
                     repeat = 'w';
                     n = input.nextElementSibling;
-                    while (n.type != 'checkbox') {n = input.nextElementSibling;}
+                    while (n.type != 'checkbox') {n = n.nextElementSibling;}
                     days = [];
                     while (n.type != 'radio') {
                         if (n.type == 'checkbox' && n.checked) {days.push(n.value);}
+                        n = n.nextElementSibling;
                     }
                     if (days.length == 0) {repeat += input.nextElementSibling.nextElementSibling.value;}
                     else {repeat += '[' + days.join('') + ']';}/*}}}*/
+                } else if (input.value != 'o') {/*{{{*//*{{{*/
+                    repeat = input.value + input.nextElementSibling.nextElementSibling.value;/*}}}*/
                 } else {/*{{{*/
-                    repeat = input.value + input.nextElementSibling.nextElementSibling.value;
+                    repeat = 'o';
                 }/*}}}*/
-                if (!/^[a-z][0-9\[\]]+$/.test(repeat)) {
+                if (!/^[a-z][0-9\[\]]+$/.test(repeat) && repeat != 'o') {
                     setText(errorP, 'Invalid repeat mode');
                     return;
                 }/*}}}*/
             } else if (input.name == 'duration' && input.checked) {/*{{{*/
                 if (input.value == 'n') {duration = 'n';}
                 else {duration = input.value + input.nextElementSibling.nextElementSibling.value;}
-                if (!/^[a-z][0-9:-]+$/.test(duration)) {
+                if (!/^[a-z][0-9 :-]+$/.test(duration) && duration != 'n') {
                     setText(errorP, 'Invalid duration');
                     return;
                 }
