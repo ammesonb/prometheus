@@ -2680,6 +2680,7 @@ function openReminders() {/*{{{*/
     saveButton.onclick = function() {/*{{{*/
         reminderEditor = this.parentElement;
         errorP = reminderEditor.getElementsByClassName('error')[0];
+        errorP.style.color = 'red';
         setText(errorP, '\u00a0');
         type = reminderEditor.getElementsByTagName('select')[0].value;
         inputs = reminderEditor.getElementsByTagName('input');
@@ -2730,7 +2731,7 @@ function openReminders() {/*{{{*/
                     }
                     if (days.length == 0) {repeat += input.nextElementSibling.nextElementSibling.value;}
                     else {repeat += '[' + days.join('') + ']';}/*}}}*/
-                } else if (input.value != 'o') {/*{{{*//*{{{*/
+                } else if (input.value != 'o') {/*{{{*/
                     repeat = input.value + input.nextElementSibling.nextElementSibling.value;/*}}}*/
                 } else {/*{{{*/
                     repeat = 'o';
@@ -2749,7 +2750,30 @@ function openReminders() {/*{{{*/
             }/*}}}*/
         }/*}}}*/
 
-    }/*}}}*/
+        saveReminderReq = createPostReq('reminders.cgi', false);
+
+        saveReminderReq.onreadystatechange = function() {/*{{{*/
+            if (this.readyState == 4 && this.status == 200) {
+                if (this.responseText == 'success') {
+                    errorP.style.color = 'green';
+                    setText(errorP, 'Saved at ' + padTime(new Date().getHours()) + ':' +
+                      padTime(new Date().getMinutes()) + ':' + padTime(new Date().getSeconds()));
+                } else if (this.responseText == 'noauth') {
+                    alertNoAuth();
+                } else {
+                    setText(errorP, 'Failed to save reminder');
+                }
+            }
+        };/*}}}*/
+
+        template = "id=%s&type=%s&message=%s&first=%s&repeat=%s&duration=%s";
+        parameters = sprintf(template, this.parentElement.getAttribute('data-id'), type, message, first, repeat, duration);
+
+        if (type == 'e') {
+            parameters += '&recipient=' + recipient + '&subject=' + subject;
+        }
+        saveReminderReq.send(parameters);
+    };/*}}}*/
 
     cancelButton = element('button');
     setText(cancelButton, 'Cancel');
