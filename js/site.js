@@ -2914,27 +2914,25 @@ function openReminder(reminder, reminderEditor) {/*{{{*/
     endCount = reminder.duration.slice(1);
 
     elems = reminderEditor.children;
-    mode = '';
-    for (eNum = 0; eNum < elems.length; eNum++) {
+    for (eNum = 0; eNum < elems.length; eNum++) {/*{{{*/
         e = elems[eNum];
-        if (e.tagName == 'SELECT') {mode = e.value;}
-        else if (e.tagName == 'INPUT') {
-            if (mode == 's') {
+        if (e.tagName == 'SELECT') {/*{{{*/
+            e.value = reminder.type;/*}}}*/
+        } else if (e.tagName == 'INPUT') {/*{{{*/
+            if (reminder.type == 's') {/*{{{*/
                 if (e.name == 'recipient' || e.name == 'subject') {
                     e.value = 'N/A';
                     e.disabled = true;
-                }
-            } else {
+                }/*}}}*/
+            } else {/*{{{*/
                 if (e.name == 'recipient') {
                     e.value = reminder.recipient;
                 } else if (e.name == 'subject') {
                     e.value = reminder.subject;
                 }
-            }
+            }/*}}}*/
 
-            if (e.name == 'message') {
-                e.value = reminder.message;
-            } else if (e.name == 'first') {
+            if (e.name == 'first') {/*{{{*/
                 if (reminder.next > reminder.first) {e.disabled = true;}
                 t = reminder.first;
                 if (t != '') {
@@ -2942,7 +2940,7 @@ function openReminder(reminder, reminderEditor) {/*{{{*/
                     t = t.split(':');
                     t = t[0] + ':' + t[1];
                 } else {t = 'YYYY-MM-DD HH:MM';}
-                e.value = t;
+                e.value = t;/*}}}*/
             } else if (e.name == 'repeat' && e.value == repeatMode) {/*{{{*/
                 e.checked = true;
                 n = e.nextElementSibling;
@@ -2972,9 +2970,11 @@ function openReminder(reminder, reminderEditor) {/*{{{*/
                     }
                     n.value = endCount;
                 }
-            }/*}}}*/
-        }
-    }
+            }/*}}}*//*}}}*/
+        } else if (e.tagName == 'TEXTAREA') {/*{{{*/
+            e.value = reminder.message;
+        }/*}}}*/
+    }/*}}}*/
 }/*}}}*/
 
 /*}}}*/
