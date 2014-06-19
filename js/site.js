@@ -2350,6 +2350,7 @@ function populateReminderList(list) {/*{{{*/
         deleteLink.setAttribute('data-name', reminder.message);
         deleteLink.onclick = function() {
             conf = confirm('Are you sure you want to delete \'' + this.getAttribute('data-name') + '\'?');
+            rID = this.getAttribute('data-id');
             if (!conf) {return;}
             reminderList = this.parentElement.parentElement.parentElement.parentElement;
             deleteReminderReq = createPostReq('reminders.cgi', false);
@@ -2357,7 +2358,17 @@ function populateReminderList(list) {/*{{{*/
             deleteReminderReq.onreadystatechange = function() {/*{{{*/
                 if (this.readyState == 4 && this.status == 200) {
                     if (this.responseText == 'success') {
-                        populateReminderList(reminderList);
+                        reminderEditor = reminderList.parentElement.children[1];
+                        fetchReminders();
+                        setTimeout(function() {
+                            populateReminderList(reminderList);
+                            if (reminderEditor.getAttribute('data-id') == rID) {
+                                openReminder(makeBlankReminder('e'), reminderEditor);
+                                err = reminderEditor.getElementsByClassName('error')[0];
+                                err.style.color = 'red';
+                                setText(err, '\u00a0');
+                            }
+                        }, 500);
                     } else if (this.responseText == 'noauth') {
                         alertNoAuth();
                     } else {
@@ -2380,7 +2391,7 @@ function populateReminderList(list) {/*{{{*/
         }
         remindersTable.appendChild(row);
 
-        textCell.style.width = textCell.offsetWidth + 15 + 'px';
+        textCell.style.width = textCell.offsetWidth + 10 + 'px';
     }/*}}}*/
 }/*}}}*/
 
@@ -2748,7 +2759,7 @@ function openReminders() {/*{{{*/
             } else if (input.name == 'duration' && input.checked) {/*{{{*/
                 if (input.value == 'n') {duration = 'n';}
                 else {duration = input.value + input.nextElementSibling.nextElementSibling.value;}
-                if (!/^[a-z][0-9 :-]+$/.test(duration) && duration != 'n') {
+                if (!/^[a-z][T0-9 :-]+$/.test(duration) && duration != 'n') {
                     setText(errorP, 'Invalid duration');
                     return;
                 }
@@ -2763,6 +2774,12 @@ function openReminders() {/*{{{*/
                     errorP.style.color = 'green';
                     setText(errorP, 'Saved at ' + padTime(new Date().getHours()) + ':' +
                       padTime(new Date().getMinutes()) + ':' + padTime(new Date().getSeconds()));
+                    setTimeout(function() {
+                        fetchReminders();
+                        setTimeout(function() {
+                            populateReminderList(reminderEditor.parentElement.children[0]);
+                        }, 500);
+                    }, 500);
                 } else if (this.responseText == 'noauth') {
                     alertNoAuth();
                 } else {
@@ -2927,8 +2944,10 @@ function openReminder(reminder, reminderEditor) {/*{{{*/
             } else {/*{{{*/
                 if (e.name == 'recipient') {
                     e.value = reminder.recipient;
+                    e.disabled = false;
                 } else if (e.name == 'subject') {
                     e.value = reminder.subject;
+                    e.disabled = false;
                 }
             }/*}}}*/
 

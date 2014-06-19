@@ -44,12 +44,12 @@ if ($mode == 0) { #{{{
     if ($type eq 'e') { #{{{
         $recipient = $q->param('recipient');
         if ($recipient =~ /,/) {
-            if (not ($recipient =~ /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}(, *[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4})*$/)) {
+            if (not ($recipient =~ /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}(, *[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4})*$/i)) {
                 print 'Invalid email';
                 exit;
             }
         } else {
-            if (not ($recipient =~ /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/)) {
+            if (not ($recipient =~ /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i)) {
                 print 'Invalid email';
                 exit;
             }
@@ -91,7 +91,7 @@ if ($mode == 0) { #{{{
 } elsif ($mode == 2) { #{{{
     my $id = $q->param('id');
     if (not ($id =~ /^[0-9]+$/)) {print 'Bad id'; exit;}
-    my $rows = COMMON::deleteFromTable($session, 'reminders', ['id'], '=', [$id], []);
+    my $rows = COMMON::deleteFromTable($session, 'reminders', ['id'], ['='], [$id], []);
     print 'success' if ($rows);
     print 'fail' if (not $rows);
 } #}}}
