@@ -2421,8 +2421,8 @@ function openReminders() {/*{{{*/
     typeSelect.onchange = function() {
         next = this.nextElementSibling;
         while (next.name != 'message') {
-            if (next.tagName === 'INPUT') {
-                if (this.value === 's') {next.disabled = true; next.value = 'N/A';}
+            if (next.tagName == 'INPUT') {
+                if (this.value == 's') {next.disabled = true; next.value = 'N/A';}
                 else {next.disabled = false; next.value = '';}
             }
             next = next.nextElementSibling;
@@ -2453,9 +2453,12 @@ function openReminders() {/*{{{*/
 
     startText = element('p');/*{{{*/
     startText.style.display = 'inline-block';
-    setText(startText, 'First notification:&nbsp;');
+    startText.style.marginBottom = '3px';
+    startText.style.paddingBottom = '3px';
+    setText(startText, 'First notification (may only be changed before initial execution):');
     startTime = createDateInput();
-    startTime.name = 'first';/*}}}*/
+    startTime.name = 'first';
+    startTime.style.marginBottom = '10px';/*}}}*/
 
     once = element('input');/*{{{*/
     once.type = 'radio';
@@ -2682,7 +2685,15 @@ function openReminders() {/*{{{*/
         errorP = reminderEditor.getElementsByClassName('error')[0];
         errorP.style.color = 'red';
         setText(errorP, '\u00a0');
+
         type = reminderEditor.getElementsByTagName('select')[0].value;
+
+        message = reminderEditor.getElementsByTagName('textarea')[0].value;/*{{{*/
+        if (message == '' && type == 's') {
+            setText(errorP, 'You must include a message');
+            return;
+        }/*}}}*/
+
         inputs = reminderEditor.getElementsByTagName('input');
         for (i = 0; i < inputs.length; i++) {/*{{{*/
             input = inputs[i];
@@ -2707,15 +2718,9 @@ function openReminders() {/*{{{*/
                 }/*}}}*/
             }/*}}}*/
 
-            if (input.name == 'message') {/*{{{*/
-                message = input.value;
-                if (message == '' && type == 's') {
-                    setText(errorP, 'You must include a message');
-                    return;
-                }/*}}}*/
-            } else if (input.name == 'first') {/*{{{*/
+            if (input.name == 'first') {/*{{{*/
                 first = input.value;
-                if (first.value == '' || /[a-zA-Z]/.test(first)) {
+                if (first.value == '' || /[a-su-zA-SU-Z]/.test(first)) {
                     setText(errorP, 'You must include a start time');
                     return;
                 }/*}}}*/
@@ -2761,12 +2766,12 @@ function openReminders() {/*{{{*/
                 } else if (this.responseText == 'noauth') {
                     alertNoAuth();
                 } else {
-                    setText(errorP, 'Failed to save reminder');
+                    setText(errorP, 'Failed to save reminder - ' + this.responseText);
                 }
             }
         };/*}}}*/
 
-        template = "id=%s&type=%s&message=%s&first=%s&repeat=%s&duration=%s";
+        template = "mode=1&id=%s&type=%s&message=%s&first=%s&repeat=%s&duration=%s";
         parameters = sprintf(template, this.parentElement.getAttribute('data-id'), type, message, first, repeat, duration);
 
         if (type == 'e') {
@@ -2816,6 +2821,7 @@ function openReminders() {/*{{{*/
     reminderEditor.appendChild(message);
     reminderEditor.appendChild(element('br'));
     reminderEditor.appendChild(startText);/*{{{*/
+    reminderEditor.appendChild(element('br'));
     reminderEditor.appendChild(startTime);
     reminderEditor.appendChild(element('br'));
     reminderEditor.appendChild(once);
@@ -2918,15 +2924,18 @@ function openReminder(reminder, reminderEditor) {/*{{{*/
                     e.value = 'N/A';
                     e.disabled = true;
                 }
+            } else {
+                if (e.name == 'recipient') {
+                    e.value = reminder.recipient;
+                } else if (e.name == 'subject') {
+                    e.value = reminder.subject;
+                }
             }
 
-            if (e.name == 'recipient') {
-                e.value = reminder.recipient;
-            } else if (e.name == 'subject') {
-                e.value = reminder.subject;
-            } else if (e.name == 'message') {
+            if (e.name == 'message') {
                 e.value = reminder.message;
             } else if (e.name == 'first') {
+                if (reminder.next > reminder.first) {e.disabled = true;}
                 t = reminder.first;
                 if (t != '') {
                     t = t.replace(' ', 'T');
@@ -2936,8 +2945,8 @@ function openReminder(reminder, reminderEditor) {/*{{{*/
                 e.value = t;
             } else if (e.name == 'repeat' && e.value == repeatMode) {/*{{{*/
                 e.checked = true;
+                n = e.nextElementSibling;
                 if (repeatCount.indexOf('[') == -1 && repeatMode != 'o') {
-                    n = e.nextElementSibling;
                     while (n.tagName != 'INPUT' || n.type != 'number') {n = n.nextElementSibling;}
                     n.value = repeatCount;
                 } else if (repeatMode != 'o') {

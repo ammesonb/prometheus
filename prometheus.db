@@ -77,9 +77,11 @@ ALTER FUNCTION public.add_default_services() OWNER TO root;
 CREATE FUNCTION block_first_time_update() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
-BEGIN 
-NEW.first = OLD.first;
-return NEW;
+BEGIN
+IF OLD.first != OLD.next THEN
+  NEW.first = OLD.first;
+END IF;
+RETURN NEW;
 END;
 $$;
 
@@ -587,10 +589,10 @@ CREATE TRIGGER add_default_services AFTER INSERT ON users FOR EACH ROW EXECUTE P
 
 
 --
--- Name: block_first_time_upate_trigger; Type: TRIGGER; Schema: public; Owner: root
+-- Name: block_first_time_update_trigger; Type: TRIGGER; Schema: public; Owner: root
 --
 
-CREATE TRIGGER block_first_time_upate_trigger BEFORE UPDATE ON reminders FOR EACH ROW EXECUTE PROCEDURE block_first_time_update();
+CREATE TRIGGER block_first_time_update_trigger BEFORE UPDATE ON reminders FOR EACH ROW EXECUTE PROCEDURE block_first_time_update();
 
 
 --

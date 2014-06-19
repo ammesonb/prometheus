@@ -36,7 +36,63 @@ if ($mode == 0) { #{{{
         $count++;
     }
     print ']'; #}}}
-} elsif ($mode == 1) {
-} elsif ($mode == 2) {
-}
+} elsif ($mode == 1) { #{{{
+    my $id = $q->param('id');
+    if (not ($id =~ /-?[0-9]+$/)) {print 'Invalid ID'; exit;}
+    my $type = $q->param('type');
+    my ($recipient, $subject);
+    if ($type eq 'e') { #{{{
+        $recipient = $q->param('recipient');
+        if ($recipient =~ /,/) {
+            if (not ($recipient =~ /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}(, *[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4})*$/)) {
+                print 'Invalid email';
+                exit;
+            }
+        } else {
+            if (not ($recipient =~ /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/)) {
+                print 'Invalid email';
+                exit;
+            }
+        }
+
+        $subject = $q->param('subject');
+        if (not COMMON::checkPrintable($subject)) {print 'Invalid subject'; exit;}
+    } #}}}
+
+    my $message = $q->param('message');
+    if (not COMMON::checkPrintable($message)) {print 'Invalid message'; exit;}
+    if ($type eq 's' and length($message) == 0) {print 'Message cannot be empty'; exit;}
+
+    my $first = $q->param('first');
+    if (not COMMON::checkPrintable($first)) {print 'Invalid start time'; exit;}
+
+    my $repeat = $q->param('repeat');
+    if (not COMMON::checkPrintable($repeat)) {print 'Invalid repetition'; exit;}
+
+    my $duration = $q->param('duration');
+    if (not COMMON::checkPrintable($duration)) {print 'Invalid duration'; exit;}
+
+    my @cols = ('user_id', 'type', 'message', 'next', 'repeat', 'duration');
+    my @vals = ($session->param('user_id'), "'$type'", "'$message'", "'$first'", "'$repeat'", "'$duration'");
+    if ($type eq 'e') {
+        push(@cols, 'recipient');
+        push(@cols, 'subject');
+        push(@vals, "'$recipient'");
+        push(@vals, "'$subject'");
+    }
+    my $rows;
+    if ($id eq '-1' or $id == -1) {
+        $rows = COMMON::insertIntoTable($session, 'reminders', \@cols, \@vals);
+    } else {
+        $rows = COMMON::updateTable($session, 'reminders', \@cols, \@vals, ['id'], ['='], [$id], []);
+    }
+    print 'success' if ($rows);
+    print 'fail' if (not $rows); #}}}
+} elsif ($mode == 2) { #{{{
+    my $id = $q->param('id');
+    if (not ($id =~ /^[0-9]+$/)) {print 'Bad id'; exit;}
+    my $rows = COMMON::deleteFromTable($session, 'reminders', ['id'], '=', [$id], []);
+    print 'success' if ($rows);
+    print 'fail' if (not $rows);
+} #}}}
 exit;
