@@ -11,9 +11,6 @@ var projectsByID = [];
 var projectHierarchy = [];
 var reminders = [];
 /*}}}*/
-// Backend needs to be written
-// Save button needs to be connected
-// Need the perl script to update the database/schedule the at jobs (check timezones)
 
 function alertNoAuth() {/*{{{*/
     alert('Session timed out! Please copy any unsaved changes then refresh the page.');
@@ -145,13 +142,14 @@ function login() { /*{{{*/
     i2.name = 'c';
     i2.type = 'password';
     i2.value = c;
-    f.appendChild(i1);
-    f.appendChild(i2);
     i3 = element('input');
     i3.type = 'hidden';
     i3.name = 't';
     i3.value = jstz.determine().name();
     f.style.display = 'none';
+    f.appendChild(i1);
+    f.appendChild(i2);
+    f.appendChild(i3);
     document.body.appendChild(f);
     f.submit();
 } /*}}}*/

@@ -86,6 +86,7 @@ if ($mode == 0) { #{{{
     } else {
         $rows = COMMON::updateTable($session, 'reminders', \@cols, \@vals, ['id'], ['='], [$id], []);
     }
+
     print 'success' if ($rows);
     print 'fail' if (not $rows); #}}}
 } elsif ($mode == 2) { #{{{
