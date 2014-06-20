@@ -2317,10 +2317,13 @@ function populateReminderList(list) {/*{{{*/
             this.style.fontStyle = 'normal';
         }/*}}}*/
 
+        uClass = 'note_blank';
+        if (reminder.id == reminderEditor.getAttribute('data-id')) {uClass = 'note_edit';}
+
         // Text cell/*{{{*/
         textCell = element('td');
         textUnderline = element('u');
-        textUnderline.className = 'note_blank';
+        textUnderline.className = uClass;
         textSpan = element('span');
         textSpan.className = 'normal';
         setText(textSpan, reminder.message);
@@ -2331,7 +2334,7 @@ function populateReminderList(list) {/*{{{*/
         // Time cell/*{{{*/
         timeCell = element('td');
         timeUnderline = element('u');
-        timeUnderline.className = 'note_blank';
+        timeUnderline.className = uClass;
         timeSpan = element('span');
         timeSpan.className = 'normal';
         setText(timeSpan, reminder.next);
@@ -2768,13 +2771,18 @@ function openReminders() {/*{{{*/
 
         saveReminderReq.onreadystatechange = function() {/*{{{*/
             if (this.readyState == 4 && this.status == 200) {
-                if (this.responseText == 'success') {
+                if (this.responseText.indexOf('success') != -1) {
+                    response = this.responseText;
                     errorP.style.color = 'green';
                     setText(errorP, 'Saved at ' + padTime(new Date().getHours()) + ':' +
                       padTime(new Date().getMinutes()) + ':' + padTime(new Date().getSeconds()));
                     setTimeout(function() {
                         fetchReminders();
                         setTimeout(function() {
+                            rID = response.split('-')[0];
+                            for (r = 0; r < reminders.length; r++) {
+                                if (reminders[r].id == rID) {openReminder(reminders[r], reminderEditor);}
+                            }
                             populateReminderList(reminderEditor.parentElement.children[0]);
                         }, 500);
                     }, 500);
@@ -2901,7 +2909,9 @@ function openReminders() {/*{{{*/
     reminderEditor.appendChild(errorP);
     /*}}}*/
 
-    openReminder(makeBlankReminder('e'), reminderEditor);
+    if (!/^[0-9]+$/.test(reminderEditor.getAttribute('data-id'))) {
+        openReminder(makeBlankReminder('e'), reminderEditor);
+    }
     /*}}}*/
 
     fetchReminders();

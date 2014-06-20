@@ -83,11 +83,17 @@ if ($mode == 0) { #{{{
     my $rows;
     if ($id eq '-1' or $id == -1) {
         $rows = COMMON::insertIntoTable($session, 'reminders', \@cols, \@vals);
+        my $idRef = COMMON::searchTable($session, 'reminders', ['id'],
+          ['type', 'message', 'first', 'repeat', 'duration', 'user_id'], ['=', '=', '=', '=', '=', '='],
+          ["'$type'", "'$message'", "'$first'", "'$repeat'", "'$duration'", $session->param('user_id')], ['AND', 'AND', 'AND', 'AND', 'AND']);
+        my %ids = %$idRef;
+        my @ids = keys(%ids);
+        $id = $ids[0];
     } else {
         $rows = COMMON::updateTable($session, 'reminders', \@cols, \@vals, ['id'], ['='], [$id], []);
     }
 
-    print 'success' if ($rows);
+    print "$id-success" if ($rows);
     print 'fail' if (not $rows); #}}}
 } elsif ($mode == 2) { #{{{
     my $id = $q->param('id');
