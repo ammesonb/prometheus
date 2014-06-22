@@ -1,34 +1,179 @@
 #!/usr/bin/perl -w
 
-use lib '/var/www/perl/';
+use Date::Simple qw(date today);
+use Date::Parse qw(str2time);
 use File::Temp qw(tempfile);
+use File::Slurp;
+use List::MoreUtils qw(after_incl);
 use DBI;
 use DBD::Pg;
-use COMMON;
 use strict;
 
 my $dbh = DBI->connect('DBI:Pg:dbname=prometheus', 'root');
 
 my $mode = shift;
 my $id = shift;
+my %reminder;
 
-my ($file, $filename, $oldFilename, %reminder);
-if ($mode ne 'd') {
-    ($file, $filename) = tempfile(DIR => 'reminders');
-}
-if ($mode ne 'c') {
-    $oldFilename = shift;
-    `rm $oldFilename`;
-}
+sub scheduleReminder { #{{{
+    my $id = shift;
+    my $strTime = shift;
 
-# Newly created reminder
-if ($mode eq 'c' or $id eq '-1') {
-# Run reminder
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($strTime);
+    $mon = int($mon) + 1;
+    $year = int($year) + 1900;
+    my ($file, $filename) = tempfile();
+    `echo \"perl /var/www/update_reminder.cgi r $id\" | at $hour:$min $year-$mon-$mday 2> $filename`;
+    my $jobID = read_file($filename);
+    $jobID =~ s/^.*job ([0-9]+) at.*$/$1/s;
+    $dbh->do("UPDATE reminders SET job_id = $jobID WHERE id = $id");
+} #}}}
+
+# Newly created reminder #{{{
+if ($mode eq 'c') {
+    scheduleReminder($id, $reminder{'first'}); #}}}
+# Run reminder #{{{
 } elsif ($mode eq 'r') {
-# Update reminder
+    # Get reinder information #{{{
+    my $cmd = $dbh->prepare("SELECT * FROM reminders WHERE id = $id");
+    $cmd->execute();
+    my $remRef = $cmd->fetchrow_hashref();
+    my %reminder = %$remRef; #}}}
+
+    # Send reminder #{{{
+    if ($reminder{'type'} eq 's') {
+    } elsif ($reminder{'type'} eq 'e') {
+        my $message = $reminder{'message'};
+        $message =~ s/"/\\\\"/g;
+        `su prometheus-reminder-daemon -c "echo \"$message\" | mail -s \"$reminder{'subject'}\" $reminder{'recipient'}"`;
+    } #}}}
+
+    # Determine next execution time #{{{
+    my $next = $reminder{'next'};
+    my $repeat = $reminder{'repeat'};
+    # If a plain numerical day or week offset, don't need to do anything fancy
+    # since they have a uniform difference and therefore can just add second equivalency
+    if ($repeat =~ /^[dw][0-9]+$/) {
+        $next = str2time($next);
+        my %conv = ('d' => 86400, 'w' => '604800');
+        $next += $conv{substr($repeat, 0, 1)};
+    # If using a day-based weekly occurrence
+    } elsif (substr($repeat, 0, 1) eq 'w') {
+        $next = str2time($next);
+        my $dow = today->day_of_week;
+        my $dIndex = index($repeat, $dow);
+        my $difference;
+        # If at end of list of days, go back to first one
+        if ((length($repeat) - 2) == $dIndex) {
+            $difference = (7 - $dow) + int(substr($repeat, 2, 1));
+        } else {
+            $difference = int(substr($repeat, $dIndex + 1, 1)) - $dow;
+        }
+        $next += ($difference * 86400);
+    # Month offset
+    } elsif (substr($repeat, 0, 1) eq 'm') {
+        my $curMonth = int(substr($next, 5, 2));
+        my $monthGap = int(substr($repeat, 1));
+        my $curYear = int(substr($next, 0, 4));
+
+        my $month = $curMonth + $monthGap;
+        if ($month > 12) {
+            $month -= 12;
+            $curYear++;
+        }
+        $next =~ s/^[0-9]{4}/$curYear/;
+        $next =~ s/-[0-9]{2}-/-$month-/;
+        $next = str2time($next);
+    } elsif (substr($repeat, 0, 1) eq 'y') {
+        my $year = int(substr($next, 0, 4));
+        my $yearGap = int(substr($repeat, 1));
+        $year += $yearGap;
+        $next = str2time(substr($next, 0, 4, $year));
+    } #}}}
+
+    # Check if this is last reminder #{{{
+    my $difference = $next - str2time($reminder{'next'});
+    my $first = str2time($reminder{'first'});
+    my $duration = str2time($reminder{'duration'});
+    my $completed = 0;
+    if (substr($duration, 0, 1) eq 'd') {
+        my $endTime = str2time(substr($duration, 1));
+        $completed = ($endTime < $next);
+    } elsif (substr($duration, 0, 1) eq 'f' and
+        int(substr($duration, 1)) < int($reminder{'count'})) {
+        $completed = 1;
+    } #}}}
+
+    # Delete reminder if necessary #{{{
+    if ($repeat eq 'o' or $completed) {
+        $dbh->do("DELETE FROM reminders * WHERE id = $id"); #}}}
+    # Otherwise schedule next runtime #{{{
+    } else {
+        scheduleReminder($id, $next);
+    } #}}} #}}}
+# Update reminder #{{{
+# If being updated, that means it will not have gone over its expected runtime
+# Also, do not need to check if the new conditions warrant deletion, since
+# that will be taken care of on next run
 } elsif ($mode eq 'u') {
-# Delete reminder
+    `atrm $reminder{'job_id'}`;
+    if (str2time($reminder{'first'}) > `date +%s`) { #{{{
+        scheduleReminder($id, $reminder{'first'}); #}}}
+    } else { #{{{
+        my $next = 0;
+        # If using a simple offset, find next occurrence after now #{{{
+        if ($reminder{'repeat'} =~ /^[dwmy][0-9]+$/) {
+            my $offset = substr($reminder{'repeat'}, 0, 1);
+            my $gap = int(substr($reminder{'repeat'}, 1));
+            my %intervals = ('d' => 86400, 'w' => 604800);
+            my $now = `date +%s`;
+            my$strNext = $reminder{'first'};
+            while ($now > $next) { #{{{
+                if ($offset eq 'd' or $offset eq 'w') { #{{{
+                    $next += $intervals{$offset} * $gap; #}}}
+                } elsif ($offset eq 'm') { #{{{
+                    my $nextMonth = int(substr($strNext, 5, 2));
+                    $nextMonth += $gap;
+                    if ($nextMonth > 12) {$nextMonth -= 12;}
+                    if ($nextMonth < 10) {$nextMonth = "0$nextMonth";}
+                    $strNext = substr($strNext, 5, 2, $nextMonth);
+                    $next = str2time($strNext); #}}}
+                } elsif ($offset eq 'y') { #{{{
+                    my $nextYear = int(substr($strNext, 0, 4));
+                    $nextYear += $gap;
+                    $next = str2time(substr($strNext, 0, 4, $nextYear));
+                } #}}}
+            } #}}} #}}}
+        # If using several days in a week #{{{
+        } else {
+            # Find next day after today on which the reminder should be sent
+            my $days = substr($reminder{'repeat'}, 2, -1);
+            my @days = split(//, $days);
+            my $dow = today->day_of_week;
+            my $nextDay = after_incl {$_ > $dow} @days;
+
+            # Calculate next reminder time based off of current date
+            # and initial reminder time
+            my $dayOffset;
+            if ($nextDay) {
+                $dayOffset = $nextDay - $dow;
+            } else {
+                $dayOffset = 7 - $dow + $days[0];
+            }
+            $next = str2time(today . " " . substr($reminder{'first'}, 11));
+            $next += $dayOffset * 86400;
+        } #}}}
+        scheduleReminder($id, $next);
+    } #}}} #}}}
+# Delete reminder #{{{
 } elsif ($mode eq 'd') {
-}
+    my $cmd = $dbh->prepare("SELECT job_id FROM reminders WHERE id = $id");
+    $cmd->execute();
+    my $dataRef = $cmd->fetchall_hashref('job_id');
+    my %data = %$dataRef;
+    my @jobIDs = keys(%data);
+    my $job = $jobIDs[0];
+    `atrm $job`;
+} #}}}
 
 $dbh->disconnect();

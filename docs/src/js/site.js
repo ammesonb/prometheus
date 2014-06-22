@@ -2467,7 +2467,7 @@ function openReminders() {/*{{{*/
     startText.style.display = 'inline-block';
     startText.style.marginBottom = '3px';
     startText.style.paddingBottom = '3px';
-    setText(startText, 'First notification (may only be changed before initial execution):');
+    setText(startText, 'First notification (may only be changed before initial reminder is sent):');
     startTime = createDateInput();
     startTime.name = 'first';
     startTime.style.marginBottom = '10px';/*}}}*/
@@ -2666,7 +2666,7 @@ function openReminders() {/*{{{*/
     finiteText2.style.display = 'inline-block';
     finiteText2.style.marginTop = '5px';
     finiteText2.style.marginBottom = '5px';
-    setText(finiteText2, '\u00a0\u00a0occurences');/*}}}*/
+    setText(finiteText2, '\u00a0\u00a0reminders');/*}}}*/
 
     deadline = element('input');/*{{{*/
     deadline.type = 'radio';

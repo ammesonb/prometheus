@@ -268,7 +268,8 @@ CREATE TABLE reminders (
     user_id integer NOT NULL,
     recipient character varying,
     subject character varying,
-    first timestamp with time zone
+    first timestamp with time zone,
+    count integer DEFAULT 0
 );
 
 
