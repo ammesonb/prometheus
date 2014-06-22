@@ -354,7 +354,7 @@ function openNotes() { /*{{{*/
 
                 switch(status) {
                     case 'success':
-                        setText(errorText, 'Saved at ' + padTime(new Date().getHours()) + ':' + padTime(new Date().getMinutes()) + ':' + padTime(new Date().getSeconds()));
+                        setText(errorText, 'Saved at ' + getTimeFromString(new Date().toString()));
                         break;
                     case 'none':
                         setText(errorText, 'Update failed - no matching note found!');
@@ -709,7 +709,7 @@ function deadlineToDate(deadline) { /*{{{*/
 
 function getTimeFromString(dateString) { /*{{{*/
     time = dateString.split(' ')[4].split(':')
-    return time[0] + ':' + time[1]
+    return padTime(time[0]) + ':' + padTime(time[1])
 } /*}}}*/
 
 function makeBlankTask(project) { /*{{{*/
@@ -2774,8 +2774,7 @@ function openReminders() {/*{{{*/
                 if (this.responseText.indexOf('success') != -1) {
                     response = this.responseText;
                     errorP.style.color = 'green';
-                    setText(errorP, 'Saved at ' + padTime(new Date().getHours()) + ':' +
-                      padTime(new Date().getMinutes()) + ':' + padTime(new Date().getSeconds()));
+                    setText(errorP, 'Saved at ' + getTimeFromString(new Date().toString()));
                     setTimeout(function() {
                         fetchReminders();
                         setTimeout(function() {
