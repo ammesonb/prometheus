@@ -2732,7 +2732,7 @@ function openReminders() {/*{{{*/
 
             if (input.name == 'first') {/*{{{*/
                 first = input.value;
-                if (first.value == '' || /[a-su-zA-SU-Z]/.test(first)) {
+                if (first == '' || /[a-su-zA-SU-Z]/.test(first)) {
                     setText(errorP, 'You must include a start time');
                     return;
                 }/*}}}*/

@@ -2,6 +2,7 @@
 
 use Date::Simple qw(date today);
 use Date::Parse qw(str2time);
+use POSIX qw(strftime);
 use File::Temp qw(tempfile);
 use File::Slurp;
 use List::MoreUtils qw(after_incl);
@@ -13,7 +14,13 @@ my $dbh = DBI->connect('DBI:Pg:dbname=prometheus', 'root');
 
 my $mode = shift;
 my $id = shift;
-my %reminder;
+
+# Get reinder information #{{{
+my $cmd = $dbh->prepare("SELECT * FROM reminders WHERE id = $id");
+$cmd->execute();
+my $remRef = $cmd->fetchrow_hashref();
+my %reminder = %$remRef;
+$cmd->finish(); #}}}
 
 sub scheduleReminder { #{{{
     my $id = shift;
@@ -23,7 +30,7 @@ sub scheduleReminder { #{{{
     $mon = int($mon) + 1;
     $year = int($year) + 1900;
     my ($file, $filename) = tempfile();
-    `echo \"perl /var/www/update_reminder.cgi r $id\" | at $hour:$min $year-$mon-$mday 2> $filename`;
+    `echo \"perl /var/www/update_reminder.pl r $id\" | at $hour:$min $year-$mon-$mday 2> $filename`;
     my $jobID = read_file($filename);
     $jobID =~ s/^.*job ([0-9]+) at.*$/$1/s;
     $dbh->do("UPDATE reminders SET job_id = $jobID WHERE id = $id");
@@ -31,21 +38,16 @@ sub scheduleReminder { #{{{
 
 # Newly created reminder #{{{
 if ($mode eq 'c') {
-    scheduleReminder($id, $reminder{'first'}); #}}}
+    scheduleReminder($id, str2time($reminder{'next'})); #}}}
 # Run reminder #{{{
 } elsif ($mode eq 'r') {
-    # Get reinder information #{{{
-    my $cmd = $dbh->prepare("SELECT * FROM reminders WHERE id = $id");
-    $cmd->execute();
-    my $remRef = $cmd->fetchrow_hashref();
-    my %reminder = %$remRef; #}}}
 
     # Send reminder #{{{
     if ($reminder{'type'} eq 's') {
     } elsif ($reminder{'type'} eq 'e') {
         my $message = $reminder{'message'};
         $message =~ s/"/\\\\"/g;
-        `su prometheus-reminder-daemon -c "echo \"$message\" | mail -s \"$reminder{'subject'}\" $reminder{'recipient'}"`;
+        `su prometheus-reminder-daemon -c "echo \\\"$message\\\" | mail -s \\\"$reminder{'subject'}\\\" $reminder{'recipient'}"`;
     } #}}}
 
     # Determine next execution time #{{{
@@ -88,13 +90,14 @@ if ($mode eq 'c') {
         my $year = int(substr($next, 0, 4));
         my $yearGap = int(substr($repeat, 1));
         $year += $yearGap;
-        $next = str2time(substr($next, 0, 4, $year));
+        substr($next, 0, 4, $year);
+        $next = str2time($next);
     } #}}}
 
     # Check if this is last reminder #{{{
     my $difference = $next - str2time($reminder{'next'});
     my $first = str2time($reminder{'first'});
-    my $duration = str2time($reminder{'duration'});
+    my $duration = $reminder{'duration'};
     my $completed = 0;
     if (substr($duration, 0, 1) eq 'd') {
         my $endTime = str2time(substr($duration, 1));
@@ -110,6 +113,8 @@ if ($mode eq 'c') {
     # Otherwise schedule next runtime #{{{
     } else {
         scheduleReminder($id, $next);
+        my $strNext = strftime('%Y-%m-%d %H:%M:00-0400', localtime $next);
+        $dbh->do("UPDATE reminders SET next = '$strNext', count = count + 1 WHERE id = $id");
     } #}}} #}}}
 # Update reminder #{{{
 # If being updated, that means it will not have gone over its expected runtime
@@ -118,7 +123,7 @@ if ($mode eq 'c') {
 } elsif ($mode eq 'u') {
     `atrm $reminder{'job_id'}`;
     if (str2time($reminder{'first'}) > `date +%s`) { #{{{
-        scheduleReminder($id, $reminder{'first'}); #}}}
+        scheduleReminder($id, str2time($reminder{'first'})); #}}}
     } else { #{{{
         my $next = 0;
         # If using a simple offset, find next occurrence after now #{{{
@@ -136,12 +141,13 @@ if ($mode eq 'c') {
                     $nextMonth += $gap;
                     if ($nextMonth > 12) {$nextMonth -= 12;}
                     if ($nextMonth < 10) {$nextMonth = "0$nextMonth";}
-                    $strNext = substr($strNext, 5, 2, $nextMonth);
+                    substr($strNext, 5, 2, $nextMonth);
                     $next = str2time($strNext); #}}}
                 } elsif ($offset eq 'y') { #{{{
                     my $nextYear = int(substr($strNext, 0, 4));
                     $nextYear += $gap;
-                    $next = str2time(substr($strNext, 0, 4, $nextYear));
+                    substr($strNext, 0, 4, $nextYear);
+                    $next = str2time($strNext);
                 } #}}}
             } #}}} #}}}
         # If using several days in a week #{{{
@@ -174,6 +180,7 @@ if ($mode eq 'c') {
     my @jobIDs = keys(%data);
     my $job = $jobIDs[0];
     `atrm $job`;
+    $cmd->finish();
 } #}}}
 
 $dbh->disconnect();
