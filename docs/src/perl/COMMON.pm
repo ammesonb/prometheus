@@ -181,6 +181,19 @@ sub checkSession { #{{{
     return 0;
 } #}}}
 
+sub reIndexHash { #{{{
+    my $hashRef = shift;
+    my $newIndex = shift;
+    my %hash = %$hashRef;
+
+    my %newHash;
+    foreach(keys(%hash)) {
+        $newHash{$hash{$_}{$newIndex}} = $hash{$_};
+    }
+
+    return %newHash;
+} #}}}
+
 sub connectToDB { #{{{
     my $session = shift;
     my $dbh = DBI->connect("DBI:Pg:dbname=prometheus", "root");

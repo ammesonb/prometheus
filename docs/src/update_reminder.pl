@@ -1,5 +1,6 @@
 #!/usr/bin/perl -w
 
+use lib '/var/www/perl';
 use Date::Simple qw(date today);
 use Date::Parse qw(str2time);
 use POSIX qw(strftime);
@@ -8,6 +9,7 @@ use File::Slurp;
 use List::MoreUtils qw(after_incl);
 use DBI;
 use DBD::Pg;
+use COMMON;
 use strict;
 
 my $dbh = DBI->connect('DBI:Pg:dbname=prometheus', 'root');
@@ -43,12 +45,28 @@ if ($mode eq 'c') {
 } elsif ($mode eq 'r') {
 
     # Send reminder #{{{
+    my $recipient = $reminder{'recipient'};
+    my $subject = '';
+    my $message = $reminder{'message'};
+    $message =~ s/"/\\\\"/g;
     if ($reminder{'type'} eq 's') {
+        my @recipients = split(/, */, $recipient);
+        $recipient = '';
+        my $cmd = $dbh->prepare('SELECT * FROM sms');
+        $cmd->execute();
+        my $contactsRef = $cmd->fetchall_hashref(['id']);
+        $cmd->finish();
+        my %contacts = COMMON::reIndexHash($contactsRef, 'name');
+        foreach(@recipients) {
+            $recipient .= "'" . $contacts{$_}{'address'} . "', ";
+        }
+        $recipient = substr($recipient, 0, -2);
+        `echo $message | msmtp -t $recipient`;
     } elsif ($reminder{'type'} eq 'e') {
-        my $message = $reminder{'message'};
-        $message =~ s/"/\\\\"/g;
-        `su prometheus-reminder-daemon -c "echo \\\"$message\\\" | mail -s \\\"$reminder{'subject'}\\\" $reminder{'recipient'}"`;
-    } #}}}
+        $subject = " -s \\\"$reminder{'subject'}\\\"";
+        `su prometheus-reminder-daemon -c "echo \\\"$message\\\" | mail$subject $recipient"`;
+    }
+    #}}}
 
     # Determine next execution time #{{{
     my $next = $reminder{'next'};
