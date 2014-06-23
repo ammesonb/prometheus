@@ -241,11 +241,14 @@ sub searchTable { #{{{
     my $dbh = connectToDB($session);
 
     # Create query #{{{
-    my $query = "SELECT " . join(', ', @columns) . " FROM $tableName WHERE ";
-    for (my $i = 0; $i <= $#logic; $i++) {
-        $query .= "$searchColumns[$i] $operators[$i] $patterns[$i] $logic[$i] ";
+    my $query = "SELECT " . join(', ', @columns) . " FROM $tableName";
+    if (@searchColumns) {
+        $query .= " WHERE ";
+        for (my $i = 0; $i <= $#logic; $i++) {
+            $query .= "$searchColumns[$i] $operators[$i] $patterns[$i] $logic[$i] ";
+        }
+        $query .= "$searchColumns[$#searchColumns] $operators[$#operators] $patterns[$#patterns]"; #}}}
     }
-    $query .= "$searchColumns[$#searchColumns] $operators[$#operators] $patterns[$#patterns]"; #}}}
     $query .= " GROUP BY " . join(', ', @groupColumns) if ($useAgg);
 
     # Execute query #{{{

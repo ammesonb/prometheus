@@ -56,7 +56,12 @@ if ($mode == 0) { #{{{
         }
 
         $subject = $q->param('subject');
-        if (not COMMON::checkPrintable($subject)) {print 'Invalid subject'; exit;}
+        if (not COMMON::checkPrintable($subject)) {print 'Invalid subject'; exit;} #}}}
+    } elsif ($type eq 's') { #{{{
+        $recipient = $q->param('recipient');
+        if (not ($recipient =~ /^[A-Za-z ]+(, *[A-Za-z ])*$/)) {
+            print 'Invalid recipients';
+        }
     } #}}}
 
     my $message = $q->param('message');
@@ -72,10 +77,9 @@ if ($mode == 0) { #{{{
     my $duration = $q->param('duration');
     if (not COMMON::checkPrintable($duration)) {print 'Invalid duration'; exit;}
 
-    my @cols = ('user_id', 'type', 'message', 'next', 'repeat', 'duration');
-    my @vals = ($session->param('user_id'), "'$type'", "'$message'", "'$first'", "'$repeat'", "'$duration'");
+    my @cols = ('user_id', 'type', 'recipient', 'message', 'next', 'repeat', 'duration');
+    my @vals = ($session->param('user_id'), "'$type'", "'$recipient'", "'$message'", "'$first'", "'$repeat'", "'$duration'");
     if ($type eq 'e') {
-        push(@cols, 'recipient');
         push(@cols, 'subject');
         push(@vals, "'$recipient'");
         push(@vals, "'$subject'");
@@ -100,6 +104,16 @@ if ($mode == 0) { #{{{
     if (not ($id =~ /^[0-9]+$/)) {print 'Bad id'; exit;}
     my $rows = COMMON::deleteFromTable($session, 'reminders', ['id'], ['='], [$id], []);
     print 'success' if ($rows);
-    print 'fail' if (not $rows);
+    print 'fail' if (not $rows); #}}}
+} elsif ($mode == 3) { #{{{
+    my $smsContactsRef = COMMON::searchTable($session, 'sms', ['id', 'name'], [], [], [], []);
+    my %smsContacts = %$smsContactsRef;
+    my @keys = keys(%smsContacts);
+
+    my @contacts;
+    foreach(@keys) {
+        push(@contacts, $smsContacts{$_}{'name'});
+    }
+    print encode_json(\@contacts);
 } #}}}
 exit;

@@ -10,6 +10,7 @@ var subProjects = [];
 var projectsByID = [];
 var projectHierarchy = [];
 var reminders = [];
+var smsContacts = [];
 /*}}}*/
 
 function alertNoAuth() {/*{{{*/
@@ -2248,18 +2249,32 @@ function fetchReminders() {/*{{{*/
     getRemindersReq.send('mode=0');
     if (getRemindersReq.responseText == 'noauth') {
         alert('Session timed out! Please copy any unsaved changes then refresh the page.');
+        return;
     } else if (getRemindersReq.responseText == 'Bad request!') {
         alert('Invalid request! Please copy any unsaved changes then refresh the page.');
+        return;
     }
     reminders = JSON.parse(getRemindersReq.responseText);
+
+    getContactsReq = createPostReq('reminders.cgi', false);
+    getContactsReq.send('mode=3');
+    if (getContactsReq.responseText == 'noauth') {
+        alert('Session timed out! Please copy any unsaved changes then refresh the page.');
+        return;
+    } else if (getContactsReq.responseText == 'Bad request!') {
+        alert('Invalid request! Please copy any unsaved changes then refresh the page.');
+        return;
+    }
+    smsContacts = JSON.parse(getContactsReq.responseText);
 }/*}}}*/
 
 function makeBlankReminder(type) {/*{{{*/
     reminder = new Object();
     reminder.id = -1;
-    reminder.message = '';
     reminder.type = type;
-    if (type == 'e') {reminder.recipient = ''; reminder.subject = '';}
+    reminder.recipient = ''; 
+    reminder.message = '';
+    if (type == 'e') {reminder.subject = '';}
     reminder.first = '';
     reminder.repeat = 'o';
     reminder.duration = 'f1';
@@ -2434,7 +2449,7 @@ function openReminders() {/*{{{*/
         next = this.nextElementSibling;
         while (next.name != 'message') {
             if (next.tagName == 'INPUT') {
-                if (this.value == 's') {next.disabled = true; next.value = 'N/A';}
+                if (this.value == 's' && next.name == 'subject') {next.disabled = true; next.value = 'N/A';}
                 else {next.disabled = false; next.value = '';}
             }
             next = next.nextElementSibling;
@@ -2720,14 +2735,30 @@ function openReminders() {/*{{{*/
                         for (r = 0; r < recipients.length; r++) {
                             recip = recipients[r];
                             if (!/ *[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}/.test(recip)) {
-                                setText(errorP, 'Recipient ' + r + ' is not valid');
+                                setText(errorP, 'Recipient ' + recip + ' is not valid');
                                 return;
                             }
                         }
                     }/*}}}*/
                 } else if (input.name == 'subject') {/*{{{*/
                     subject = input.value;
-                }/*}}}*/
+                }/*}}}*/ /*}}}*/
+            } else if (type == 's' && input.name == 'recipient') {/*{{{*/
+                recipient = input.value;
+                if (recipient == '' ) {
+                    setText(errorP, 'You must specify at least one recipient');
+                    return;
+                } else {
+                    recipients = recipient.split(',');
+                    for (r = 0; r < recipients.length; r++) {
+                        recip = recipients[r];
+                        recip = recip.replace(/^ +| +$/g, '');
+                        if (smsContacts.indexOf(recip) == -1) {
+                            setText(errorP, 'Contact ' + recip + ' does not exist!');
+                            return;
+                        }
+                    }
+                }
             }/*}}}*/
 
             if (input.name == 'first') {/*{{{*/
@@ -2793,11 +2824,11 @@ function openReminders() {/*{{{*/
             }
         };/*}}}*/
 
-        template = "mode=1&id=%s&type=%s&message=%s&first=%s&repeat=%s&duration=%s";
-        parameters = sprintf(template, this.parentElement.getAttribute('data-id'), type, message, first, repeat, duration);
+        template = "mode=1&id=%s&type=%s&recipient=%s&message=%s&first=%s&repeat=%s&duration=%s";
+        parameters = sprintf(template, this.parentElement.getAttribute('data-id'), type, recipient, message, first, repeat, duration);
 
         if (type == 'e') {
-            parameters += '&recipient=' + recipient + '&subject=' + subject;
+            parameters += '&subject=' + subject;
         }
         saveReminderReq.send(parameters);
     };/*}}}*/
@@ -2944,21 +2975,21 @@ function openReminder(reminder, reminderEditor) {/*{{{*/
             e.value = reminder.type;/*}}}*/
         } else if (e.tagName == 'INPUT') {/*{{{*/
             if (reminder.type == 's') {/*{{{*/
-                if (e.name == 'recipient' || e.name == 'subject') {
+                if (e.name == 'subject') {
                     e.value = 'N/A';
                     e.disabled = true;
                 }/*}}}*/
             } else {/*{{{*/
-                if (e.name == 'recipient') {
-                    e.value = reminder.recipient;
-                    e.disabled = false;
-                } else if (e.name == 'subject') {
+                if (e.name == 'subject') {
                     e.value = reminder.subject;
                     e.disabled = false;
                 }
             }/*}}}*/
 
-            if (e.name == 'first') {/*{{{*/
+            if (e.name == 'recipient') {/*{{{*/
+                e.value = reminder.recipient;
+            }/*}}}*/
+            else if (e.name == 'first') {/*{{{*/
                 if (reminder.next > reminder.first) {e.disabled = true;}
                 t = reminder.first;
                 if (t != '') {
