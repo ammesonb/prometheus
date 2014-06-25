@@ -77,8 +77,8 @@ if ($mode == 0) { #{{{
     my $duration = $q->param('duration');
     if (not COMMON::checkPrintable($duration)) {print 'Invalid duration'; exit;}
 
-    my @cols = ('user_id', 'type', 'recipient', 'message', 'next', 'repeat', 'duration');
-    my @vals = ($session->param('user_id'), "'$type'", "'$recipient'", "'$message'", "'$first'", "'$repeat'", "'$duration'");
+    my @cols = ('user_id', 'type', 'recipient', 'message', 'next', 'first', 'repeat', 'duration');
+    my @vals = ($session->param('user_id'), "'$type'", "'$recipient'", "'$message'", "'$first'", "'$first'", "'$repeat'", "'$duration'");
     if ($type eq 'e') {
         push(@cols, 'subject');
         push(@vals, "'$recipient'");
@@ -93,8 +93,14 @@ if ($mode == 0) { #{{{
         my %ids = %$idRef;
         my @ids = keys(%ids);
         $id = $ids[0];
+        if ($rows) {
+            `sudo update_reminder c $id`;
+        }
     } else {
         $rows = COMMON::updateTable($session, 'reminders', \@cols, \@vals, ['id'], ['='], [$id], []);
+        if ($rows) {
+            `sudo update_reminder u $id`;
+        }
     }
 
     print "$id-success" if ($rows);
@@ -102,6 +108,7 @@ if ($mode == 0) { #{{{
 } elsif ($mode == 2) { #{{{
     my $id = $q->param('id');
     if (not ($id =~ /^[0-9]+$/)) {print 'Bad id'; exit;}
+    `sudo update_reminder d $id`;
     my $rows = COMMON::deleteFromTable($session, 'reminders', ['id'], ['='], [$id], []);
     print 'success' if ($rows);
     print 'fail' if (not $rows); #}}}
