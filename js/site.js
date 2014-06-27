@@ -117,6 +117,11 @@ function createPostReq(url, mode) { /*{{{*/
     return req;
 } /*}}}*/
 
+function reqFailed(req) {/*{{{*/
+    return ((req.readyState == 4 && req.status != 200) ||
+      (req.readyState ==4 && req.status == 200 && req.responseText != 'success'));
+}/*}}}*/
+
 function login() { /*{{{*/
     elems = document.getElementsByTagName('input');
     a = elems[0];
@@ -3355,6 +3360,21 @@ function viewAccount() { /*{{{*/
                         domainSelect.appendChild(o);
                         if (useNightTheme()) {switchToNight(o);}
                     }
+                    domainSelect.setAttribute('data-id', user.id);
+                    domainSelect.onfocus = function() {this.setAttribute('data-old', this.value);}
+                    domainSelect.onchange = function() {/*{{{*//*{{{*/
+                        select = this;
+                        domainReq = createPostReq('account.cgi', true);
+
+                        domainReq.onreadystatechange = function() {
+                            if (reqFailed(this)) {
+                                select.value = select.getAttribute('data-old');
+                                alert('Failed to save domain!');
+                            }
+                        }
+
+                        domainReq.send('mode=3&field=domain' + this.getAttribute('data-id') + '&value=' + this.value);
+                    };/*}}}*//*}}}*/
                     dCell.appendChild(domainSelect);/*}}}*/
 
                     // Services/*{{{*/
@@ -3374,6 +3394,14 @@ function viewAccount() { /*{{{*/
                     disabled.type = 'checkbox';
                     disabled.name = 'disabled' + user.id;
                     disabled.checked = user.disabled;
+                    disabled.setAttribute('data-id', user.id);
+                    disabled.onchange = function() {/*{{{*/
+                        disableReq = createPostReq('account.cgi', true);
+                        disableReq.onreadystatechange = function() {
+                            if (reqFailed(this)) {alert('Failed to change disable status!');}
+                        }
+                        disableReq.send('mode=3&field=disabled' + this.getAttribute('data-id') + '&value=' + this.checked);
+                    };/*}}}*/
                     diCell.appendChild(disabled);/*}}}*/
 
                     // Delete user /*{{{*/
@@ -3412,6 +3440,31 @@ function viewAccount() { /*{{{*/
                     reset.className = 'normal_text';
                     reset.href = '#';
                     setText(reset, 'Reset password');
+                    reset.setAttribute('data-id', user.id);
+                    reset.setAttribute('data-name', user.username);
+                    reset.onclick = function() {/*{{{*/
+                        conf = confirm('Are you sure you want to reset ' + this.getAttribute('data-name') + '\'s password?');
+                        if (!conf) {return;}
+                        newPass = '';
+                        choices = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789;,.<>?-=_+'
+                        for (c = 0; c < 15; c++) {
+                            newPass += choices.charAt(Math.floor(Math.random() * choices.length));
+                        }
+
+                        resetPassReq = createPostReq('account.cgi', true);
+
+                        resetPassReq.onreadystatechange = function() {
+                            if (this.readyState == 4 && this.status == 200) {
+                                if (this.responseText == 'success') {
+                                    alert('The user\'s new password is: ' + newPass + '<br>Please transmit it to them via a secure channel.');
+                                } else if (this.responseText == 'noauth') {
+                                    alertNoAuth();
+                                } else {alert('Failed to reset password!');}
+                            }
+                        };
+
+                        resetPassReq.send('mode=3&field=pw' + this.getAttribute('data-id') + '&value=\'' + CryptoJS.SHA512(newPass).toString() + '\'');
+                    }/*}}}*/
                     rCell.appendChild(reset);/*}}}*/
 
                     // Add elements/*{{{*/
@@ -3429,7 +3482,6 @@ function viewAccount() { /*{{{*/
                 accountPanel.appendChild(userTable);
                 setTimeout(function() {hServices.style.width = hServices.offsetWidth + 15 + 'px';}, 50);
 
-                // Ask for email to send reset password to
                 // Edit services link with pop-up window
                 // Plus at top/bottom for new users
             }/*}}}*/

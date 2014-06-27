@@ -76,7 +76,17 @@ if ($mode == 0) { #{{{
     print 'success' if ($rows == 1);
     print 'none' if ($rows == 0);
     print 'extra' if ($rows > 1); #}}}
-} elsif ($mode == 3) {
+} elsif ($mode == 3) { #{{{
+    my $field = $q->param('field');
+    my $id = $field;
+    $id =~ s/[^0-9]//g;
+    if (not $id) {print 'Bad ID';}
+    $field =~ s/[0-9]+//;
+    my $value = $q->param('value');
+
+    my $rows = COMMON::updateTable($session, 'users', [$field], [$value], ['id'], ['='], [$id], []);
+    print 'success' if ($rows);
+    print 'fail' if (not $rows) #}}}
 } elsif ($mode == 4) { #{{{
     my $id = $q->param('id');
     if ($id !~ /^[0-9]+$/) {
