@@ -60,6 +60,8 @@ $session->param('is_admin', $userData{$userID}{'is_admin'});
 $session->expire('is_admin', '+30m');
 $session->param('is_shared', $userData{$userID}{'is_shared'});
 $session->expire('is_shared', '+30m');
+$session->param('domain', $userData{$userID}{'domain'});
+$session->expire('domain', '+30m');
 $session->param('logged_in', 1) if ($response == 0);
 print $q->redirect('/') if ($response == 0);
 $session->param('blocked', 1) if ($response == 3);

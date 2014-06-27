@@ -3047,17 +3047,30 @@ function viewAccount() { /*{{{*/
     privilegesReq.onreadystatechange = function() { /*{{{*/
         if (privilegesReq.readyState == 4 && privilegesReq.status == 200) {
             data = privilegesReq.responseText;
-            data = data.split(';');
+            data = JSON.parse(data);
             accountType = data[0];
-            services = data[1];
-            serviceP = element('p');
-            serviceP.className = 'normal_text';
-            setText(serviceP, 'You may access the following services: ' + services);
-            if (useNightTheme()) {serviceP.className += ' night';}
-            accountPanel.appendChild(serviceP);
+            domains = data[1];
+            services = data[2];
+            myServices = data[3];
 
-            // If account isn't shared, show password box and theme
-            if (accountType != 'shared') { /*{{{*/
+            myDomain = domains[domain].name;
+
+            if (username != 'root') {/*{{{*/
+                serviceP = element('p');
+                serviceP.className = 'normal_text';
+                setText(serviceP, 'You may access the following services: ' + services);
+                domainP = element('p');
+                domainP.className = 'normal_text';
+                setText(domainP, 'You may access the server from ' + myDomain);
+
+                if (useNightTheme()) {switchToNight(serviceP, domainP);}
+
+                accountPanel.appendChild(serviceP);
+                accountPanel.appendChild(domainP);
+            }/*}}}*/
+    
+            // If account isn't shared, show password box and theme/*{{{*/
+            if (accountType != 'shared') { 
                 passText = element('p');
                 passText.className = 'normal_section_header';
                 passText.style.paddingBottom = '0px';
@@ -3207,6 +3220,7 @@ function viewAccount() { /*{{{*/
                 iBox.appendChild(p);
                 pBox.appendChild(error_p);
                 pBox.appendChild(iBox);
+                pBox.appendChild(element('br'));
                 pBox.appendChild(updateButton);
 
                 accountPanel.appendChild(passText);
@@ -3217,7 +3231,7 @@ function viewAccount() { /*{{{*/
                 // Elements /*{{{*/
                 themeP = element('p');
                 themeP.className = 'normal_text';
-                setText(themeP, 'Night theme: ');
+                setText(themeP, 'Night theme:&nbsp;&nbsp;');
                 themeS = element('select');
                 themeS.setAttribute('data-error-id', 'theme_error_' + id);
                 opt1 = element('option');
@@ -3274,8 +3288,133 @@ function viewAccount() { /*{{{*/
                 themeS.appendChild(opt3);
                 themeP.appendChild(themeS);
                 themeP.appendChild(themeError);
+                accountPanel.appendChild(element('br'));
+                accountPanel.appendChild(element('br'));
                 accountPanel.appendChild(themeP);
             } /*}}}*/
+
+            if (username == 'root') {/*{{{*/
+                users = data[4];
+                uKeys = Object.keys(users);
+                dKeys = Object.keys(domains);
+
+                // Table headers/*{{{*/
+                userTable = element('table');
+                userTable.className = 'notes';
+                userTable.style.width = 'auto';
+                headerRow = element('tr');
+                hName = element('th');
+                setText(hName, 'Username');
+                hDomain = element('th');
+                setText(hDomain, 'Domain');
+                hServices = element('th');
+                setText(hServices, 'Services');
+                hDisable = element('th');
+                setText(hDisable, 'Disabled');
+                hDelete = element('th');
+                setText(hDelete, 'Delete user');
+                hReset = element('th');
+                setText(hReset, 'Reset password');
+
+                if (useNightTheme()) {switchToNight(userTable, hName, hDomain, hServices, hDisable, hDelete, hReset);}
+                headerRow.appendChild(hName);
+                headerRow.appendChild(hDomain);
+                headerRow.appendChild(hServices);
+                headerRow.appendChild(hDisable);
+                headerRow.appendChild(hDelete);
+                headerRow.appendChild(hReset);
+                for (c = 0; c < 6; c++) {
+                    headerRow.children[c].style.paddingRight = '5px';
+                }
+                userTable.appendChild(headerRow);/*}}}*/
+
+                for (u = 0; u < uKeys.length; u ++) {/*{{{*/
+                    user = users[uKeys[u]];
+                    if (user.username == 'root') {continue;}
+                    row = element('tr');
+
+                    // Name input/*{{{*/
+                    nCell = element('td');
+                    nCell.style.paddingRight = '5px';
+                    nInput = element('input');
+                    nInput.type = 'text';
+                    nInput.name = 'name' + user.id;
+                    nInput.value = user.username;
+                    nCell.appendChild(nInput);/*}}}*/
+
+                    // Domain selection/*{{{*/
+                    dCell = element('td');
+                    domainSelect = element('select');
+                    domainSelect.name = 'domain' + user.id;
+                    for (d = 0; d < dKeys.length; d++) {
+                        k = dKeys[d];
+                        o = element('option');
+                        setText(o, domains[k].title);
+                        o.value = domains[k].id;
+                        if (o.value == user.domain) {o.selected = true;}
+                        domainSelect.appendChild(o);
+                        if (useNightTheme()) {switchToNight(o);}
+                    }
+                    dCell.appendChild(domainSelect);/*}}}*/
+
+                    // Services/*{{{*/
+                    sCell = element('td');
+                    sSpan = element('span');
+                    sLink = element('a');
+                    sLink.className = 'normal_text';
+                    setText(sLink, 'Edit services');
+                    sLink.href = '#';
+                    sSpan.appendChild(sLink);
+                    sCell.appendChild(sSpan);/*}}}*/
+
+                    // Disabled/*{{{*/
+                    diCell = element('td');
+                    diCell.style.textAlign = 'center';
+                    disabled = element('input');
+                    disabled.type = 'checkbox';
+                    disabled.name = 'disabled' + user.id;
+                    disabled.checked = user.disabled;
+                    diCell.appendChild(disabled);/*}}}*/
+
+                    // Delete user /*{{{*/
+                    deCell = element('td');
+                    deCell.style.textAlign = 'center';
+                    deleteLink = element('a');
+                    deleteImg = element('img');
+                    deleteImg.src = 'images/x.png';
+                    deleteImg.alt = 'Delete user';
+                    deleteImg.title = 'Delete user';
+                    deleteLink.appendChild(deleteImg);
+                    deleteLink.href = '#';
+                    deCell.appendChild(deleteLink);/*}}}*/
+
+                    // Reset user password/*{{{*/
+                    rCell = element('td');
+                    reset = element('a');
+                    reset.className = 'normal_text';
+                    reset.href = '#';
+                    setText(reset, 'Reset password');
+                    rCell.appendChild(reset);/*}}}*/
+
+                    // Add elements/*{{{*/
+                    row.appendChild(nCell);
+                    row.appendChild(dCell);
+                    row.appendChild(sCell);
+                    row.appendChild(diCell);
+                    row.appendChild(deCell);
+                    row.appendChild(rCell);
+                    userTable.appendChild(row);/*}}}*/
+                    
+                    if (useNightTheme()) {switchToNight(nCell, nInput, dCell, domainSelect, sCell, sLink, diCell, disabled, deCell, deleteLink, rCell, reset);}
+                }/*}}}*/
+
+                accountPanel.appendChild(userTable);
+                setTimeout(function() {hServices.style.width = hServices.offsetWidth + 15 + 'px';}, 50);
+
+                // Ask for email to send reset password to
+                // Edit services link with pop-up window
+                // Plus at top/bottom for new users
+            }/*}}}*/
         }
     }; /*}}}*/
 

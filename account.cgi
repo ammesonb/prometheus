@@ -24,11 +24,29 @@ if (not ($mode =~ /^[0-9]+$/)) { #{{{
     exit;
 } #}}}
 
+# Need to use JSON instead - include all domains and services, not just ones which the user has access to
 if ($mode == 0) { #{{{
-    if ($session->param('is_shared')) {print 'shared';}
-    elsif ($session->param('is_admin')) {print 'admin';}
-    else {print 'normal';}
-    print ';' . $session->param('services'); #}}}
+    my $domainRef = COMMON::getTable($session, 'domains');
+    my %domains = %$domainRef;
+    my $serviceRef = COMMON::getTable($session, 'services');
+    my %services = %$serviceRef;
+    my $myServicesRef = COMMON::searchTable($session, 'user_services', ['service_id'], ['user_id'], ['='], [$session->param('user_id')], [], 0, 'service_id');
+    my %myServices = %$myServicesRef;
+    my @myServices = keys(%myServices);
+    print '[';
+    if ($session->param('is_shared')) {print '"shared",';}
+    elsif ($session->param('is_admin')) {print '"admin",';}
+    else {print '"normal",';}
+    print encode_json(\%domains) . ',';
+    print encode_json(\%services) . ',';
+    print encode_json(\@myServices);
+    if ($session->param('user') eq 'root') {
+        print ',';
+        my $usersRef = COMMON::getTable($session, 'users');
+        my %users = %$usersRef;
+        print encode_json(\%users);
+    }
+    print ']'; #}}}
 } elsif ($mode == 1) { #{{{
     my $userID = $session->param('user_id');
     my $newPass = $q->param('p');
@@ -58,5 +76,7 @@ if ($mode == 0) { #{{{
     print 'success' if ($rows == 1);
     print 'none' if ($rows == 0);
     print 'extra' if ($rows > 1); #}}}
+} elsif ($mode == 3) {
+} elsif ($mode == 4) {
 }
 exit;

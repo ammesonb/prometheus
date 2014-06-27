@@ -18,6 +18,9 @@ sub init { #{{{
     my $authorized = checkSession($session);
 
     print $session->header();
+    my $userID = $session->param('user_id');
+    my $domain = $session->param('domain');
+    if (not $userID) {$userID = "''"; $domain = "''";}
     my $html = "<!DOCTYPE html>\n";
     $html .= "<html>\n";
     $html .= "<head>\n"; #{{{
@@ -29,6 +32,8 @@ sub init { #{{{
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/site.js\"></script>\n";
     $html .= $indent . "<script type=\"text/javascript\"> // #{{{
     var username = '" . $session->param('user') . "';
+    var userid = $userID;
+    var domain = $domain;
     window.onload = function() {
         document.body.style.backgroundSize = window.innerWidth + \"px \" + window.innerHeight + \"px\";
         theme = document.body.getAttribute('data-night-theme');

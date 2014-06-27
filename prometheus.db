@@ -154,7 +154,8 @@ SET default_with_oids = false;
 CREATE TABLE domains (
     id integer NOT NULL,
     name character varying NOT NULL,
-    regex character varying NOT NULL
+    regex character varying NOT NULL,
+    title character varying
 );
 
 
