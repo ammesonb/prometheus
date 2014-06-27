@@ -3345,6 +3345,18 @@ function viewAccount() { /*{{{*/
                     nInput.type = 'text';
                     nInput.name = 'name' + user.id;
                     nInput.value = user.username;
+                    nInput.setAttribute('data-id', user.id);
+                    nInput.setAttribute('data-old', user.username);
+                    nInput.onblur = function() {/*{{{*/
+                        nameInput = this;
+                        nameReq = createPostReq('account.cgi', true);
+
+                        nameReq.onreadystatechange = function() {
+                            if (reqFailed(this)) {alert('Failed to change username to ' + nameInput.value + '!'); nameInput.value = nameInput.getAttribute('data-old');}
+                            else if (this.readyState == 4){nameInput.setAttribute('data-old', nameInput.value);}
+                        }
+                        nameReq.send('mode=3&field=username' + this.getAttribute('data-id') + '&value=\'' + this.value + '\'');
+                    }/*}}}*/
                     nCell.appendChild(nInput);/*}}}*/
 
                     // Domain selection/*{{{*/
@@ -3456,7 +3468,7 @@ function viewAccount() { /*{{{*/
                         resetPassReq.onreadystatechange = function() {
                             if (this.readyState == 4 && this.status == 200) {
                                 if (this.responseText == 'success') {
-                                    alert('The user\'s new password is: ' + newPass + '<br>Please transmit it to them via a secure channel.');
+                                    alert('The user\'s new password is (without quotes): \'' + newPass + '\'\n\nPlease transmit it to them via a secure channel.');
                                 } else if (this.responseText == 'noauth') {
                                     alertNoAuth();
                                 } else {alert('Failed to reset password!');}
