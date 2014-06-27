@@ -3386,6 +3386,24 @@ function viewAccount() { /*{{{*/
                     deleteImg.title = 'Delete user';
                     deleteLink.appendChild(deleteImg);
                     deleteLink.href = '#';
+                    deleteLink.setAttribute('data-id', user.id);
+                    deleteLink.setAttribute('data-name', user.username);
+                    deleteLink.onclick = function() {
+                        conf = confirm('Are you sure you want to delete ' + this.getAttribute('data-name') + ' ? This will permanently delete ALL of their data!');
+                        if (!conf) {return;}
+                        delUserReq = createPostReq('account.cgi', true);
+
+                        delUserReq.onreadystatechange = function() {/*{{{*/
+                            if (this.readyState == 4 && this.status == 200) {
+                                if (this.responseText == 'success') {alert('Deleted successfully!');}
+                                else if (this.responseText == 'noauth') {alertNoAuth();}
+                                else if (this.responseText == 'failed') {alert('Failed to delete user!');}
+                                else {alert(this.responseText);}
+                            }
+                        };/*}}}*/
+                        
+                        delUserReq.send('mode=4&id=' + this.getAttribute('data-id'));
+                    }
                     deCell.appendChild(deleteLink);/*}}}*/
 
                     // Reset user password/*{{{*/

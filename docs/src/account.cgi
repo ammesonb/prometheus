@@ -77,6 +77,18 @@ if ($mode == 0) { #{{{
     print 'none' if ($rows == 0);
     print 'extra' if ($rows > 1); #}}}
 } elsif ($mode == 3) {
-} elsif ($mode == 4) {
-}
+} elsif ($mode == 4) { #{{{
+    my $id = $q->param('id');
+    if ($id !~ /^[0-9]+$/) {
+        print 'Bad ID';
+    }
+
+    COMMON::deleteFromTable($session, 'notes', ['user_id'], ['='], [$id], []);
+    COMMON::deleteFromTable($session, 'projects', ['user_id'], ['='], [$id], []);
+    COMMON::deleteFromTable($session, 'tasks', ['user_id'], ['='], [$id], []);
+    COMMON::deleteFromTable($session, 'reminders', ['user_id'], ['='], [$id], []);
+    my $rows = COMMON::deleteFromTable($session, 'users', ['id'], ['='], [$id], []);
+    print 'success' if ($rows == 1);
+    print 'fail' if ($rows != 1);
+} #}}}
 exit;
