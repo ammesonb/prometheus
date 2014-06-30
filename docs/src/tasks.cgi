@@ -19,7 +19,7 @@ if (COMMON::checkSession($session)) {
     exit;
 }
 
-if (not ($mode =~ /^[0-9]+$/)) {
+if ($mode !~ /^[0-9]+$/) {
     print 'Bad request!';
     exit;
 }
@@ -54,7 +54,7 @@ if ($mode == 0) { #{{{
     my $name = $q->param('name');
     $name =~ s/'/''/g;
     my $parent = $q->param('parent');
-    if (not ($parent =~ /^-?[0-9]+$/)) {
+    if ($parent !~ /^-?[0-9]+$/) {
         print 'baddata';
         exit;
     }
@@ -71,7 +71,7 @@ if ($mode == 0) { #{{{
 } elsif ($mode == 2) { #{{{
     # Verify parameter integrity #{{{
     my $id = $q->param('id');
-    if (not ($id =~ /^-?[0-9]+$/)) {print 'baddata'; exit;}
+    if ($id !~ /^-?[0-9]+$/) {print 'baddata'; exit;}
     my $name = $q->param('n');
     if (not (COMMON::checkPrintable($name))) {print 'badname'; exit;}
     $name =~ s/'/''/g;
@@ -81,9 +81,9 @@ if ($mode == 0) { #{{{
     if ($desc =~ /^['"]*$/) {$desc = "''";}
     else {$desc = "'$desc'";}
     my $proj = $q->param('pj');
-    if (not ($proj =~ /^[0-9]+$/)) {print 'badproj'; exit;}
+    if ($proj !~ /^[0-9]+$/) {print 'badproj'; exit;}
     my $pri = $q->param('p');
-    if (not ($pri =~ /^[0-9]+$/)) {print 'badpri'; exit;}
+    if ($pri !~ /^[0-9]+$/) {print 'badpri'; exit;}
     my $deadline = $q->param('d');
     if (not (COMMON::checkPrintable($deadline))) {print 'baddead'; exit;} #}}}
 
@@ -133,7 +133,7 @@ if ($mode == 0) { #{{{
     } #}}} #}}}
 } elsif ($mode == 3) { #{{{
     my $id = $q->param('id');
-    if (not ($id =~ /^[0-9]+$/)) {
+    if ($id !~ /^[0-9]+$/) {
         print 'badid';
         exit;
     }
@@ -148,7 +148,7 @@ if ($mode == 0) { #{{{
     else {print 'extra';} #}}}
 } elsif ($mode == 4) { #{{{
     my $id = $q->param('id');
-    if (not ($id =~ /^[0-9]+$/)) {
+    if ($id !~ /^[0-9]+$/) {
         print 'Invalid ID';
         exit;
     }

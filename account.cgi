@@ -20,7 +20,7 @@ if (COMMON::checkSession($session)) { #{{{
     exit;
 } #}}}
 
-if (not ($mode =~ /^[0-9]+$/)) { #{{{
+if ($mode !~ /^[0-9]+$/) { #{{{
     print 'Bad request!';
     exit;
 } #}}}
@@ -60,8 +60,8 @@ if ($mode == 0) { #{{{
 } elsif ($mode == 1) { #{{{
     my $userID = $session->param('user_id');
     my $newPass = $q->param('p');
-    if (not ($userID =~ /^[0-9]+$/)) {print 'badid'; exit;}
-    elsif (not ($newPass =~ /^[0-9a-f]{128}$/)) {print 'baddata'; exit;}
+    if ($userID !~ /^[0-9]+$/) {print 'badid'; exit;}
+    elsif ($newPass !~ /^[0-9a-f]{128}$/) {print 'baddata'; exit;}
     my @updateCols = ('pw');
     my @updateVals = ("'$newPass'");
     my @searchCols = ('id');
@@ -74,7 +74,7 @@ if ($mode == 0) { #{{{
     print 'extra' if ($rows > 1); #}}}
 } elsif ($mode == 2) { #{{{
     my $theme = $q->param('theme');
-    if (not ($theme =~ /^[0-9]$/)) {print 'baddata'; exit;}
+    if ($theme !~ /^[0-9]$/) {print 'baddata'; exit;}
     my @updateCols = ('theme');
     my @updateVals = ($theme);
     my @searchCols = ('id');

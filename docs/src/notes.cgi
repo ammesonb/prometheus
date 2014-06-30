@@ -20,7 +20,7 @@ if (COMMON::checkSession($session) && $mode != 1) { #{{{
     exit;
 } #}}}
 
-if (not ($mode =~ /^[0-2]$/)) { #{{{
+if ($mode !~ /^[0-2]$/) { #{{{
     print 'Bad request!';
     exit;
 } #}}}
@@ -76,7 +76,7 @@ if ($mode == 0) { #{{{
         exit;
     } #}}}
 
-    if (not ($noteID =~ /^[0-9]+$/)) { #{{{
+    if ($noteID !~ /^[0-9]+$/) { #{{{
         print 'badid';
         exit; #}}}
     } elsif (not COMMON::checkPrintable($noteTitle)) { #{{{

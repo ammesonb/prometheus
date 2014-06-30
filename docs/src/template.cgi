@@ -19,7 +19,7 @@ if (COMMON::checkSession($session)) {
     exit;
 }
 
-if (not ($mode =~ /^[0-9]+$/)) {
+if ($mode !~ /^[0-9]+$/) {
     print 'Bad request!';
     exit;
 }

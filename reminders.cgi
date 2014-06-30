@@ -19,7 +19,7 @@ if (COMMON::checkSession($session)) {
     exit;
 }
 
-if (not ($mode =~ /^[0-9]+$/)) {
+if ($mode !~ /^[0-9]+$/) {
     print 'Bad request!';
     exit;
 }
@@ -38,18 +38,18 @@ if ($mode == 0) { #{{{
     print ']'; #}}}
 } elsif ($mode == 1) { #{{{
     my $id = $q->param('id');
-    if (not ($id =~ /-?[0-9]+$/)) {print 'Invalid ID'; exit;}
+    if ($id !~ /-?[0-9]+$/) {print 'Invalid ID'; exit;}
     my $type = $q->param('type');
     my ($recipient, $subject);
     if ($type eq 'e') { #{{{
         $recipient = $q->param('recipient');
         if ($recipient =~ /,/) {
-            if (not ($recipient =~ /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}(, *[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4})*$/i)) {
+            if ($recipient !~ /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}(, *[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4})*$/i) {
                 print 'Invalid email';
                 exit;
             }
         } else {
-            if (not ($recipient =~ /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i)) {
+            if ($recipient !~ /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i) {
                 print 'Invalid email';
                 exit;
             }
@@ -59,7 +59,7 @@ if ($mode == 0) { #{{{
         if (not COMMON::checkPrintable($subject)) {print 'Invalid subject'; exit;} #}}}
     } elsif ($type eq 's') { #{{{
         $recipient = $q->param('recipient');
-        if (not ($recipient =~ /^[A-Za-z ]+(, *[A-Za-z ])*$/)) {
+        if ($recipient !~ /^[A-Za-z ]+(, *[A-Za-z ])*$/) {
             print 'Invalid recipients';
         }
     } #}}}
@@ -107,7 +107,7 @@ if ($mode == 0) { #{{{
     print 'fail' if (not $rows); #}}}
 } elsif ($mode == 2) { #{{{
     my $id = $q->param('id');
-    if (not ($id =~ /^[0-9]+$/)) {print 'Bad id'; exit;}
+    if ($id !~ /^[0-9]+$/) {print 'Bad id'; exit;}
     `sudo update_reminder d $id`;
     my $rows = COMMON::deleteFromTable($session, 'reminders', ['id'], ['='], [$id], []);
     print 'success' if ($rows);
