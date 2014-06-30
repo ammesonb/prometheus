@@ -6,6 +6,7 @@ use CGI::Session;
 use CGI::Carp qw(fatalsToBrowser);
 use JSON;
 use COMMON;
+use List::MoreUtils qw(any);
 use strict;
 
 my $q = new CGI();
@@ -42,6 +43,15 @@ if ($mode == 0) { #{{{
     print encode_json(\@myServices);
     if ($session->param('user') eq 'root') {
         print ',';
+        my $userServicesRef = COMMON::getTable($session, 'user_services');
+        my %userServices = %$userServicesRef;
+        my %uServices;
+        my @ids;
+        foreach(keys(%userServices)) {
+            my $userID = $userServices{$_}{'user_id'};
+            push(@{$uServices{$userID}}, $userServices{$_}{'service_id'});
+        }
+        print encode_json(\%uServices) . ',';
         my $usersRef = COMMON::getTable($session, 'users');
         my %users = %$usersRef;
         print encode_json(\%users);
@@ -98,6 +108,23 @@ if ($mode == 0) { #{{{
     COMMON::deleteFromTable($session, 'tasks', ['user_id'], ['='], [$id], []);
     COMMON::deleteFromTable($session, 'reminders', ['user_id'], ['='], [$id], []);
     my $rows = COMMON::deleteFromTable($session, 'users', ['id'], ['='], [$id], []);
+    print 'success' if ($rows == 1);
+    print 'fail' if ($rows != 1); #}}}
+} elsif ($mode == 5) { #{{{
+    my $user = $q->param('u');
+    if ($user !~ /^[0-9]+$/) {print 'fail'; exit;}
+    my $service = $q->param('s');
+    if ($service !~ /^[0-9]+$/) {print 'fail'; exit;}
+    my $c = $q->param('c');
+    if ($c ne 'true' and $c ne 'false') {print 'fail'; exit;}
+
+    my $rows;
+    if ($c eq 'false') {
+        $rows = COMMON::deleteFromTable($session, 'user_services', ['user_id', 'service_id'], ['=', '='], [$user, $service], ['AND']);
+    } else {
+        $rows = COMMON::insertIntoTable($session, 'user_services', ['user_id', 'service_id'], [$user, $service]);
+    }
+
     print 'success' if ($rows == 1);
     print 'fail' if ($rows != 1);
 } #}}}

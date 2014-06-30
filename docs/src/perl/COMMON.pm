@@ -209,8 +209,10 @@ sub connectToDB { #{{{
 sub getTable { #{{{
     my $session = shift;
     my $tableName = shift;
+    my $idCol = shift;
     my $dbh = connectToDB($session);
-    my $tableRef = $dbh->selectall_hashref("SELECT * FROM $tableName", ["id"]);
+    $idCol = 'id' if (not $idCol);
+    my $tableRef = $dbh->selectall_hashref("SELECT * FROM $tableName", [$idCol]);
     $dbh->disconnect();
     return $tableRef;
 } #}}}
@@ -394,7 +396,6 @@ sub deleteFromTable { #{{{
     $query .= "$deleteCols[$#deleteCols] $deleteOps[$#deleteOps] $deleteValues[$#deleteValues]"; #}}}
 
     my $deletedRows = $dbh->do($query);
-    $dbh->disconnect();
 
     return $deletedRows;
 } #}}}

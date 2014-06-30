@@ -11,6 +11,10 @@ var projectsByID = [];
 var projectHierarchy = [];
 var reminders = [];
 var smsContacts = [];
+var domains = [];
+var services = [];
+var userServices = [];
+var users = [];
 /*}}}*/
 
 function alertNoAuth() {/*{{{*/
@@ -3299,9 +3303,12 @@ function viewAccount() { /*{{{*/
             } /*}}}*/
 
             if (username == 'root') {/*{{{*/
-                users = data[4];
+                userServices = data[4];
+                users = data[5];
                 uKeys = Object.keys(users);
                 dKeys = Object.keys(domains);
+                sKeys = Object.keys(services);
+                usKeys = Object.keys(userServices);
 
                 // Table headers/*{{{*/
                 userTable = element('table');
@@ -3396,6 +3403,72 @@ function viewAccount() { /*{{{*/
                     sLink.className = 'normal_text';
                     setText(sLink, 'Edit services');
                     sLink.href = '#';
+                    sLink.setAttribute('data-id', user.id);
+                    sLink.setAttribute('data-services', JSON.stringify(userServices[user.id]));
+                    sLink.onclick = function() {/*{{{*/
+                        myServices = JSON.parse(this.getAttribute('data-services'));
+                        link = this;
+
+                        wnd = window.open('', '', 'width=600,height=150');
+                        b = wnd.document.body;
+                        b.style.background = '#333';
+                        b.style.color = 'silver';
+                        b.style.fontFamily = 'Arial';
+                        stylesheet = element('link');
+                        stylesheet.rel = 'stylesheet';
+                        stylesheet.type = 'text/css';
+                        stylesheet.href = 'res/style.css';
+                        b.appendChild(stylesheet);
+
+                        title = element('p')
+                        title.style.fontWeight = 'bold';
+                        title.style.fontSize = '14pt';
+                        setText(title, 'Select services');
+                        b.appendChild(title);
+
+                        for (s = 0; s < sKeys.length; s++) {
+                            se = services[sKeys[s]];
+                            d = element('div');
+                            d.style.display = 'inline-block';
+                            d.style.float = 'left';
+                            p = element('p');
+                            p.style.display = 'inline-block';
+                            setText(p, '\u00a0\u00a0' + se.service + '\u00a0');
+
+                            i = element('input');
+                            i.type = 'checkbox';
+                            i.checked = (myServices.indexOf(parseInt(se.id, 10)) != -1);
+                            i.setAttribute('data-id', this.getAttribute('data-id'));
+                            i.setAttribute('data-service', se.id);
+                            i.onclick = function() {
+                                toggleServiceReq = createPostReq('account.cgi', true);
+                                input = this;
+
+                                toggleServiceReq.onreadystatechange = function() {
+                                    if (reqFailed(this)) {
+                                        input.checked = !input.checked;
+                                        alert('Failed to update service!');
+                                    } else if (this.readyState == 4 && this.status == 200) {
+                                        uid = parseInt(input.getAttribute('data-id'), 10);
+                                        sid = parseInt(input.getAttribute('data-service'), 10);
+                                        if (input.checked) {
+                                            userServices[uid].push(sid);
+                                        } else {
+                                            userServices[uid] = userServices[uid].filter(function(e) {return (e != sid);});
+                                        }
+                                        link.setAttribute('data-services', JSON.stringify(userServices[uid]));
+                                    }
+                                };
+
+                                toggleServiceReq.send('mode=5&u=' + this.getAttribute('data-id') + '&s=' + this.getAttribute('data-service') + '&c=' + this.checked);
+                            };
+
+                            d.appendChild(p);
+                            d.appendChild(i);
+                            b.appendChild(d);
+                        }
+
+                    };/*}}}*/
                     sSpan.appendChild(sLink);
                     sCell.appendChild(sSpan);/*}}}*/
 
@@ -3511,5 +3584,5 @@ function viewAccount() { /*{{{*/
     addTab(accountPanel, accountTab);
     switchTab(id);
 } /*}}}*/
- /*}}}*/
+/*}}}*/
 
