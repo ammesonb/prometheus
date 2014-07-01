@@ -11,6 +11,11 @@ use strict;
 my $q = new CGI();
 my $session = CGI::Session->new($q);
 
+if (COMMON::checkFilePermissions($session, 2)) {
+    print 'notmine';
+    exit;
+}
+
 print "Content-type: text/html\r\n\r\n";
 my $mode = $q->param('mode');
 if (COMMON::checkSession($session)) {
@@ -23,6 +28,18 @@ if ($mode !~ /^[0-9]+$/) {
     print 'Bad request!';
     exit;
 }
+
+# Check data permissions #{{{
+my $id;
+if ($mode > 1) {
+    $id = $q->param('id');
+    if ($id =~ /^[0-9]+$/) {
+        if ($mode == 5) {
+            if (COMMON::checkDataPermissions($session, 'projects', $id)) {print 'notmine'; exit;}
+        } elsif (COMMON::checkDataPermissions($session, 'tasks', $id)) {print 'notmine'; exit;}
+    }
+
+} #}}}
 
 if ($mode == 0) { #{{{
     my @returnCols = ('*');
@@ -70,7 +87,6 @@ if ($mode == 0) { #{{{
     print 'fail' if ($inserted == 0); #}}}
 } elsif ($mode == 2) { #{{{
     # Verify parameter integrity #{{{
-    my $id = $q->param('id');
     if ($id !~ /^-?[0-9]+$/) {print 'baddata'; exit;}
     my $name = $q->param('n');
     if (not (COMMON::checkPrintable($name))) {print 'badname'; exit;}
@@ -132,7 +148,6 @@ if ($mode == 0) { #{{{
         print 'success';
     } #}}} #}}}
 } elsif ($mode == 3) { #{{{
-    my $id = $q->param('id');
     if ($id !~ /^[0-9]+$/) {
         print 'badid';
         exit;
@@ -147,7 +162,6 @@ if ($mode == 0) { #{{{
     elsif ($rows == 1) {print 'success';}
     else {print 'extra';} #}}}
 } elsif ($mode == 4) { #{{{
-    my $id = $q->param('id');
     if ($id !~ /^[0-9]+$/) {
         print 'Invalid ID';
         exit;

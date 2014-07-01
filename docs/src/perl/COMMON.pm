@@ -229,7 +229,7 @@ sub checkDataPermissions { #{{{
 sub disableAccount { #{{{
     my $session = shift;
     my $userID = $session->param('user_id');
-    if ($userId == 3) {return;}
+    if ($userID == 3) {return;}
     COMMON::updateTable($session, 'users', ['disabled'], ['true'], ['id'], ['='], [$userID], []);
     $session->param('disabled', 1);
 } #}}}

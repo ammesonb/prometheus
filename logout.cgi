@@ -13,6 +13,8 @@ $session->param("logged_in", 0);
 $session->param("attempt_login", 0);
 $session->param('timed_out', 0);
 $session->param('night_theme', 0);
+$session->param('blocked', 0);
+$session->param('disabled', 0);
 print $q->redirect("/");
 exit;
 

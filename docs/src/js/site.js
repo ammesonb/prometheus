@@ -22,7 +22,7 @@ function alertNoAuth() {/*{{{*/
 }/*}}}*/
 
 function alertDisabled() {/*{{{*/
-    alert('You tried to edit something not belonging to you! This account has been disabled!');
+    alert('You tried to edit something that does not belong to you! Your account has been disabled.');
     window.location.reload();
 }/*}}}*/
 
@@ -756,6 +756,8 @@ function fetchTaskData() { /*{{{*/
         alertNoAuth();
     } else if (getTasksReq.responseText === 'Bad request!') {
         alert('Invalid request! Please copy any unsaved changes then refresh the page.');
+    } else if (getTasksReq.responseText == 'notmine') {
+        alertDisabled();
     }
     rootProjects.length = 0;
     subProjects.length = 0;
@@ -894,6 +896,9 @@ function openTasks() { /*{{{*/
                         fetchTaskData();
                         populateProjects(list); /*{{{*/ /*}}}*/
 
+                        break;
+                    case 'notmine':
+                        alertDisabled();
                         break;
                     default:
                         alert('Failed to create project!');
@@ -1520,6 +1525,8 @@ function openTask(task, taskView, redirectView) { /*{{{*/
                     } else {
                         populateUpcoming(taskView);
                     }
+                } else if (this.responseText == 'notmine') {
+                    alertDisabled();
                 } else {
                     errorText.style.color = 'red';
                     setText(errorText, 'Save failed - ' + this.responseText);
@@ -1901,6 +1908,8 @@ function deleteTask(task, taskView, returnToOverview) { /*{{{*/
                 } else {
                     openProject(taskView, projectsByID[t.project]);
                 } /*}}}*/
+            } else if (this.responseText == 'notmine') {/*{{{*/
+                alertDisabled();/*}}}*/
             } else { /*{{{*/
                 e = taskView.getElementsByClassName('error')[0];
                 if (e) {
@@ -1930,7 +1939,9 @@ function deleteProject(projectID, viewMode, taskView) { /*{{{*/
     deleteProjectReq = createPostReq('tasks.cgi', false);
     deleteProjectReq.onreadystatechange = function() { /*{{{*/
         if (reqCompleted(this)) {
-            if (this.responseText != 'success') {
+            if (this.responseText == 'notmine') {
+                alertDisabled();
+            } else if (this.responseText != 'success') {
                 alert('Project deletion failed with error ' + this.responseText);
             }
         }
