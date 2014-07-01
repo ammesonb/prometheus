@@ -12,6 +12,8 @@ use strict;
 my $q = new CGI();
 my $session = CGI::Session->new($q);
 
+if (COMMON::checkFilePermissions($session, 1)) {print 'notmine'; exit;}
+
 print "Content-type: text/plain\r\n\r\n";
 my $mode = $q->param('mode');
 if (COMMON::checkSession($session) && $mode != 1) { #{{{
@@ -23,6 +25,19 @@ if (COMMON::checkSession($session) && $mode != 1) { #{{{
 if ($mode !~ /^[0-2]$/) { #{{{
     print 'Bad request!';
     exit;
+} #}}}
+
+# Check note permissions #{{{
+my $noteID;
+if ($mode) {
+    $noteID = $q->param('note_id');
+    if ($noteID !~ /^-?[0-9]+$/) {
+        print $noteID;
+        print 'badid';
+        exit;
+    }
+
+    if (COMMON::checkDataPermissions($session, 'notes', $noteID)) {print 'notmine'; exit;}
 } #}}}
 
 if ($mode == 0) { #{{{
@@ -45,14 +60,7 @@ if ($mode == 0) { #{{{
     }
     print ']'; #}}}
 } elsif ($mode == 1) { #{{{ #{{{
-    if (COMMON::checkSession($session)) { #{{{
-        $session->param('timed_out', 1);
-        print 'expired';
-        exit;
-    } #}}}
-
     # Check parameter validity #{{{
-    my $noteID = $q->param('note_id');
     my $noteTitle = $q->param('note_title');
     my $noteText = $q->param('note_text');
 
@@ -76,34 +84,13 @@ if ($mode == 0) { #{{{
         exit;
     } #}}}
 
-    if ($noteID !~ /^[0-9]+$/) { #{{{
-        print 'badid';
-        exit; #}}}
-    } elsif (not COMMON::checkPrintable($noteTitle)) { #{{{
+    if (not COMMON::checkPrintable($noteTitle)) { #{{{
         print 'baddata';
         exit; #}}}
     } elsif (not COMMON::checkPrintable($noteText)) { #{{{
         print 'baddata';
         exit;
     } #}}} #}}}
-
-    # Make sure user has access to given note #{{{
-    my @noteCols = ('id');
-    my @searchCols = ('user_id');
-    my @noteOps = ('=');
-    my @noteVals = ($session->param('user_id'));
-    my @logic;
-    my $noteIDsRef = COMMON::searchTable($session, 'notes', \@noteCols, \@searchCols, \@noteOps, \@noteVals, \@logic);
-    my %tmpNotes = %$noteIDsRef;
-    my @myNoteIDs = keys(%tmpNotes);
-    if ((first_index {$_ == $noteID} @myNoteIDs) == -1) {
-        print 'notmine';
-        my @updateCols = ('disabled');
-        my @updateVals = ('true');
-        COMMON::updateTable($session, 'users', \@updateCols, \@updateVals, \@noteCols, \@noteOps, \@noteVals, \@logic);
-        $session->param('disabled', 1);
-        exit;
-    } #}}}
 
     # Update note #{{{
     $noteTitle =~ s/'/''/g;
@@ -122,34 +109,12 @@ if ($mode == 0) { #{{{
     print 'none' if ($rows == 0);
     print 'extra' if ($rows > 1); #}}} #}}}
 } elsif ($mode == 2) { #{{{
-    my $noteID = $q->param('note_id');
-    if ($noteID =~ /^[0-9]+$/) {
-
-        # Make sure user has access to given note #{{{
-        my @noteCols = ('id');
-        my @searchCols = ('user_id');
-        my @noteOps = ('=');
-        my @noteVals = ($session->param('user_id'));
-        my @logic;
-        my $noteIDsRef = COMMON::searchTable($session, 'notes', \@noteCols, \@searchCols, \@noteOps, \@noteVals, \@logic);
-        my %tmpNotes = %$noteIDsRef;
-        my @myNoteIDs = keys(%tmpNotes);
-        if ((first_index {$_ == $noteID} @myNoteIDs) == -1) {
-            print 'notmine';
-            my @updateCols = ('disabled');
-            my @updateVals = ('true');
-            COMMON::updateTable($session, 'users', \@updateCols, \@updateVals, \@noteCols, \@noteOps, \@noteVals, \@logic);
-            $session->param('disabled', 1);
-            exit;
-        } #}}}
-
-        # Delete note #{{{
+        # Delete note
         my @deleteCols = ('id');
         my @deleteOps = ('=');
         my @deleteVals = ($noteID);
         my @deleteLogic = ();
-        COMMON::deleteFromTable($session, 'notes', \@deleteCols, \@deleteOps, \@deleteVals, \@deleteLogic); #}}}
-    }
+        COMMON::deleteFromTable($session, 'notes', \@deleteCols, \@deleteOps, \@deleteVals, \@deleteLogic);
 } #}}}
 
 exit;

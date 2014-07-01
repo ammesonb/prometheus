@@ -1,3 +1,8 @@
 DirectoryIndex index.cgi
 Options +ExecCGI
 AddHandler cgi-script cgi pl
+
+<Files ~ "\.(pl|db|sh)$">
+Order deny,allow
+Deny from all
+</Files>

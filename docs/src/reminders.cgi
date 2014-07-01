@@ -11,6 +11,8 @@ use strict;
 my $q = new CGI();
 my $session = CGI::Session->new($q);
 
+if (COMMON::checkFilePermissions($session, 9)) {print 'notmine'; exit;}
+
 print "Content-type: text/html\r\n\r\n";
 my $mode = $q->param('mode');
 if (COMMON::checkSession($session)) {
@@ -23,6 +25,14 @@ if ($mode !~ /^[0-9]+$/) {
     print 'Bad request!';
     exit;
 }
+
+# Check data permissions #{{{
+my $id;
+if (0 < $mode and $mode < 3) {
+    $id = $q->param('id');
+    if ($id !~ /^-?[0-9]+$/) {print 'Bad id'; exit;}
+    if (COMMON::checkDataPermissions($session, 'reminders', $id)) {print 'notmine'; exit;}
+} #}}}
 
 if ($mode == 0) { #{{{
     my $remindersRef = COMMON::searchTableSort($session, 'reminders', ['*'], ['user_id'], ['='], [$session->param('user_id')], [], 'message');
@@ -37,8 +47,6 @@ if ($mode == 0) { #{{{
     }
     print ']'; #}}}
 } elsif ($mode == 1) { #{{{
-    my $id = $q->param('id');
-    if ($id !~ /-?[0-9]+$/) {print 'Invalid ID'; exit;}
     my $type = $q->param('type');
     my ($recipient, $subject);
     if ($type eq 'e') { #{{{
@@ -106,8 +114,6 @@ if ($mode == 0) { #{{{
     print "$id-success" if ($rows);
     print 'fail' if (not $rows); #}}}
 } elsif ($mode == 2) { #{{{
-    my $id = $q->param('id');
-    if ($id !~ /^[0-9]+$/) {print 'Bad id'; exit;}
     `sudo update_reminder d $id`;
     my $rows = COMMON::deleteFromTable($session, 'reminders', ['id'], ['='], [$id], []);
     print 'success' if ($rows);

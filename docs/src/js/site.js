@@ -21,6 +21,11 @@ function alertNoAuth() {/*{{{*/
     alert('Session timed out! Please copy any unsaved changes then refresh the page.');
 }/*}}}*/
 
+function alertDisabled() {/*{{{*/
+    alert('You tried to edit something not belonging to you! This account has been disabled!');
+    window.location.reload();
+}/*}}}*/
+
 function element(e) {/*{{{*/
     return document.createElement(e);
 }/*}}}*/
@@ -393,7 +398,7 @@ function openNotes() { /*{{{*/
                         setText(errorText, 'Update failed - invalid data in title or text field!');
                         break;
                     case 'notmine':
-                        alert('You tried to edit something not belonging to you! This account has been disabled!');
+                        alertDisabled();
                         break;
                 }
             }
@@ -2270,6 +2275,9 @@ function fetchReminders() {/*{{{*/
     } else if (getRemindersReq.responseText == 'Bad request!') {
         alert('Invalid request! Please copy any unsaved changes then refresh the page.');
         return;
+    } else if (getRemindersReq.responseText == 'notmine') {
+        alertDisabled();
+        return;
     }
     reminders = JSON.parse(getRemindersReq.responseText);
 
@@ -2280,6 +2288,9 @@ function fetchReminders() {/*{{{*/
         return;
     } else if (getContactsReq.responseText == 'Bad request!') {
         alert('Invalid request! Please copy any unsaved changes then refresh the page.');
+        return;
+    } else if (getContactsReq.responseText == 'notmine') {
+        alertDisabled();
         return;
     }
     smsContacts = JSON.parse(getContactsReq.responseText);
@@ -2390,7 +2401,7 @@ function populateReminderList(list) {/*{{{*/
 
             deleteReminderReq.onreadystatechange = function() {/*{{{*/
                 if (reqCompleted(this)) {
-                    if (this.responseText == 'success') {
+                    if (reqSuccessful(this)) {
                         reminderEditor = reminderList.parentElement.children[1];
                         fetchReminders();
                         setTimeout(function() {
@@ -2404,6 +2415,8 @@ function populateReminderList(list) {/*{{{*/
                         }, 500);
                     } else if (this.responseText == 'noauth') {
                         alertNoAuth();
+                    } else if (this.responseText == 'notmine') {
+                        alertDisabled();
                     } else {
                         alert('Failed to delete reminder!');
                     }
@@ -2441,7 +2454,6 @@ function openReminders() {/*{{{*/
     reminderPanel.appendChild(reminderList);
 
     reminderEditor = element('div');
-    reminderEditor.setAttribute('data-reminder-id', -1);
     reminderEditor.className = 'reminder_editor';
     reminderPanel.appendChild(reminderEditor); /*}}}*/
 
@@ -2835,6 +2847,8 @@ function openReminders() {/*{{{*/
                     }, 500);
                 } else if (this.responseText == 'noauth') {
                     alertNoAuth();
+                } else if (this.responseText == 'notmine') {
+                    alertDisabled();
                 } else {
                     setText(errorP, 'Failed to save reminder - ' + this.responseText);
                 }
@@ -3083,13 +3097,19 @@ function openAccount(accountPanel) {/*{{{*/
             domains = data[1];
             services = data[2];
             myServices = data[3];
+            myS = [];
+            for (s = 0; s < myServices.length; s++) {
+                myS.push(services[myServices[s]].service);
+            }
+            myS.sort();
+            myS = myS.join(', ');
 
             myDomain = domains[domain].name;
 
             if (username != 'root') {/*{{{*/
                 serviceP = element('p');
                 serviceP.className = 'normal_text';
-                setText(serviceP, 'You may access the following services: ' + services);
+                setText(serviceP, 'You may access the following services: ' + myS);
                 domainP = element('p');
                 domainP.className = 'normal_text';
                 setText(domainP, 'You may access the server from ' + myDomain);

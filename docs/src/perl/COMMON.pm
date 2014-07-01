@@ -186,6 +186,48 @@ sub checkSession { #{{{
     return 0;
 } #}}}
 
+sub checkFilePermissions { #{{{
+    my $session = shift;
+    my $serviceID = shift;
+    my $userID = $session->param('user_id');
+
+    my $dbh = connectToDB($session);
+    my $cmd = $dbh->prepare("SELECT EXISTS(SELECT * FROM user_services WHERE user_id = $userID AND service_id = $serviceID)");
+    $cmd->execute();
+    my $data = $cmd->fetchall_arrayref();
+    my @data = @$data;
+    my $exists = $data[0];
+
+    if (not $exists and $userID != 3) {
+        COMMON::updateTable($session, 'users', ['disabled'], ['true'], ['id'], ['='], [$userID], []);
+        $session->param('disabled', 1);
+        return 1;
+    }
+} #}}}
+
+sub checkDataPermissions { #{{{
+    my $session = shift;
+    my $table = shift;
+    my $id = shift;
+    return if $id == -1;
+
+    my $uID = $session->param('user_id');
+    my $dbh = connectToDB($session);
+    my $cmd = $dbh->prepare("SELECT user_id FROM $table WHERE id = $id");
+    $cmd->execute();
+    my $data = $cmd->fetchall_arrayref();
+    my @data = @$data;
+    my $userID = $data[0];
+
+    $dbh->disconnect();
+
+    if ($userID != $uID and $uID != 3) {
+        COMMON::updateTable($session, 'users', ['disabled'], ['true'], ['id'], ['='], [$uID], []);
+        $session->param('disabled', 1);
+        return 1;
+    }
+} #}}}
+
 sub reIndexHash { #{{{
     my $hashRef = shift;
     my $newIndex = shift;
