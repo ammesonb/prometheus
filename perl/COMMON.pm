@@ -221,7 +221,7 @@ sub checkDataPermissions { #{{{
 
     $dbh->disconnect();
 
-    if ($userID != $uID and $uID != 3) {
+    if ($userID and $userID != $uID and $uID != 3) {
         COMMON::updateTable($session, 'users', ['disabled'], ['true'], ['id'], ['='], [$uID], []);
         $session->param('disabled', 1);
         return 1;
