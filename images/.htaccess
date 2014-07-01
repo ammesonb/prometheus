@@ -1,0 +1,4 @@
+<Files ~ ".ai$">
+Order deny,allow
+Deny from all
+</Files>

@@ -126,6 +126,14 @@ function reqFailed(req) {/*{{{*/
       (req.readyState ==4 && req.status == 200 && req.responseText != 'success'));
 }/*}}}*/
 
+function reqCompleted(req) {/*{{{*/
+    return req.readyState == 4 && req.status == 200;
+}/*}}}*/
+
+function reqSuccessful(req) {/*{{{*/
+    return req.readyState == 4 && req.status == 200 && req.responseText == 'success';
+}/*}}}*/
+
 function login() { /*{{{*/
     elems = document.getElementsByTagName('input');
     a = elems[0];
@@ -356,7 +364,7 @@ function openNotes() { /*{{{*/
         saveNoteReq = createPostReq('notes.cgi', false);
 
         saveNoteReq.onreadystatechange = function() { /*{{{*/
-            if (this.readyState == 4 && this.status == 200) {
+            if (reqCompleted(this)) {
                 status = this.responseText;
 
                 if (status == 'success') {errorText.style.color = 'green';}
@@ -401,7 +409,7 @@ function openNotes() { /*{{{*/
             updateNoteReq = createPostReq('notes.cgi', true);
 
             updateNoteReq.onreadystatechange = function() {
-                if (this.readyState == 4 && this.status == 200) {refreshNotes(this.responseText);}
+                if (reqCompleted(this)) {refreshNotes(this.responseText);}
             };
 
             updateNoteReq.send('mode=0');
@@ -589,11 +597,11 @@ function populateNotes(data, notesTable, notesEditor, resize) { /*{{{*/
             deleteNoteReq = createPostReq('notes.cgi', true);
 
             deleteNoteReq.onreadystatechange = function() {
-                if (this.readyState == 4 && this.status == 200) {
+                if (reqCompleted(this)) {
                     refreshNotesReq = createPostReq('notes.cgi', true);
 
                     refreshNotesReq.onreadystatechange = function() { /*{{{*/
-                        if (this.readyState == 4 && this.status == 200) {
+                        if (reqCompleted(this)) {
                             if (notesEditor.getAttribute('data-note-id') == deletedNoteID) {
                                 notesEditor.setAttribute('data-note-id', -1);
                                 for (child = 0; child < notesEditor.childElementCount; child++) {
@@ -873,7 +881,7 @@ function openTasks() { /*{{{*/
         saveProjReq = createPostReq('tasks.cgi', true);
 
         saveProjReq.onreadystatechange = function() { /*{{{*/
-            if (this.readyState == 4 && this.status == 200) {
+            if (reqCompleted(this)) {
                 switch(this.responseText) {
                     case 'success':
                         nameElem.value = 'Enter new project name';
@@ -1496,7 +1504,7 @@ function openTask(task, taskView, redirectView) { /*{{{*/
         saveTaskReq = createPostReq('tasks.cgi', true);
 
         saveTaskReq.onreadystatechange = function() { /*{{{*/
-            if (this.readyState == 4 && this.status == 200) {
+            if (reqCompleted(this)) {
                 if (this.responseText === 'success') {
                     errorText.style.color = 'green';
                     setText(errorText, 'Saved at ' + getTimeFromString(new Date().toString()));
@@ -1879,7 +1887,7 @@ function deleteTask(task, taskView, returnToOverview) { /*{{{*/
     deleteTaskReq = createPostReq('tasks.cgi', false);
 
     deleteTaskReq.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) {
+        if (reqCompleted(this)) {
             if (this.responseText == 'success') { /*{{{*/
                 fetchTaskData();
 
@@ -1916,7 +1924,7 @@ function deleteProject(projectID, viewMode, taskView) { /*{{{*/
     // Delete project /*{{{*/
     deleteProjectReq = createPostReq('tasks.cgi', false);
     deleteProjectReq.onreadystatechange = function() { /*{{{*/
-        if (this.readyState == 4 && this.status == 200) {
+        if (reqCompleted(this)) {
             if (this.responseText != 'success') {
                 alert('Project deletion failed with error ' + this.responseText);
             }
@@ -2381,7 +2389,7 @@ function populateReminderList(list) {/*{{{*/
             deleteReminderReq = createPostReq('reminders.cgi', false);
 
             deleteReminderReq.onreadystatechange = function() {/*{{{*/
-                if (this.readyState == 4 && this.status == 200) {
+                if (reqCompleted(this)) {
                     if (this.responseText == 'success') {
                         reminderEditor = reminderList.parentElement.children[1];
                         fetchReminders();
@@ -2810,7 +2818,7 @@ function openReminders() {/*{{{*/
         saveReminderReq = createPostReq('reminders.cgi', false);
 
         saveReminderReq.onreadystatechange = function() {/*{{{*/
-            if (this.readyState == 4 && this.status == 200) {
+            if (reqCompleted(this)) {
                 if (this.responseText.indexOf('success') != -1) {
                     response = this.responseText;
                     errorP.style.color = 'green';
@@ -3051,11 +3059,24 @@ function viewAccount() { /*{{{*/
     accountPanel = element('div');
     accountPanel.id = id;
 
-    privilegesReq = createPostReq('account.cgi', false);
+    openAccount(accountPanel);
+     
+    // Create tab and display panel
+    accountTab = element('div');
+    setText(accountTab, 'My Account');
+    accountTab.className = 'tab';
+    accountTab.setAttribute('data-id', id);
+    accountTab.onclick = function() {switchTab(this.getAttribute('data-id'));};
+    addTab(accountPanel, accountTab);
+    switchTab(id);
+} /*}}}*/
 
-    privilegesReq.onreadystatechange = function() { /*{{{*/
-        if (privilegesReq.readyState == 4 && privilegesReq.status == 200) {
-            data = privilegesReq.responseText;
+function openAccount(accountPanel) {/*{{{*/
+    usersReq = createPostReq('account.cgi', false);
+
+    usersReq.onreadystatechange = function() { /*{{{*/
+        if (reqCompleted(this)) {
+            data = this.responseText;
             data = JSON.parse(data);
             accountType = data[0];
             domains = data[1];
@@ -3188,7 +3209,7 @@ function viewAccount() { /*{{{*/
                     error_id = this.getAttribute('data-error-id');
 
                     updatePassReq.onreadystatechange = function() { /*{{{*/
-                        if (this.readyState == 4 && this.status == 200) {
+                        if (reqCompleted(this)) {
                             e = document.getElementById(error_id);
                             switch(this.responseText) {
                                 case 'success':
@@ -3267,7 +3288,7 @@ function viewAccount() { /*{{{*/
                     theme = this.value;
 
                     updateThemeReq.onreadystatechange = function() { /*{{{*/
-                        if (this.readyState == 4 && this.status == 200) {
+                        if (reqCompleted(this)) {
                             switch(this.responseText) {
                                 case 'success':
                                     error.style.color = 'green';
@@ -3310,6 +3331,32 @@ function viewAccount() { /*{{{*/
                 sKeys = Object.keys(services);
                 usKeys = Object.keys(userServices);
 
+                // Alphabetize users
+                uKeys.sort(function(a, b) {return (users[a].username > users[b].username) ? 1 : -1;});
+
+                // Create user button
+                createUser = element('button');
+                setText(createUser, 'New user');
+                createUser.onclick = function() {/*{{{*/
+                    un = prompt('New username:');
+                    if (!un) {return;}
+
+                    p = '';
+                    choices = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789;,.<>?-=_+'
+                    for (c = 0; c < 15; c++) {
+                        p += choices.charAt(Math.floor(Math.random() * choices.length));
+                    }
+
+                    createUserReq = createPostReq('account.cgi', true);
+
+                    createUserReq.onreadystatechange = function() {
+                        if (reqFailed(this)) {alert('Failed to create user!');}
+                        if (reqSuccessful(this)) {alert('The user\'s new password is: ' + p + '\n\nPlease transmit it to them via a secure channel.');}
+                    }
+
+                    createUserReq.send('mode=6&u=' + un + '&p=' + CryptoJS.SHA512(p).toString());
+                };/*}}}*/
+
                 // Table headers/*{{{*/
                 userTable = element('table');
                 userTable.className = 'notes';
@@ -3328,7 +3375,7 @@ function viewAccount() { /*{{{*/
                 hReset = element('th');
                 setText(hReset, 'Reset password');
 
-                if (useNightTheme()) {switchToNight(userTable, hName, hDomain, hServices, hDisable, hDelete, hReset);}
+                if (useNightTheme()) {switchToNight(createUser, userTable, hName, hDomain, hServices, hDisable, hDelete, hReset);}
                 headerRow.appendChild(hName);
                 headerRow.appendChild(hDomain);
                 headerRow.appendChild(hServices);
@@ -3360,7 +3407,7 @@ function viewAccount() { /*{{{*/
 
                         nameReq.onreadystatechange = function() {
                             if (reqFailed(this)) {alert('Failed to change username to ' + nameInput.value + '!'); nameInput.value = nameInput.getAttribute('data-old');}
-                            else if (this.readyState == 4){nameInput.setAttribute('data-old', nameInput.value);}
+                            else if (reqCompleted(this)) {nameInput.setAttribute('data-old', nameInput.value);}
                         }
                         nameReq.send('mode=3&field=username' + this.getAttribute('data-id') + '&value=\'' + this.value + '\'');
                     }/*}}}*/
@@ -3448,7 +3495,7 @@ function viewAccount() { /*{{{*/
                                     if (reqFailed(this)) {
                                         input.checked = !input.checked;
                                         alert('Failed to update service!');
-                                    } else if (this.readyState == 4 && this.status == 200) {
+                                    } else if (reqCompleted(this)) {
                                         uid = parseInt(input.getAttribute('data-id'), 10);
                                         sid = parseInt(input.getAttribute('data-service'), 10);
                                         if (input.checked) {
@@ -3507,7 +3554,7 @@ function viewAccount() { /*{{{*/
                         delUserReq = createPostReq('account.cgi', true);
 
                         delUserReq.onreadystatechange = function() {/*{{{*/
-                            if (this.readyState == 4 && this.status == 200) {
+                            if (reqCompleted(this)) {
                                 if (this.responseText == 'success') {alert('Deleted successfully!');}
                                 else if (this.responseText == 'noauth') {alertNoAuth();}
                                 else if (this.responseText == 'failed') {alert('Failed to delete user!');}
@@ -3539,9 +3586,9 @@ function viewAccount() { /*{{{*/
                         resetPassReq = createPostReq('account.cgi', true);
 
                         resetPassReq.onreadystatechange = function() {
-                            if (this.readyState == 4 && this.status == 200) {
+                            if (reqCompleted(this)) {
                                 if (this.responseText == 'success') {
-                                    alert('The user\'s new password is (without quotes): \'' + newPass + '\'\n\nPlease transmit it to them via a secure channel.');
+                                    alert('The user\'s new password is: ' + newPass + '\n\nPlease transmit it to them via a secure channel.');
                                 } else if (this.responseText == 'noauth') {
                                     alertNoAuth();
                                 } else {alert('Failed to reset password!');}
@@ -3564,6 +3611,10 @@ function viewAccount() { /*{{{*/
                     if (useNightTheme()) {switchToNight(nCell, nInput, dCell, domainSelect, sCell, sLink, diCell, disabled, deCell, deleteLink, rCell, reset);}
                 }/*}}}*/
 
+                accountPanel.appendChild(element('br'));
+                accountPanel.appendChild(createUser);
+                accountPanel.appendChild(element('br'));
+                accountPanel.appendChild(element('br'));
                 accountPanel.appendChild(userTable);
                 setTimeout(function() {hServices.style.width = hServices.offsetWidth + 15 + 'px';}, 50);
 
@@ -3573,16 +3624,7 @@ function viewAccount() { /*{{{*/
         }
     }; /*}}}*/
 
-    privilegesReq.send('mode=0');
-
-    // Create tab and display panel
-    accountTab = element('div');
-    setText(accountTab, 'My Account');
-    accountTab.className = 'tab';
-    accountTab.setAttribute('data-id', id);
-    accountTab.onclick = function() {switchTab(this.getAttribute('data-id'));};
-    addTab(accountPanel, accountTab);
-    switchTab(id);
-} /*}}}*/
+    usersReq.send('mode=0');
+}/*}}}*/
 /*}}}*/
 
