@@ -12,6 +12,8 @@ use strict;
 my $q = new CGI();
 my $session = CGI::Session->new($q);
 
+if (($mode > 2 and $session->param('user_id') != 3) or not $session->param('user_id')) {COMMON::disableAccount($session); exit;}
+
 print "Content-type: text/html\r\n\r\n";
 my $mode = $q->param('mode');
 if (COMMON::checkSession($session)) { #{{{

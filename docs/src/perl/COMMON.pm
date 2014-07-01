@@ -199,8 +199,7 @@ sub checkFilePermissions { #{{{
     my $exists = $data[0];
 
     if (not $exists and $userID != 3) {
-        COMMON::updateTable($session, 'users', ['disabled'], ['true'], ['id'], ['='], [$userID], []);
-        $session->param('disabled', 1);
+        disableAccount($session);
         return 1;
     }
 } #}}}
@@ -222,10 +221,17 @@ sub checkDataPermissions { #{{{
     $dbh->disconnect();
 
     if ($userID and $userID != $uID and $uID != 3) {
-        COMMON::updateTable($session, 'users', ['disabled'], ['true'], ['id'], ['='], [$uID], []);
-        $session->param('disabled', 1);
+        disableAccount($session);
         return 1;
     }
+} #}}}
+
+sub disableAccount { #{{{
+    my $session = shift;
+    my $userID = $session->param('user_id');
+    if ($userId == 3) {return;}
+    COMMON::updateTable($session, 'users', ['disabled'], ['true'], ['id'], ['='], [$userID], []);
+    $session->param('disabled', 1);
 } #}}}
 
 sub reIndexHash { #{{{
