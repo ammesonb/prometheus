@@ -107,6 +107,7 @@ if ($mode == 0) { #{{{
     COMMON::deleteFromTable($session, 'projects', ['user_id'], ['='], [$id], []);
     COMMON::deleteFromTable($session, 'tasks', ['user_id'], ['='], [$id], []);
     COMMON::deleteFromTable($session, 'reminders', ['user_id'], ['='], [$id], []);
+    COMMON::deleteFromTable($session, 'user_services', ['user_id'], ['='], [$id], []);
     my $rows = COMMON::deleteFromTable($session, 'users', ['id'], ['='], [$id], []);
     print 'success' if ($rows == 1);
     print 'fail' if ($rows != 1); #}}}

@@ -3076,6 +3076,7 @@ function openAccount(accountPanel) {/*{{{*/
 
     usersReq.onreadystatechange = function() { /*{{{*/
         if (reqCompleted(this)) {
+            deleteAllChildren(accountPanel, true);
             data = this.responseText;
             data = JSON.parse(data);
             accountType = data[0];
@@ -3351,9 +3352,13 @@ function openAccount(accountPanel) {/*{{{*/
 
                     createUserReq.onreadystatechange = function() {
                         if (reqFailed(this)) {alert('Failed to create user!');}
-                        if (reqSuccessful(this)) {alert('The user\'s new password is: ' + p + '\n\nPlease transmit it to them via a secure channel.');}
+                        if (reqSuccessful(this)) {
+                            alert('The user\'s new password is: ' + p + '\n\nPlease transmit it to them via a secure channel.');
+                            openAccount(accountPanel);
+                        }
                     }
 
+                    accountPanel = this.parentElement;
                     createUserReq.send('mode=6&u=' + un + '&p=' + CryptoJS.SHA512(p).toString());
                 };/*}}}*/
 
@@ -3548,14 +3553,15 @@ function openAccount(accountPanel) {/*{{{*/
                     deleteLink.href = '#';
                     deleteLink.setAttribute('data-id', user.id);
                     deleteLink.setAttribute('data-name', user.username);
-                    deleteLink.onclick = function() {
+                    deleteLink.onclick = function() {/*{{{*/
+                        accountPanel = this.parentElement.parentElement.parentElement.parentElement;
                         conf = confirm('Are you sure you want to delete ' + this.getAttribute('data-name') + ' ? This will permanently delete ALL of their data!');
                         if (!conf) {return;}
                         delUserReq = createPostReq('account.cgi', true);
 
                         delUserReq.onreadystatechange = function() {/*{{{*/
                             if (reqCompleted(this)) {
-                                if (this.responseText == 'success') {alert('Deleted successfully!');}
+                                if (reqSuccessful(this)) {openAccount(accountPanel);}
                                 else if (this.responseText == 'noauth') {alertNoAuth();}
                                 else if (this.responseText == 'failed') {alert('Failed to delete user!');}
                                 else {alert(this.responseText);}
@@ -3563,7 +3569,7 @@ function openAccount(accountPanel) {/*{{{*/
                         };/*}}}*/
                         
                         delUserReq.send('mode=4&id=' + this.getAttribute('data-id'));
-                    }
+                    };/*}}}*/
                     deCell.appendChild(deleteLink);/*}}}*/
 
                     // Reset user password/*{{{*/
