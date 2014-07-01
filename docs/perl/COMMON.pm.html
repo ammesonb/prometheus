@@ -136,9 +136,12 @@ sub init { #{{{
         // Login
         try {
             if (useNightTheme()) {
-                document.getElementById('login').className += ' night';
+                e = document.getElementsByClassName('normal_text');
+                switchToNight(e[e.length - 1]);
+                e[e.length - 1].style.textDecoration = 'underline';
+                switchToNight(document.getElementById('login'));
                 fields = document.getElementsByTagName('input')
-                for (i = 0; i < fields.length; i++) {switchToNight(fields[i]);}
+                switchToNight(fields);
                 switchToNight(document.getElementsByTagName('button')[0]);
             }
         } catch(e) {}
@@ -153,12 +156,13 @@ sub init { #{{{
     if ($authorized == 2) { #{{{
         $html .= "<div id=\"login\">\n";
         $html .= "<img src=\"images/prometheus.png\" alt=\"Prometheus\">\n";
-        $html .= "<p><strong>You are not allowed to access this from your current location.<br>Please contact me at ammesonb\@gmail.com.</strong></p>\n";
+        my $class = "normal_text";
+        $html .= "<p><strong>You are not allowed to access this from your current location.<br>Please contact me at ammesonb\@gmail.com.</strong><br><br>If this has been resolved, click <a href=\"logout.cgi\" class=\"normal_text\">here</a>.</p>\n";
         $html .= "</div>\n"; #}}}
-    } elsif ($authorized == 3) {
+    } elsif ($authorized == 3) { #{{{
         $html .= "<div id=\"login\">\n";
         $html .= "<img src=\"images/prometheus.png\" alt=\"Prometheus\">\n";
-        $html .= "<p><strong>This account has been disabled.<br>Please contact me at ammesonb\@gmail.com.</strong></p>\n";
+        $html .= "<p><strong>This account has been disabled.<br>Please contact me at ammesonb\@gmail.com.</strong><br><br>If this has been resolved, click <a href=\"logout.cgi\" class=\"normal_text\">here</a>.</p>\n"; #}}}
     } elsif ($authorized == 1) { #{{{
         $html .= "<div id=\"login\">\n";
         $html .= $indent . "<a href=\"/\"><img src=\"images/prometheus.png\" alt=\"Prometheus\"></a>\n";
