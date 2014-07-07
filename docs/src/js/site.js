@@ -3689,8 +3689,6 @@ function openVideos() {/*{{{*/
     videoPanel.className = 'videos';
     videoPanel.style.display = 'none';
 
-    openVideoPanel(videoPanel);
-
     // Add tab/*{{{*/
     videoTab = element('div');
     videoTab.className = 'tab';
@@ -3700,15 +3698,21 @@ function openVideos() {/*{{{*/
     addTab(videoPanel, videoTab);
     videoPanel.style.display = 'block';
     switchTab(id);/*}}}*/
+
+    openVideoPanel(videoPanel);
 }/*}}}*/
 
 function openVideoPanel(videoPanel) {/*{{{*/
+    deleteAllChildren(videoPanel, true);
+    videoPanel.style.display = 'none';
+
     // fetchVideos();
     
     // Filter criteria
     filterPanel = element('div');
     filterPanel.className = 'movie_filter';
 
+    // Title/*{{{*/
     filterTitle = element('p');
     filterTitle.className = 'normal_section_header';
     filterTitle.style.marginTop = '15px';
@@ -3716,11 +3720,12 @@ function openVideoPanel(videoPanel) {/*{{{*/
     filterTitle.style.marginBottom = '5px';
     setText(filterTitle, 'Search criteria');
     filterPanel.appendChild(filterTitle);
+    filterPanel.appendChild(element('br'));/*}}}*/
 
     // Duration/*{{{*/
     durationText1 = element('p');
     durationText1.className = 'normal_text';
-    durationText1.style.display = 'inline-block';
+    durationText1.style.display = 'inline';
     setText(durationText1, 'Between\u00a0');
     durationInput1 = element('input');
     durationInput1.style.width = '50px';
@@ -3729,7 +3734,7 @@ function openVideoPanel(videoPanel) {/*{{{*/
     durationInput1.onblur = function() {this.value = verifyNum(this.value, 1, 9999);};
     durationText2 = element('p');
     durationText2.className = 'normal_text';
-    durationText2.style.display = 'inline-block';
+    durationText2.style.display = 'inline';
     setText(durationText2, '\u00a0and\u00a0');
     durationInput2 = element('input');
     durationInput2.style.width = '50px';
@@ -3738,18 +3743,20 @@ function openVideoPanel(videoPanel) {/*{{{*/
     durationInput2.onblur = function() {this.value = verifyNum(this.value, 1, 9999);};
     durationText3 = element('p');
     durationText3.className = 'normal_text';
-    durationText3.style.display = 'inline-block';
+    durationText3.style.display = 'inline';
     setText(durationText3, '\u00a0minutes');
     filterPanel.appendChild(durationText1);
     filterPanel.appendChild(durationInput1);
     filterPanel.appendChild(durationText2);
     filterPanel.appendChild(durationInput2);
-    filterPanel.appendChild(durationText3);/*}}}*/
+    filterPanel.appendChild(durationText3);
+    filterPanel.appendChild(element('br'));
+    filterPanel.appendChild(element('br'));/*}}}*/
 
     // Released/*{{{*/
     releaseText1 = element('p');
     releaseText1.className = 'normal_text';
-    releaseText1.style.display = 'inline-block';
+    releaseText1.style.display = 'inline';
     setText(releaseText1, 'Released between\u00a0');
     releaseInput1 = element('input');
     releaseInput1.style.width = '50px';
@@ -3759,7 +3766,7 @@ function openVideoPanel(videoPanel) {/*{{{*/
     releaseInput1.onblur = function() {this.value = verifyNum(this.value, 1900, 9999);};
     releaseText2 = element('p');
     releaseText2.className = 'normal_text';
-    releaseText2.style.display = 'inline-block';
+    releaseText2.style.display = 'inline';
     setText(releaseText2, '\u00a0and\u00a0');
     releaseInput2 = element('input');
     releaseInput2.style.width = '50px';
@@ -3772,14 +3779,15 @@ function openVideoPanel(videoPanel) {/*{{{*/
     filterPanel.appendChild(releaseText2);
     filterPanel.appendChild(releaseInput2);/*}}}*/
 
-    if (useNightTheme()) {
+    if (useNightTheme()) {/*{{{*/
         switchToNight(
             filterTitle,
             durationText1, durationInput1, durationText2, durationInput2, durationText3,
             releaseText1, releaseInput1, releaseText2, releaseInput2
         );
-    }
+    }/*}}}*/
 
+    // Title search bar/*{{{*/
     titlePanel = element('div');
     titlePanel.className = 'movie_title_filter';
     titleFilter = element('input');
@@ -3788,7 +3796,7 @@ function openVideoPanel(videoPanel) {/*{{{*/
     titleFilter.value = 'Search titles....';
     titleFilter.onclick = function() {if (this.value == 'Search titles....') {this.value = '';}};
     titleFilter.onblur = function() {if (this.value == '') {this.value = 'Search titles....';}};
-    titlePanel.appendChild(titleFilter);
+    titlePanel.appendChild(titleFilter);/*}}}*/
 
     movieGrid = element('div');
     movieGrid.className = 'movie_grid';
@@ -3797,5 +3805,15 @@ function openVideoPanel(videoPanel) {/*{{{*/
     videoPanel.appendChild(filterPanel);
     videoPanel.appendChild(titlePanel);
     videoPanel.appendChild(movieGrid);
+
+    videoPanel.style.display = 'block';
+    
+    // Resize elements to fit on screen/*{{{*/
+    titlePanel.style.left = filterPanel.offsetLeft + filterPanel.offsetWidth + 10 + 'px';
+    titlePanel.style.width = videoPanel.offsetWidth - titlePanel.offsetLeft - 20 + 'px';
+    movieGrid.style.left = filterPanel.offsetLeft + filterPanel.offsetWidth + 10 + 'px';
+    movieGrid.style.top = titlePanel.style.offsetTop + titlePanel.style.offsetHeight + 10 + 'px';
+    movieGrid.style.width = videoPanel.offsetWidth - titlePanel.offsetLeft - 10 + 'px';
+    movieGrid.style.height = videoPanel.offsetHeight - titlePanel.offsetTop - 20 + 'px';/*}}}*/
 }/*}}}*//*}}}*/
 

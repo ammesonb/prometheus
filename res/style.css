@@ -218,7 +218,6 @@ div.movie_filter.night {/*{{{*/
 div.movie_title_filter {/*{{{*/
     position: absolute;
     display: inline-block;
-    left: 22%;
     top: 1%;
     width: 75%;
     height: 30px;
@@ -227,9 +226,6 @@ div.movie_title_filter {/*{{{*/
 
 div.movie_grid {/*{{{*/
     position: absolute;
-    left: 22%;
-    top: 5%;
-    width: 77%;
 }/*}}}*/
 /*}}}*/
 
