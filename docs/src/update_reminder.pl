@@ -46,7 +46,6 @@ if ($mode eq 'c') {
     scheduleReminder($id, str2time($reminder{'next'})); #}}}
 # Run reminder #{{{
 } elsif ($mode eq 'r') {
-
     # Send reminder #{{{
     my $recipient = $reminder{'recipient'};
     my $subject = '';

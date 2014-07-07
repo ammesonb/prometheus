@@ -59,7 +59,7 @@ if ($mode == 0) { #{{{
         $count++;
     }
     print ']'; #}}}
-} elsif ($mode == 1) { #{{{ #{{{
+} elsif ($mode == 1) { #{{{
     # Check parameter validity #{{{
     my $noteTitle = $q->param('note_title');
     my $noteText = $q->param('note_text');

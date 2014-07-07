@@ -89,6 +89,24 @@ $$;
 ALTER FUNCTION public.block_first_time_update() OWNER TO root;
 
 --
+-- Name: block_root_disable(); Type: FUNCTION; Schema: public; Owner: root
+--
+
+CREATE FUNCTION block_root_disable() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+IF (NEW.id = 3 AND NEW.disabled = true) THEN
+    NEW.disabled = false;
+END IF;
+RETURN NEW;
+END
+$$;
+
+
+ALTER FUNCTION public.block_root_disable() OWNER TO root;
+
+--
 -- Name: delete_project(integer); Type: FUNCTION; Schema: public; Owner: root
 --
 
@@ -857,6 +875,13 @@ CREATE TRIGGER add_default_services AFTER INSERT ON users FOR EACH ROW EXECUTE P
 --
 
 CREATE TRIGGER block_first_time_update_trigger BEFORE UPDATE ON reminders FOR EACH ROW EXECUTE PROCEDURE block_first_time_update();
+
+
+--
+-- Name: block_root_disable; Type: TRIGGER; Schema: public; Owner: root
+--
+
+CREATE TRIGGER block_root_disable BEFORE UPDATE ON users FOR EACH ROW EXECUTE PROCEDURE block_root_disable();
 
 
 --
