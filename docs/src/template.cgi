@@ -11,6 +11,8 @@ use strict;
 my $q = new CGI();
 my $session = CGI::Session->new($q);
 
+if (COMMON::checkFilePermissions($session, <serviceID>)) {print 'notmine'; exit;}
+
 print "Content-type: text/html\r\n\r\n";
 my $mode = $q->param('mode');
 if (COMMON::checkSession($session)) {

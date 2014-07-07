@@ -199,6 +199,37 @@ div.reminder_editor.night {/*{{{*/
     border: 1px solid silver;
     background-color: rgba(0, 0, 0, .3);
 }/*}}}*/
+
+div.movie_filter {/*{{{*/
+    position: absolute;
+    float: left;
+    display: inline-block;
+    top: 1%;
+    width: 20%;
+    height: 98%;
+    border: 1px solid black;
+}/*}}}*/
+
+div.movie_filter.night {/*{{{*/
+    border: 1px solid silver;
+}/*}}}*/
+
+div.movie_title_filter {/*{{{*/
+    position: absolute;
+    display: inline-block;
+    left: 22%;
+    top: 1%;
+    width: 75%;
+    height: 30px;
+    border: none;
+}/*}}}*/
+
+div.movie_grid {/*{{{*/
+    position: absolute;
+    left: 22%;
+    top: 5%;
+    width: 77%;
+}/*}}}*/
 /*}}}*/
 
 /* span */ /*{{{*/
@@ -278,6 +309,10 @@ input.note_title { /*{{{*/
     padding-top: 0px;
     margin-top: 0px;
 } /*}}}*/
+
+input.filter {/*{{{*/
+    width: 100%;
+}/*}}}*/
 
 textarea.night { /*{{{*/
     background-color: rgba(0, 0, 0, 0);

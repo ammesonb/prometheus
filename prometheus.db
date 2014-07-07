@@ -183,6 +183,80 @@ ALTER SEQUENCE domains_id_seq OWNED BY domains.id;
 
 
 --
+-- Name: genres; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE genres (
+    id integer NOT NULL,
+    name character varying NOT NULL
+);
+
+
+ALTER TABLE public.genres OWNER TO root;
+
+--
+-- Name: genres_id_seq; Type: SEQUENCE; Schema: public; Owner: root
+--
+
+CREATE SEQUENCE genres_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.genres_id_seq OWNER TO root;
+
+--
+-- Name: genres_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: root
+--
+
+ALTER SEQUENCE genres_id_seq OWNED BY genres.id;
+
+
+--
+-- Name: movies; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE movies (
+    id integer NOT NULL,
+    ttid integer,
+    title character varying NOT NULL,
+    series integer,
+    genre integer,
+    year integer,
+    released date,
+    duration integer,
+    director character varying,
+    description character varying
+);
+
+
+ALTER TABLE public.movies OWNER TO root;
+
+--
+-- Name: movies_id_seq; Type: SEQUENCE; Schema: public; Owner: root
+--
+
+CREATE SEQUENCE movies_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.movies_id_seq OWNER TO root;
+
+--
+-- Name: movies_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: root
+--
+
+ALTER SEQUENCE movies_id_seq OWNED BY movies.id;
+
+
+--
 -- Name: notes; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
@@ -295,6 +369,39 @@ ALTER TABLE public.reminders_id_seq OWNER TO root;
 --
 
 ALTER SEQUENCE reminders_id_seq OWNED BY reminders.id;
+
+
+--
+-- Name: series; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE series (
+    id integer NOT NULL,
+    name character varying NOT NULL
+);
+
+
+ALTER TABLE public.series OWNER TO root;
+
+--
+-- Name: series_id_seq; Type: SEQUENCE; Schema: public; Owner: root
+--
+
+CREATE SEQUENCE series_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.series_id_seq OWNER TO root;
+
+--
+-- Name: series_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: root
+--
+
+ALTER SEQUENCE series_id_seq OWNED BY series.id;
 
 
 --
@@ -490,6 +597,20 @@ ALTER TABLE ONLY domains ALTER COLUMN id SET DEFAULT nextval('domains_id_seq'::r
 -- Name: id; Type: DEFAULT; Schema: public; Owner: root
 --
 
+ALTER TABLE ONLY genres ALTER COLUMN id SET DEFAULT nextval('genres_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY movies ALTER COLUMN id SET DEFAULT nextval('movies_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: root
+--
+
 ALTER TABLE ONLY notes ALTER COLUMN id SET DEFAULT nextval('notes_id_seq'::regclass);
 
 
@@ -505,6 +626,13 @@ ALTER TABLE ONLY projects ALTER COLUMN id SET DEFAULT nextval('projects_id_seq':
 --
 
 ALTER TABLE ONLY reminders ALTER COLUMN id SET DEFAULT nextval('reminders_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY series ALTER COLUMN id SET DEFAULT nextval('series_id_seq'::regclass);
 
 
 --
@@ -559,6 +687,30 @@ ALTER TABLE ONLY domains
 
 
 --
+-- Name: genres_name_key; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY genres
+    ADD CONSTRAINT genres_name_key UNIQUE (name);
+
+
+--
+-- Name: genres_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY genres
+    ADD CONSTRAINT genres_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: movies_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY movies
+    ADD CONSTRAINT movies_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: notes_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
 --
 
@@ -588,6 +740,22 @@ ALTER TABLE ONLY reminders
 
 ALTER TABLE ONLY services
     ADD CONSTRAINT row_order_key UNIQUE (row_order);
+
+
+--
+-- Name: series_name_key; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY series
+    ADD CONSTRAINT series_name_key UNIQUE (name);
+
+
+--
+-- Name: series_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY series
+    ADD CONSTRAINT series_pkey PRIMARY KEY (id);
 
 
 --
@@ -703,6 +871,22 @@ CREATE TRIGGER notes_update BEFORE UPDATE ON notes FOR EACH ROW EXECUTE PROCEDUR
 --
 
 CREATE TRIGGER set_first_reminder_time_trigger BEFORE INSERT ON reminders FOR EACH ROW EXECUTE PROCEDURE set_first_reminder_time();
+
+
+--
+-- Name: movies_genre_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY movies
+    ADD CONSTRAINT movies_genre_fkey FOREIGN KEY (genre) REFERENCES genres(id);
+
+
+--
+-- Name: movies_series_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY movies
+    ADD CONSTRAINT movies_series_fkey FOREIGN KEY (series) REFERENCES series(id);
 
 
 --

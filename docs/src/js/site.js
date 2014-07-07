@@ -1,5 +1,7 @@
 /* Global variables *//*{{{*/
 var colors = ['#FF1300', '#FF6A00', '#FFA540', '#FFD240', '#9BED00', '#37DB79', '#63ADD0', '#7872D8', '#4B5BD8', '#9A3ED5', '#7F4BA0', '#ED3B83', '#999'];
+
+// Tasks/*{{{*/
 var expanded = [];
 var tasks = [];
 var sortedTasks = [];
@@ -8,15 +10,25 @@ var projects = [];
 var rootProjects = [];
 var subProjects = [];
 var projectsByID = [];
-var projectHierarchy = [];
+var projectHierarchy = [];/*}}}*/
+
+// Reminders/*{{{*/
 var reminders = [];
-var smsContacts = [];
+var smsContacts = [];/*}}}*/
+
+// Users/*{{{*/
 var domains = [];
 var services = [];
 var userServices = [];
-var users = [];
+var users = [];/*}}}*/
+
+// Videos
+movies = [];
+series = [];
+genres = [];
 /*}}}*/
 
+/* General functions *//*{{{*/
 function alertNoAuth() {/*{{{*/
     alert('Session timed out! Please copy any unsaved changes then refresh the page.');
 }/*}}}*/
@@ -244,7 +256,7 @@ function deleteAllChildren(elem, removeAll) { /*{{{*/
 function setText(elem, text) { /*{{{*/
     elem.innerText = text;
     elem.innerHTML = text;
-} /*}}}*/
+} /*}}}*//*}}}*/
 
 /* Tabs */ /*{{{*/
 function addTab(elem, tabElement) { /*{{{*/
@@ -3664,4 +3676,55 @@ function openAccount(accountPanel) {/*{{{*/
     usersReq.send('mode=0');
 }/*}}}*/
 /*}}}*/
+
+/* Videos *//*{{{*/
+function fetchVideos() {/*{{{*/
+    
+}/*}}}*/
+
+function openVideos() {/*{{{*/
+    videoPanel = element('div');
+    id = 'videos_' + new Date().getTime();
+    videoPanel.id = id;
+    videoPanel.className = 'videos';
+    videoPanel.style.display = 'none';
+
+    openVideoPanel(videoPanel);
+
+    // Add tab/*{{{*/
+    videoTab = element('div');
+    videoTab.className = 'tab';
+    setText(videoTab, 'Videos');
+    videoTab.setAttribute('data-id', id);
+    videoTab.onclick = function() {switchTab(this.getAttribute('data-id'));}
+    addTab(videoPanel, videoTab);
+    videoPanel.style.display = 'block';
+    switchTab(id);/*}}}*/
+}/*}}}*/
+
+function openVideoPanel(videoPanel) {/*{{{*/
+    // fetchVideos();
+    
+    filterPanel = element('div');
+    filterPanel.className = 'movie_filter';
+    filterPanel.appendChild(document.createTextNode('\u00a0'));
+
+    titlePanel = element('div');
+    titlePanel.className = 'movie_title_filter';
+    titleFilter = element('input');
+    titleFilter.type = 'text';
+    titleFilter.className = 'filter';
+    titleFilter.value = 'Search titles....';
+    titleFilter.onclick = function() {if (this.value == 'Search titles....') {this.value = '';}};
+    titleFilter.onblur = function() {if (this.value == '') {this.value = 'Search titles....';}};
+    titlePanel.appendChild(titleFilter);
+
+    movieGrid = element('div');
+    movieGrid.className = 'movie_grid';
+
+    if (useNightTheme()) {switchToNight(filterPanel, titleFilter);}
+    videoPanel.appendChild(filterPanel);
+    videoPanel.appendChild(titlePanel);
+    videoPanel.appendChild(movieGrid);
+}/*}}}*//*}}}*/
 
