@@ -207,6 +207,7 @@ div.movie_filter {/*{{{*/
     top: 1%;
     width: 20%;
     height: 98%;
+    padding-left: 5px;
     border: 1px solid black;
 }/*}}}*/
 

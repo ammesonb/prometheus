@@ -101,7 +101,7 @@ function createDateInput() {/*{{{*/
 function verifyNum(value, min, max) {/*{{{*/
     if (isNaN(value)) {return 1;}
     else if (min <= parseInt(value, 10) && parseInt(value, 10) <= max) {return value;}
-    else {return 1;}
+    else {return min;}
 }/*}}}*/
 
 function update() {/*{{{*/
@@ -3705,9 +3705,80 @@ function openVideos() {/*{{{*/
 function openVideoPanel(videoPanel) {/*{{{*/
     // fetchVideos();
     
+    // Filter criteria
     filterPanel = element('div');
     filterPanel.className = 'movie_filter';
-    filterPanel.appendChild(document.createTextNode('\u00a0'));
+
+    filterTitle = element('p');
+    filterTitle.className = 'normal_section_header';
+    filterTitle.style.marginTop = '15px';
+    filterTitle.style.marginLeft = '10px';
+    filterTitle.style.marginBottom = '5px';
+    setText(filterTitle, 'Search criteria');
+    filterPanel.appendChild(filterTitle);
+
+    // Duration/*{{{*/
+    durationText1 = element('p');
+    durationText1.className = 'normal_text';
+    durationText1.style.display = 'inline-block';
+    setText(durationText1, 'Between\u00a0');
+    durationInput1 = element('input');
+    durationInput1.style.width = '50px';
+    durationInput1.type = 'number';
+    durationInput1.min = 1;
+    durationInput1.onblur = function() {this.value = verifyNum(this.value, 1, 9999);};
+    durationText2 = element('p');
+    durationText2.className = 'normal_text';
+    durationText2.style.display = 'inline-block';
+    setText(durationText2, '\u00a0and\u00a0');
+    durationInput2 = element('input');
+    durationInput2.style.width = '50px';
+    durationInput2.type = 'number';
+    durationInput2.min = 2;
+    durationInput2.onblur = function() {this.value = verifyNum(this.value, 1, 9999);};
+    durationText3 = element('p');
+    durationText3.className = 'normal_text';
+    durationText3.style.display = 'inline-block';
+    setText(durationText3, '\u00a0minutes');
+    filterPanel.appendChild(durationText1);
+    filterPanel.appendChild(durationInput1);
+    filterPanel.appendChild(durationText2);
+    filterPanel.appendChild(durationInput2);
+    filterPanel.appendChild(durationText3);/*}}}*/
+
+    // Released/*{{{*/
+    releaseText1 = element('p');
+    releaseText1.className = 'normal_text';
+    releaseText1.style.display = 'inline-block';
+    setText(releaseText1, 'Released between\u00a0');
+    releaseInput1 = element('input');
+    releaseInput1.style.width = '50px';
+    releaseInput1.type = 'number';
+    releaseInput1.value = 1900;
+    releaseInput1.min = 1900;
+    releaseInput1.onblur = function() {this.value = verifyNum(this.value, 1900, 9999);};
+    releaseText2 = element('p');
+    releaseText2.className = 'normal_text';
+    releaseText2.style.display = 'inline-block';
+    setText(releaseText2, '\u00a0and\u00a0');
+    releaseInput2 = element('input');
+    releaseInput2.style.width = '50px';
+    releaseInput2.type = 'number';
+    releaseInput2.value = 1900 + new Date().getYear();
+    releaseInput2.min = 1901;
+    releaseInput2.onblur = function() {this.value = verifyNum(this.value, 1901, 9999);};
+    filterPanel.appendChild(releaseText1);
+    filterPanel.appendChild(releaseInput1);
+    filterPanel.appendChild(releaseText2);
+    filterPanel.appendChild(releaseInput2);/*}}}*/
+
+    if (useNightTheme()) {
+        switchToNight(
+            filterTitle,
+            durationText1, durationInput1, durationText2, durationInput2, durationText3,
+            releaseText1, releaseInput1, releaseText2, releaseInput2
+        );
+    }
 
     titlePanel = element('div');
     titlePanel.className = 'movie_title_filter';
