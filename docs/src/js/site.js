@@ -22,10 +22,14 @@ var services = [];
 var userServices = [];
 var users = [];/*}}}*/
 
-// Videos
-movies = [];
-series = [];
-genres = [];
+media = {
+    "movies": [],
+    "mSeries": [],
+    "mGenres": [],
+    "tv": [],
+    "tSeries": [],
+    "tGenres": [],
+};
 /*}}}*/
 
 /* General functions *//*{{{*/
@@ -140,7 +144,7 @@ function createPostReq(url, mode) { /*{{{*/
 
 function reqFailed(req) {/*{{{*/
     return ((req.readyState == 4 && req.status != 200) ||
-      (req.readyState ==4 && req.status == 200 && req.responseText != 'success'));
+      (req.readyState == 4 && req.status == 200 && req.responseText != 'success'));
 }/*}}}*/
 
 function reqCompleted(req) {/*{{{*/
@@ -3677,36 +3681,39 @@ function openAccount(accountPanel) {/*{{{*/
 }/*}}}*/
 /*}}}*/
 
-/* Videos *//*{{{*/
-function fetchVideos() {/*{{{*/
-    
+/* Media */
+function fetchMedia(kind) {/*{{{*/
+    getMediaReq = createPostReq('media.cgi', true);
+
+    getMediaReq.onreadystatechange = function() {/*{{{*/
+        if (this.readyState ==4 && this.status == 200) {
+            switch(this.responseText) {
+                case 'noauth':
+                    alertNoAuth();
+                    break;
+                case 'notmine':
+                    alertDisabled();
+                    break;
+                case 'badreq':
+                    alert('Invalid session variable - close the panel and reopen it!');
+                    break;
+                case 'badmedia':
+                    alert('Invalid session variable - close the panel and reopen it!');
+                    break;
+                default:
+                    [media[kind], media[kind[0] + 'Series'], media[kind[0] + 'Genres']] = JSON.parse(this.responseText);
+            }
+        }
+    };/*}}}*/
+
+    getMediaReq.send('mode=0&media=' + kind);
 }/*}}}*/
 
-function openVideos() {/*{{{*/
-    videoPanel = element('div');
-    id = 'videos_' + new Date().getTime();
-    videoPanel.id = id;
-    videoPanel.className = 'videos';
-    videoPanel.style.display = 'none';
+function openMediaPanel(mediaPanel, kind) {/*{{{*/
+    deleteAllChildren(mediaPanel, true);
+    mediaPanel.style.display = 'none';
 
-    // Add tab/*{{{*/
-    videoTab = element('div');
-    videoTab.className = 'tab';
-    setText(videoTab, 'Videos');
-    videoTab.setAttribute('data-id', id);
-    videoTab.onclick = function() {switchTab(this.getAttribute('data-id'));}
-    addTab(videoPanel, videoTab);
-    videoPanel.style.display = 'block';
-    switchTab(id);/*}}}*/
-
-    openVideoPanel(videoPanel);
-}/*}}}*/
-
-function openVideoPanel(videoPanel) {/*{{{*/
-    deleteAllChildren(videoPanel, true);
-    videoPanel.style.display = 'none';
-
-    // fetchVideos();
+    fetchMedia(kind);
     
     // Filter criteria
     filterPanel = element('div');
@@ -3798,22 +3805,45 @@ function openVideoPanel(videoPanel) {/*{{{*/
     titleFilter.onblur = function() {if (this.value == '') {this.value = 'Search titles....';}};
     titlePanel.appendChild(titleFilter);/*}}}*/
 
-    movieGrid = element('div');
-    movieGrid.className = 'movie_grid';
+    mediaGrid = element('div');
+    mediaGrid.className = 'movie_grid';
 
     if (useNightTheme()) {switchToNight(filterPanel, titleFilter);}
-    videoPanel.appendChild(filterPanel);
-    videoPanel.appendChild(titlePanel);
-    videoPanel.appendChild(movieGrid);
+    mediaPanel.appendChild(filterPanel);
+    mediaPanel.appendChild(titlePanel);
+    mediaPanel.appendChild(mediaGrid);
 
-    videoPanel.style.display = 'block';
+    mediaPanel.style.display = 'block';
     
     // Resize elements to fit on screen/*{{{*/
     titlePanel.style.left = filterPanel.offsetLeft + filterPanel.offsetWidth + 10 + 'px';
-    titlePanel.style.width = videoPanel.offsetWidth - titlePanel.offsetLeft - 20 + 'px';
-    movieGrid.style.left = filterPanel.offsetLeft + filterPanel.offsetWidth + 10 + 'px';
-    movieGrid.style.top = titlePanel.style.offsetTop + titlePanel.style.offsetHeight + 10 + 'px';
-    movieGrid.style.width = videoPanel.offsetWidth - titlePanel.offsetLeft - 10 + 'px';
-    movieGrid.style.height = videoPanel.offsetHeight - titlePanel.offsetTop - 20 + 'px';/*}}}*/
-}/*}}}*//*}}}*/
+    titlePanel.style.width = mediaPanel.offsetWidth - titlePanel.offsetLeft - 20 + 'px';
+    mediaGrid.style.left = filterPanel.offsetLeft + filterPanel.offsetWidth + 10 + 'px';
+    mediaGrid.style.top = titlePanel.style.offsetTop + titlePanel.style.offsetHeight + 10 + 'px';
+    mediaGrid.style.width = mediaPanel.offsetWidth - titlePanel.offsetLeft - 10 + 'px';
+    mediaGrid.style.height = mediaPanel.offsetHeight - titlePanel.offsetTop - 20 + 'px';/*}}}*/
+}/*}}}*/
+
+/* Videos *//*{{{*/
+function openVideos() {/*{{{*/
+    videoPanel = element('div');
+    id = 'videos_' + new Date().getTime();
+    videoPanel.id = id;
+    videoPanel.className = 'videos';
+    videoPanel.style.display = 'none';
+
+    // Add tab/*{{{*/
+    videoTab = element('div');
+    videoTab.className = 'tab';
+    setText(videoTab, 'Videos');
+    videoTab.setAttribute('data-id', id);
+    videoTab.onclick = function() {switchTab(this.getAttribute('data-id'));}
+    addTab(videoPanel, videoTab);
+    videoPanel.style.display = 'block';
+    switchTab(id);/*}}}*/
+
+    openMediaPanel(videoPanel, 'video');
+}/*}}}*/
+
+/*}}}*/
 

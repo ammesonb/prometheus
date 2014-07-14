@@ -206,7 +206,8 @@ ALTER SEQUENCE domains_id_seq OWNED BY domains.id;
 
 CREATE TABLE genres (
     id integer NOT NULL,
-    name character varying NOT NULL
+    name character varying NOT NULL,
+    CONSTRAINT check_genre_valid CHECK (((name)::text ~ '^.+$'::text))
 );
 
 
@@ -234,6 +235,40 @@ ALTER SEQUENCE genres_id_seq OWNED BY genres.id;
 
 
 --
+-- Name: movies_genre; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE movies_genre (
+    id integer NOT NULL,
+    movie integer,
+    genre integer
+);
+
+
+ALTER TABLE public.movies_genre OWNER TO root;
+
+--
+-- Name: movie_genre_id_seq; Type: SEQUENCE; Schema: public; Owner: root
+--
+
+CREATE SEQUENCE movie_genre_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.movie_genre_id_seq OWNER TO root;
+
+--
+-- Name: movie_genre_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: root
+--
+
+ALTER SEQUENCE movie_genre_id_seq OWNED BY movies_genre.id;
+
+
+--
 -- Name: movies; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
@@ -242,12 +277,12 @@ CREATE TABLE movies (
     ttid integer,
     title character varying NOT NULL,
     series integer,
-    genre integer,
     year integer,
     released date,
     duration integer,
     director character varying,
-    description character varying
+    description character varying,
+    needs_attention boolean DEFAULT false
 );
 
 
@@ -395,7 +430,8 @@ ALTER SEQUENCE reminders_id_seq OWNED BY reminders.id;
 
 CREATE TABLE series (
     id integer NOT NULL,
-    name character varying NOT NULL
+    name character varying NOT NULL,
+    CONSTRAINT check_series_valid CHECK (((name)::text ~ '^.+$'::text))
 );
 
 
@@ -532,6 +568,81 @@ ALTER SEQUENCE tasks_id_seq OWNED BY tasks.id;
 
 
 --
+-- Name: tv; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE tv (
+    id integer NOT NULL,
+    ttid integer,
+    title character varying NOT NULL,
+    series integer,
+    year integer,
+    released date,
+    duration integer,
+    director character varying,
+    description character varying,
+    needs_attention boolean DEFAULT false
+);
+
+
+ALTER TABLE public.tv OWNER TO root;
+
+--
+-- Name: tv_genre; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE tv_genre (
+    id integer NOT NULL,
+    episode integer,
+    genre integer
+);
+
+
+ALTER TABLE public.tv_genre OWNER TO root;
+
+--
+-- Name: tv_genre_id_seq; Type: SEQUENCE; Schema: public; Owner: root
+--
+
+CREATE SEQUENCE tv_genre_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.tv_genre_id_seq OWNER TO root;
+
+--
+-- Name: tv_genre_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: root
+--
+
+ALTER SEQUENCE tv_genre_id_seq OWNED BY tv_genre.id;
+
+
+--
+-- Name: tv_id_seq; Type: SEQUENCE; Schema: public; Owner: root
+--
+
+CREATE SEQUENCE tv_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.tv_id_seq OWNER TO root;
+
+--
+-- Name: tv_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: root
+--
+
+ALTER SEQUENCE tv_id_seq OWNED BY tv.id;
+
+
+--
 -- Name: user_services; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
@@ -629,6 +740,13 @@ ALTER TABLE ONLY movies ALTER COLUMN id SET DEFAULT nextval('movies_id_seq'::reg
 -- Name: id; Type: DEFAULT; Schema: public; Owner: root
 --
 
+ALTER TABLE ONLY movies_genre ALTER COLUMN id SET DEFAULT nextval('movie_genre_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: root
+--
+
 ALTER TABLE ONLY notes ALTER COLUMN id SET DEFAULT nextval('notes_id_seq'::regclass);
 
 
@@ -678,6 +796,20 @@ ALTER TABLE ONLY tasks ALTER COLUMN id SET DEFAULT nextval('tasks_id_seq'::regcl
 -- Name: id; Type: DEFAULT; Schema: public; Owner: root
 --
 
+ALTER TABLE ONLY tv ALTER COLUMN id SET DEFAULT nextval('tv_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY tv_genre ALTER COLUMN id SET DEFAULT nextval('tv_genre_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: root
+--
+
 ALTER TABLE ONLY user_services ALTER COLUMN id SET DEFAULT nextval('user_services_id_seq'::regclass);
 
 
@@ -721,11 +853,27 @@ ALTER TABLE ONLY genres
 
 
 --
+-- Name: movie_genre_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY movies_genre
+    ADD CONSTRAINT movie_genre_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: movies_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
 --
 
 ALTER TABLE ONLY movies
     ADD CONSTRAINT movies_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: movies_ttid_key; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY movies
+    ADD CONSTRAINT movies_ttid_key UNIQUE (ttid);
 
 
 --
@@ -833,6 +981,30 @@ ALTER TABLE ONLY tasks
 
 
 --
+-- Name: tv_genre_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY tv_genre
+    ADD CONSTRAINT tv_genre_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tv_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY tv
+    ADD CONSTRAINT tv_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tv_ttid_key; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY tv
+    ADD CONSTRAINT tv_ttid_key UNIQUE (ttid);
+
+
+--
 -- Name: user_services_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
 --
 
@@ -899,11 +1071,19 @@ CREATE TRIGGER set_first_reminder_time_trigger BEFORE INSERT ON reminders FOR EA
 
 
 --
--- Name: movies_genre_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+-- Name: movie_genre_genre_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
 --
 
-ALTER TABLE ONLY movies
-    ADD CONSTRAINT movies_genre_fkey FOREIGN KEY (genre) REFERENCES genres(id);
+ALTER TABLE ONLY movies_genre
+    ADD CONSTRAINT movie_genre_genre_fkey FOREIGN KEY (genre) REFERENCES genres(id);
+
+
+--
+-- Name: movie_genre_movie_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY movies_genre
+    ADD CONSTRAINT movie_genre_movie_fkey FOREIGN KEY (movie) REFERENCES movies(id);
 
 
 --
@@ -960,6 +1140,30 @@ ALTER TABLE ONLY tasks
 
 ALTER TABLE ONLY tasks
     ADD CONSTRAINT tasks_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);
+
+
+--
+-- Name: tv_genre_episode_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY tv_genre
+    ADD CONSTRAINT tv_genre_episode_fkey FOREIGN KEY (episode) REFERENCES tv(id);
+
+
+--
+-- Name: tv_genre_genre_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY tv_genre
+    ADD CONSTRAINT tv_genre_genre_fkey FOREIGN KEY (genre) REFERENCES genres(id);
+
+
+--
+-- Name: tv_series_fkey; Type: FK CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY tv
+    ADD CONSTRAINT tv_series_fkey FOREIGN KEY (series) REFERENCES series(id);
 
 
 --

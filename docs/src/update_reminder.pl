@@ -34,7 +34,8 @@ sub scheduleReminder { #{{{
     my ($file, $filename) = tempfile();
     if (int($hour) < 10) {$hour = "0$hour";}
     if (int($min) < 10) {$min = "0$min";}
-    print "$hour:$min $year-$mon-$mday\n";
+    #print "$hour:$min $year-$mon-$mday\n";
+    #print "echo \"perl /var/www/update_reminder.pl r $id\" | at $hour:$min $year-$mon-$mday 2> $filename";
     `echo \"perl /var/www/update_reminder.pl r $id\" | at $hour:$min $year-$mon-$mday 2> $filename`;
     my $jobID = read_file($filename);
     $jobID =~ s/^.*job ([0-9]+) at.*$/$1/s;
