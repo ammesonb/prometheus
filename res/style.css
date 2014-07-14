@@ -200,7 +200,7 @@ div.reminder_editor.night {/*{{{*/
     background-color: rgba(0, 0, 0, .3);
 }/*}}}*/
 
-div.movie_filter {/*{{{*/
+div.media_filter {/*{{{*/
     position: absolute;
     float: left;
     display: inline-block;
@@ -209,13 +209,14 @@ div.movie_filter {/*{{{*/
     height: 98%;
     padding-left: 5px;
     border: 1px solid black;
+    overflow: auto;
 }/*}}}*/
 
-div.movie_filter.night {/*{{{*/
+div.media_filter.night {/*{{{*/
     border: 1px solid silver;
 }/*}}}*/
 
-div.movie_title_filter {/*{{{*/
+div.media_title_filter {/*{{{*/
     position: absolute;
     display: inline-block;
     top: 1%;
@@ -224,7 +225,7 @@ div.movie_title_filter {/*{{{*/
     border: none;
 }/*}}}*/
 
-div.movie_grid {/*{{{*/
+div.media_grid {/*{{{*/
     position: absolute;
 }/*}}}*/
 /*}}}*/

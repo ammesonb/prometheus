@@ -3683,7 +3683,7 @@ function openAccount(accountPanel) {/*{{{*/
 
 /* Media */
 function fetchMedia(kind) {/*{{{*/
-    getMediaReq = createPostReq('media.cgi', true);
+    getMediaReq = createPostReq('media.cgi', false);
 
     getMediaReq.onreadystatechange = function() {/*{{{*/
         if (this.readyState ==4 && this.status == 200) {
@@ -3717,9 +3717,9 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
     
     // Filter criteria
     filterPanel = element('div');
-    filterPanel.className = 'movie_filter';
+    filterPanel.className = 'media_filter';
 
-    // Title/*{{{*/
+    // Label/*{{{*/
     filterTitle = element('p');
     filterTitle.className = 'normal_section_header';
     filterTitle.style.marginTop = '15px';
@@ -3786,17 +3786,40 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
     filterPanel.appendChild(releaseText2);
     filterPanel.appendChild(releaseInput2);/*}}}*/
 
+    // Genre
+    genreP = element('p');
+    genreP.className = 'normal_text';
+    setText(genreP, 'Genres:');
+    filterPanel.appendChild(genreP);
+    genreKeys = Object.keys(media[kind[0] + 'Genres']);
+    for (g = 0; g < genreKeys.length; g++) {/*{{{*/
+        genre = media[kind[0] + 'Genres'][genreKeys[g]];
+        check = element('input');
+        check.type = 'checkbox';
+        check.value = genre.id
+        checkP = element('p');
+        checkP.className = 'normal_text';
+        checkP.style.display = 'inline';
+        setText(checkP, '\u00a0' + genre.name);
+
+        if (useNightTheme()) {switchToNight(checkP, check);}
+        filterPanel.appendChild(check);
+        filterPanel.appendChild(checkP);
+        filterPanel.appendChild(element('br'));
+    }/*}}}*/
+
     if (useNightTheme()) {/*{{{*/
         switchToNight(
             filterTitle,
             durationText1, durationInput1, durationText2, durationInput2, durationText3,
-            releaseText1, releaseInput1, releaseText2, releaseInput2
+            releaseText1, releaseInput1, releaseText2, releaseInput2,
+            genreP
         );
     }/*}}}*/
 
     // Title search bar/*{{{*/
     titlePanel = element('div');
-    titlePanel.className = 'movie_title_filter';
+    titlePanel.className = 'media_title_filter';
     titleFilter = element('input');
     titleFilter.type = 'text';
     titleFilter.className = 'filter';
@@ -3806,7 +3829,7 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
     titlePanel.appendChild(titleFilter);/*}}}*/
 
     mediaGrid = element('div');
-    mediaGrid.className = 'movie_grid';
+    mediaGrid.className = 'media_grid';
 
     if (useNightTheme()) {switchToNight(filterPanel, titleFilter);}
     mediaPanel.appendChild(filterPanel);
@@ -3842,7 +3865,7 @@ function openVideos() {/*{{{*/
     videoPanel.style.display = 'block';
     switchTab(id);/*}}}*/
 
-    openMediaPanel(videoPanel, 'video');
+    openMediaPanel(videoPanel, 'movies');
 }/*}}}*/
 
 /*}}}*/
