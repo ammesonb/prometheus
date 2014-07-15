@@ -573,7 +573,7 @@ ALTER SEQUENCE tasks_id_seq OWNED BY tasks.id;
 
 CREATE TABLE tv (
     id integer NOT NULL,
-    ttid integer,
+    ttid character varying,
     title character varying NOT NULL,
     series integer,
     year integer,
@@ -581,7 +581,9 @@ CREATE TABLE tv (
     duration integer,
     director character varying,
     description character varying,
-    needs_attention boolean DEFAULT false
+    needs_attention boolean DEFAULT false,
+    season integer,
+    episode integer
 );
 
 

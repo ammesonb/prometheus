@@ -3713,7 +3713,19 @@ function fetchMedia(kind) {/*{{{*/
                     for (k = 0; k < keys.length; k++) {
                         arr.push(media[kind][keys[k]]);
                     }
-                    arr.sort(function(a, b) {return a.title > b.title;});
+                    if (kind != 'tv') {
+                        arr.sort(function(a, b) {return (a.title > b.title) ? 1 : -1;});
+                    } else {
+                        arr.sort(function(a, b) {
+                            if (a.series == b.series) {
+                                if (a.season == b.season) {
+                                    return (a.episode > b.episode) ? 1 : -1;
+                                } else {return (a.season > b.season) ? 1 : -1;}
+                            } else {
+                                return (media['tSeries'][a.series].name > media['tSeries'][b.series].name) ? 1 : -1;
+                            }
+                        });
+                    }
                     media[kind] = arr;
                     break;
             }
@@ -3927,7 +3939,17 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
         if ((this.value == '' || this.value == 'Search titles....') && !found) {return};
         addFilter('title', this.value, this.parentElement.parentElement, this.getAttribute('data-kind'));
     };
-    titlePanel.appendChild(titleFilter);/*}}}*/
+    clearTitle = element('img');
+    clearTitle.src = 'images/x.png';
+    clearTitle.onclick = function() {/*{{{*/
+       titleFilter = this.previousElementSibling;
+       titleFilter.value = '';
+       titleFilter.onchange();
+       titleFilter.onblur();
+    };/*}}}*/
+
+    titlePanel.appendChild(titleFilter);
+    titlePanel.appendChild(clearTitle); /*}}}*/
 
     mediaGrid = element('div');
     mediaGrid.className = 'media_grid';
@@ -3946,7 +3968,7 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
     mediaGrid.style.width = mediaPanel.offsetWidth - titlePanel.offsetLeft - 10 + 'px';
     mediaGrid.style.height = filterPanel.offsetHeight - titlePanel.offsetTop - 30 + 'px';/*}}}*/
 
-    populateMediaGrid(mediaGrid, media[kind], kind);
+    setTimeout(function() {populateMediaGrid(mediaGrid, media[kind], kind);}, 100);
 }/*}}}*/
 
 function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
@@ -3971,6 +3993,20 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
             series = element('p');
             series.className = 'media_series';
             setText(series, media[kind[0] + 'Series'][item.series].name);
+            series.onclick = function() {
+                titleFilter = this.parentElement.parentElement.parentElement.getElementsByClassName('media_title_filter')[0].getElementsByTagName('input')[0];
+                titleFilter.value = this.innerText;
+                titleFilter.onchange();
+            };
+        }
+        if (kind == 'tv') {
+            season = item.season;
+            //if (10 > season) {season = '0' + season;}
+            ep = item.episode;
+            //if (10 > ep) {ep = '0' + ep;}
+            episode = element('p');
+            episode.className = 'media_length';
+            setText(episode, 'Season ' + season + ', Episode ' + ep)
         }
         length = element('p');
         length.className = 'media_length';
@@ -3985,10 +4021,13 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
         container.appendChild(title);
         container.appendChild(element('br'));
         if (series) {
-            if (useNightTheme()) {
-                switchToNight(series);
-            }
+            if (useNightTheme()) {switchToNight(series);}
             container.appendChild(series);
+            container.appendChild(element('br'));
+        }
+        if (kind == 'tv') {
+            if (useNightTheme()) {switchToNight(episode);}
+            container.appendChild(episode);
             container.appendChild(element('br'));
         }
         container.appendChild(length);
@@ -4012,7 +4051,6 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
     }/*}}}*/
 }/*}}}*/
 
-/* Videos *//*{{{*/
 function openVideos() {/*{{{*/
     videoPanel = element('div');
     id = 'videos_' + new Date().getTime();
@@ -4034,5 +4072,24 @@ function openVideos() {/*{{{*/
     openMediaPanel(videoPanel, 'movies');
 }/*}}}*/
 
-/*}}}*/
+function openTV() {/*{{{*/
+    tvPanel = element('div');
+    id = 'tv_' + new Date().getTime();
+    tvPanel.id = id;
+    tvPanel.className = 'tv';
+    tvPanel.style.display = 'none';
+    tvPanel.setAttribute('data-filters', JSON.stringify([]));
+
+    // Add tab/*{{{*/
+    tvTab = element('div');
+    tvTab.className = 'tab';
+    setText(tvTab, 'TV');
+    tvTab.setAttribute('data-id', id);
+    tvTab.onclick = function() {switchTab(this.getAttribute('data-id'));}
+    addTab(tvPanel, tvTab);
+    tvPanel.style.display = 'block';
+    switchTab(id);/*}}}*/
+
+    openMediaPanel(tvPanel, 'tv');
+}/*}}}*/
 

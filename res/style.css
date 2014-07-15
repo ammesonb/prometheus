@@ -325,7 +325,9 @@ input.note_title { /*{{{*/
 } /*}}}*/
 
 input.filter {/*{{{*/
-    width: 100%;
+    width: 95%;
+    display: inline;
+    margin-right: 10px;
 }/*}}}*/
 
 textarea.night { /*{{{*/
