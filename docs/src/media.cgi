@@ -42,9 +42,13 @@ if ($mode == 0) {
     $genreCMD->execute();
     my $genreRef = $genreCMD->fetchall_hashref(['id']);
     my %genres = %$genreRef;
+    my $mediaGenreCMD = $dbh->prepare("SELECT $genreAlias{$media}, array_agg(genre) AS genres FROM $media" . "_genre GROUP BY $genreAlias{$media};");
+    $mediaGenreCMD->execute();
+    my $mediaGenreRef = $mediaGenreCMD->fetchall_hashref([$genreAlias{$media}]);
+    my %mediaGenres = %$mediaGenreRef;
 
     print '[';
-    print join(',', (encode_json(\%media), encode_json(\%series), encode_json(\%genres)));
+    print join(',', (encode_json(\%media), encode_json(\%series), encode_json(\%genres), encode_json(\%mediaGenres)));
     print ']';
 }
 exit;

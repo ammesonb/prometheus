@@ -133,7 +133,7 @@ if ($mode == 0) { #{{{
     print 'fail' if ($rows != 1); #}}}
 } elsif ($mode == 6) { #{{{
     my $u = $q->param('u');
-    if ($u !~ /^[a-zA-Z0-9-_]+$/) {print 'Bad user'; exit;}
+    if ($u !~ /^[a-zA-Z0-9-_.]+$/) {print 'Bad user'; exit;}
     my $p = $q->param('p');
     if ($p !~ /^[0-9a-f]{64,}$/) {print 'Bad pass'; exit;}
 

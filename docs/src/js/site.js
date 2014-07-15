@@ -26,9 +26,11 @@ media = {
     "movies": [],
     "mSeries": [],
     "mGenres": [],
+    "movieGenres": [],
     "tv": [],
     "tSeries": [],
     "tGenres": [],
+    "tvGenres": []
 };
 /*}}}*/
 
@@ -3701,12 +3703,60 @@ function fetchMedia(kind) {/*{{{*/
                     alert('Invalid session variable - close the panel and reopen it!');
                     break;
                 default:
-                    [media[kind], media[kind[0] + 'Series'], media[kind[0] + 'Genres']] = JSON.parse(this.responseText);
+                    results = JSON.parse(this.responseText);
+                    media[kind] = results[0];
+                    media[kind[0] + 'Series'] = results[1];
+                    media[kind[0] + 'Genres'] = results[2];
+                    media[kind + 'Genres'] = results[3];
+                    keys = Object.keys(media[kind]);
+                    arr = [];
+                    for (k = 0; k < keys.length; k++) {
+                        arr.push(media[kind][keys[k]]);
+                    }
+                    arr.sort(function(a, b) {return a.title > b.title;});
+                    media[kind] = arr;
+                    break;
             }
         }
     };/*}}}*/
 
     getMediaReq.send('mode=0&media=' + kind);
+}/*}}}*/
+
+function addFilter(filter, value, mediaPanel, kind) {/*{{{*/
+    filters = JSON.parse(mediaPanel.getAttribute('data-filters'));
+    filters = filters.filter(function(f) {return f[0] != filter;});
+    filters.push([filter, value]);
+    mediaPanel.setAttribute('data-filters', JSON.stringify(filters));
+    items = filterMedia(kind, filters);
+    mediaGrid = mediaPanel.getElementsByClassName('media_grid')[0];
+    populateMediaGrid(mediaGrid, items, kind);
+}/*}}}*/
+
+function filterMedia(kind, filters) {/*{{{*/
+    items = media[kind];
+    return items.filter(function(m) {
+        keep = true;
+        for (f = 0; f < filters.length; f++) {
+            filter = filters[f];
+            if ((filter[0] == 'dmin' && m['duration'] < filter[1]) ||
+              (filter[0] == 'dmax' && m['duration'] > filter[1]) ||
+              (filter[0] == 'ymin' && m['year'] < filter[1]) ||
+              (filter[0] == 'ymax' && m['year'] > filter[1]) ||
+              (filter[0] == 'title' && m['title'].toLowerCase().indexOf(filter[1].toLowerCase()) == -1 && (!m['series'] || (m['series'] && media[kind[0] + 'Series'][m['series']].name.toLowerCase().indexOf(filter[1].toLowerCase()) == -1)))) {
+                keep = false;
+                break;
+            } else if (filter[0] == 'genres') {
+                found = 0;
+                for (g = 0; g < filter[1].length; g++) {
+                    if (media[kind + 'Genres'][m.id]['genres'].indexOf(filter[1][g]) != -1) {found = 1; break;}
+                }
+                keep = found;
+                if (!keep) {break;}
+            }
+        }
+        return keep;
+    });
 }/*}}}*/
 
 function openMediaPanel(mediaPanel, kind) {/*{{{*/
@@ -3737,8 +3787,15 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
     durationInput1 = element('input');
     durationInput1.style.width = '50px';
     durationInput1.type = 'number';
+    durationInput1.value = 1;
     durationInput1.min = 1;
     durationInput1.onblur = function() {this.value = verifyNum(this.value, 1, 9999);};
+    durationInput1.setAttribute('data-kind', kind);
+    durationInput1.onchange = function() {/*{{{*/
+        minTime = parseInt(this.value, 10);
+        if (!minTime || 1 > minTime) {return;}
+        addFilter('dmin', minTime, this.parentElement.parentElement, this.getAttribute('data-kind'));
+    };/*}}}*/
     durationText2 = element('p');
     durationText2.className = 'normal_text';
     durationText2.style.display = 'inline';
@@ -3746,8 +3803,15 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
     durationInput2 = element('input');
     durationInput2.style.width = '50px';
     durationInput2.type = 'number';
+    durationInput2.value = 999;
     durationInput2.min = 2;
-    durationInput2.onblur = function() {this.value = verifyNum(this.value, 1, 9999);};
+    durationInput2.onblur = function() {this.value = verifyNum(this.value, 2, 9999);};
+    durationInput2.setAttribute('data-kind', kind);
+    durationInput2.onchange = function() {/*{{{*/
+        maxTime = parseInt(this.value, 10);
+        if (!maxTime || 1 > minTime) {return;}
+        addFilter('dmax', maxTime, this.parentElement.parentElement, this.getAttribute('data-kind'));
+    };/*}}}*/
     durationText3 = element('p');
     durationText3.className = 'normal_text';
     durationText3.style.display = 'inline';
@@ -3771,6 +3835,12 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
     releaseInput1.value = 1900;
     releaseInput1.min = 1900;
     releaseInput1.onblur = function() {this.value = verifyNum(this.value, 1900, 9999);};
+    releaseInput1.setAttribute('data-kind', kind);
+    releaseInput1.onchange = function() {/*{{{*/
+        minYear = parseInt(this.value, 10);
+        if (!minYear || 1 > minYear) {return;}
+        addFilter('ymin', minYear, this.parentElement.parentElement, this.getAttribute('data-kind'));
+    };/*}}}*/
     releaseText2 = element('p');
     releaseText2.className = 'normal_text';
     releaseText2.style.display = 'inline';
@@ -3781,12 +3851,18 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
     releaseInput2.value = 1900 + new Date().getYear();
     releaseInput2.min = 1901;
     releaseInput2.onblur = function() {this.value = verifyNum(this.value, 1901, 9999);};
+    releaseInput2.setAttribute('data-kind', kind);
+    releaseInput2.onchange = function() {/*{{{*/
+        maxYear = parseInt(this.value, 10);
+        if (!maxYear || 1 > maxYear) {return;}
+        addFilter('ymax', maxYear, this.parentElement.parentElement, this.getAttribute('data-kind'));
+    };/*}}}*/
     filterPanel.appendChild(releaseText1);
     filterPanel.appendChild(releaseInput1);
     filterPanel.appendChild(releaseText2);
     filterPanel.appendChild(releaseInput2);/*}}}*/
 
-    // Genre
+    // Genre/*{{{*/
     genreP = element('p');
     genreP.className = 'normal_text';
     setText(genreP, 'Genres:');
@@ -3796,7 +3872,24 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
         genre = media[kind[0] + 'Genres'][genreKeys[g]];
         check = element('input');
         check.type = 'checkbox';
-        check.value = genre.id
+        check.value = genre.id;
+        check.setAttribute('data-kind', kind);
+        check.onclick = function() {
+            genre = parseInt(this.value, 10);
+            filters = JSON.parse(this.parentElement.parentElement.getAttribute('data-filters'));
+            genres = filters.find(function(e) {return e[0] == 'genres';});
+            if (!genres) {
+                genres = [genre];
+            } else {
+                genres = genres[1];
+                if (genres.indexOf(genre) != -1) {
+                    genres.splice(genres.indexOf(genre), 1);
+                } else {
+                    genres.push(genre);
+                }
+            }
+            addFilter('genres', genres, this.parentElement.parentElement, this.getAttribute('data-kind'));
+        };
         checkP = element('p');
         checkP.className = 'normal_text';
         checkP.style.display = 'inline';
@@ -3806,7 +3899,7 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
         filterPanel.appendChild(check);
         filterPanel.appendChild(checkP);
         filterPanel.appendChild(element('br'));
-    }/*}}}*/
+    }/*}}}*//*}}}*/
 
     if (useNightTheme()) {/*{{{*/
         switchToNight(
@@ -3826,25 +3919,97 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
     titleFilter.value = 'Search titles....';
     titleFilter.onclick = function() {if (this.value == 'Search titles....') {this.value = '';}};
     titleFilter.onblur = function() {if (this.value == '') {this.value = 'Search titles....';}};
+    titleFilter.setAttribute('data-kind', kind);
+    titleFilter.onchange = function() {
+        filters = JSON.parse(this.parentElement.parentElement.getAttribute('data-filters'));
+        found = 0;
+        if (filters.find(function(e) {return e[0] == 'title'})) {found = 1;}
+        if ((this.value == '' || this.value == 'Search titles....') && !found) {return};
+        addFilter('title', this.value, this.parentElement.parentElement, this.getAttribute('data-kind'));
+    };
     titlePanel.appendChild(titleFilter);/*}}}*/
 
     mediaGrid = element('div');
     mediaGrid.className = 'media_grid';
 
-    if (useNightTheme()) {switchToNight(filterPanel, titleFilter);}
+    if (useNightTheme()) {switchToNight(filterPanel, titleFilter, mediaGrid);}
     mediaPanel.appendChild(filterPanel);
     mediaPanel.appendChild(titlePanel);
     mediaPanel.appendChild(mediaGrid);
-
     mediaPanel.style.display = 'block';
-    
+
     // Resize elements to fit on screen/*{{{*/
     titlePanel.style.left = filterPanel.offsetLeft + filterPanel.offsetWidth + 10 + 'px';
     titlePanel.style.width = mediaPanel.offsetWidth - titlePanel.offsetLeft - 20 + 'px';
     mediaGrid.style.left = filterPanel.offsetLeft + filterPanel.offsetWidth + 10 + 'px';
-    mediaGrid.style.top = titlePanel.style.offsetTop + titlePanel.style.offsetHeight + 10 + 'px';
+    mediaGrid.style.top = titlePanel.offsetTop + titlePanel.offsetHeight + 10 + 'px';
     mediaGrid.style.width = mediaPanel.offsetWidth - titlePanel.offsetLeft - 10 + 'px';
-    mediaGrid.style.height = mediaPanel.offsetHeight - titlePanel.offsetTop - 20 + 'px';/*}}}*/
+    mediaGrid.style.height = filterPanel.offsetHeight - titlePanel.offsetTop - 30 + 'px';/*}}}*/
+
+    populateMediaGrid(mediaGrid, media[kind], kind);
+}/*}}}*/
+
+function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
+    deleteAllChildren(mediaGrid, true);
+    count = 0;
+    lastTop = 0;
+    for (m = 0; m < items.length; m++) {/*{{{*/
+        item = items[m];
+        container = element('span');
+        container.className = 'media_item';
+        poster = element('img');
+        poster.src = 'thumbs/' + item['ttid'] + '.jpg';
+        poster.style.width = '100px';
+        poster.style.height = '150px';
+        poster.title = item.title;
+        poster.alt = item.title;
+        title = element('p');
+        title.className = 'media_title';
+        setText(title, item.title + ' (' + item.year + ')');
+        series = 0;
+        if (item.series) {
+            series = element('p');
+            series.className = 'media_series';
+            setText(series, media[kind[0] + 'Series'][item.series].name);
+        }
+        length = element('p');
+        length.className = 'media_length';
+        setText(length, item['duration']+ ' minutes');
+        
+        if (useNightTheme()) {
+            switchToNight(title, length);
+        }
+
+        container.appendChild(poster);
+        container.appendChild(element('br'));
+        container.appendChild(title);
+        container.appendChild(element('br'));
+        if (series) {
+            if (useNightTheme()) {
+                switchToNight(series);
+            }
+            container.appendChild(series);
+            container.appendChild(element('br'));
+        }
+        container.appendChild(length);
+
+        mediaGrid.appendChild(container);
+        largestHeight = 0;
+        if (container.offsetTop != lastTop && count) {
+            for (c = mediaGrid.childElementCount - count; c < mediaGrid.childElementCount; c++) {
+                mediaHeight = mediaGrid.children[c].offsetHeight;
+                if (mediaHeight > largestHeight) {largestHeight = mediaHeight;}
+            }
+            for (c = mediaGrid.childElementCount - count - 1; c < mediaGrid.childElementCount; c++) {
+                mediaGrid.children[c].style.height = largestHeight + 'px';
+            }
+            count = 1;
+        } else {
+            count++;
+        }
+
+        lastTop = container.offsetTop;
+    }/*}}}*/
 }/*}}}*/
 
 /* Videos *//*{{{*/
@@ -3854,6 +4019,7 @@ function openVideos() {/*{{{*/
     videoPanel.id = id;
     videoPanel.className = 'videos';
     videoPanel.style.display = 'none';
+    videoPanel.setAttribute('data-filters', JSON.stringify([]));
 
     // Add tab/*{{{*/
     videoTab = element('div');

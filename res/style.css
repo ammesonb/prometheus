@@ -227,10 +227,26 @@ div.media_title_filter {/*{{{*/
 
 div.media_grid {/*{{{*/
     position: absolute;
+    overflow: auto;
+    border: 1px solid black;
 }/*}}}*/
+
+div.media_grid.night {/*{{{*/
+    border: 1px solid silver;
+}/*}}}*/
+
 /*}}}*/
 
 /* span */ /*{{{*/
+span.media_item {
+    float: left;
+    text-align: center;
+    width: 150px;
+    margin-right: 15px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
 span.normal { /*{{{*/
     color: black;
 } /*}}}*/
@@ -421,6 +437,41 @@ p.project_name:hover { /*{{{*/
     font-style: italic;
     font-weight: bold;
 } /*}}}*/
+
+p.media_title {/*{{{*/
+    display: inline;
+    color: black;
+    display: inline;
+    font-size: 100%;
+    font-weight: bold;
+}/*}}}*/
+
+p.media_title.night {/*{{{*/
+    color: silver;
+}/*}}}*/
+
+p.media_series {/*{{{*/
+    display: inline;
+    color: black;
+    font-size: 90%;
+    font-style: italic;
+    text-decoration: underline;
+}/*}}}*/
+
+p.media_series.night {/*{{{*/
+    color: silver;
+}/*}}}*/
+
+p.media_length {/*{{{*/
+    display: inline;
+    color: black;
+    font-size: 80%;
+    font-style: italic;
+}/*}}}*/
+
+p.media_length.night {/*{{{*/
+    color: silver;
+}/*}}}*/
 
 p.tool_name { /*{{{*/
     color: #555;

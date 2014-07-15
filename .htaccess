@@ -6,3 +6,5 @@ AddHandler cgi-script cgi pl
 Order deny,allow
 Deny from all
 </Files>
+
+ErrorDocument 404 /index.cgi

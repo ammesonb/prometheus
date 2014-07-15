@@ -274,7 +274,7 @@ ALTER SEQUENCE movie_genre_id_seq OWNED BY movies_genre.id;
 
 CREATE TABLE movies (
     id integer NOT NULL,
-    ttid integer,
+    ttid character varying,
     title character varying NOT NULL,
     series integer,
     year integer,
