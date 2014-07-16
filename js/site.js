@@ -3979,15 +3979,31 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
         item = items[m];
         container = element('span');
         container.className = 'media_item';
+
+        // Media poster/*{{{*/
         poster = element('img');
         poster.src = 'thumbs/' + item['ttid'] + '.jpg';
         poster.style.width = '100px';
         poster.style.height = '150px';
         poster.title = item.title;
         poster.alt = item.title;
+        poster.setAttribute('data-kind', kind);
+        poster.setAttribute('data-item', JSON.stringify(item));
+        poster.onclick = function() {
+            openMediaDetails(this.parentElement.parentElement, this.getAttribute('data-kind'), JSON.parse(this.getAttribute('data-item')));
+        }/*}}}*/
+
+        // Media title/*{{{*/
         title = element('p');
         title.className = 'media_title';
+        title.setAttribute('data-kind', kind);
+        title.setAttribute('data-item', JSON.stringify(item));
         setText(title, item.title + ' (' + item.year + ')');
+        title.onclick = function() {
+            openMediaDetails(this.parentElement.parentElement, this.getAttribute('data-kind'), JSON.parse(this.getAttribute('data-item')));
+        }/*}}}*/
+
+        // Media series/*{{{*/
         series = 0;
         if (item.series) {
             series = element('p');
@@ -3998,7 +4014,9 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
                 titleFilter.value = this.innerText;
                 titleFilter.onchange();
             };
-        }
+        }/*}}}*/
+
+        // If series, display season and episode/*{{{*/
         if (kind == 'tv') {
             season = item.season;
             //if (10 > season) {season = '0' + season;}
@@ -4007,15 +4025,18 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
             episode = element('p');
             episode.className = 'media_length';
             setText(episode, 'Season ' + season + ', Episode ' + ep)
-        }
+        }/*}}}*/
+
+        // Media length/*{{{*/
         length = element('p');
         length.className = 'media_length';
-        setText(length, item['duration']+ ' minutes');
+        setText(length, item['duration']+ ' minutes');/*}}}*/
         
         if (useNightTheme()) {
             switchToNight(title, length);
         }
 
+        // Add media elements/*{{{*/
         container.appendChild(poster);
         container.appendChild(element('br'));
         container.appendChild(title);
@@ -4032,7 +4053,9 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
         }
         container.appendChild(length);
 
-        mediaGrid.appendChild(container);
+        mediaGrid.appendChild(container);/*}}}*/
+
+        // Fix row heights to ensure proper alignments/*{{{*/
         largestHeight = 0;
         if (container.offsetTop != lastTop && count) {
             for (c = mediaGrid.childElementCount - count; c < mediaGrid.childElementCount; c++) {
@@ -4047,9 +4070,77 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
             count++;
         }
 
-        lastTop = container.offsetTop;
+        lastTop = container.offsetTop;/*}}}*/
     }/*}}}*/
 }/*}}}*/
+
+function openMediaDetails(mediaGrid, kind, item) {
+    deleteAllChildren(mediaGrid, true);
+
+    // Back arrow/*{{{*/
+    back = element('img');
+    back.style.width = '50px';
+    back.style.height = '35px';
+    back.src = 'images/back.png';
+    back.title = 'Back';
+    back.alt = 'Back';
+    back.setAttribute('data-kind', kind);
+    back.onclick = function() {
+        filters = JSON.parse(this.parentElement.parentElement.getAttribute('data-filters'));
+        items = filterMedia(kind, filters);
+        populateMediaGrid(this.parentElement, items, this.getAttribute('data-kind'));
+    };/*}}}*/
+
+    // Media title/*{{{*/
+    titleLink = element('a');
+    titleLink.className = 'normal_text';
+    titleLink.href = 'http://www.imdb.com/title/tt' + item.ttid + '/';
+    titleLink.title = '(To IMDb - hold control while clicking to open in new tab)';
+    title = element('p');
+    title.className = 'normal_section_header';
+    title.style.textDecoration = 'underline';
+    title.style.display = 'inline-block';
+    title.style.position = 'relative';
+    title.style.left = '20px';
+    title.style.top = '-7px';
+    setText(title, item.title);
+    titleLink.appendChild(title);/*}}}*/
+        
+    // Media series/*{{{*/
+    if (item.series) {
+        series = element('p');
+        series.className = 'media_series';
+        series.style.position = 'relative';
+        series.style.fontSize = '100%';
+        setText(series, 'Part\u00a0of\u00a0\u00a0&lt;' + media[kind[0] + 'Series'][item.series].name + '&gt;');
+        if (useNightTheme()) {switchToNight(series);}
+    }/*}}}*/
+
+    // If TV episode, add season/episode to series/*{{{*/
+    if (kind == 'tv') {
+        episode = element('p');
+        episode.className = 'media_length';
+        episode.style.display = 'inline';
+        episode.style.fontSize = '100%';
+        setText(episode, ':\u00a0Season\u00a0' + item.season + ',\u00a0Episode\u00a0' + item.episode);
+        if (useNightTheme()) {switchToNight(episode);}
+        series.appendChild(episode);
+    }/*}}}*/
+
+    
+    if (useNightTheme()) {switchToNight(title, titleLink);}
+
+    mediaGrid.appendChild(back);
+    mediaGrid.appendChild(titleLink);
+    mediaGrid.appendChild(element('br'));
+    if (item.series) {
+        mediaGrid.appendChild(series);
+        series.style.top = '-10px';
+        series.style.left = title.offsetLeft + 'px';
+        mediaGrid.appendChild(element('br'));
+    }
+
+}
 
 function openVideos() {/*{{{*/
     videoPanel = element('div');
