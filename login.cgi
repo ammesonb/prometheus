@@ -4,6 +4,9 @@ use lib '/var/www/perl';
 use CGI;
 use CGI::Session;
 use CGI::Carp qw(fatalsToBrowser);
+use Time::HiRes qw(gettimeofday);
+use Crypt::OpenSSL::Random qw(random_seed random_bytes);
+use MIME::Base64;
 use COMMON;
 use strict;
 
@@ -40,6 +43,13 @@ my @userIDs = keys %userData;
 my $userID = $userIDs[0]; #}}}
 
 my $response = COMMON::attempt_login($session, $q->param('a'), $q->param('c'), $userData{$userID}{'domain'});
+
+# Create session AES key #{{{
+my $time = gettimeofday();
+while (not random_seed($time)) {$time = gettimeofday();}
+my $key = encode_base64(random_bytes(32));
+chomp($key);
+$session->param('master_key', $key); #}}}
 
 # Set session parameters #{{{
 $session->param('attempt_login', 1);

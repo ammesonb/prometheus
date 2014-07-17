@@ -20,11 +20,16 @@ sub init { #{{{
     print $session->header();
     my $userID = $session->param('user_id');
     my $domain = $session->param('domain');
+    my $aesKey = $session->param('master_key');
+    #CryptoJS.AES.encrypt(str, key, {mode: CryptoJS.mode.CBC}).toString()
+    # equals (with quotes)
+    # echo "str" | base64 --decode | openssl enc -aes-256-cbc -d -k "key"
     if (not $userID) {$userID = "''"; $domain = "''";}
     my $html = "<!DOCTYPE html>\n";
     $html .= "<html>\n";
     $html .= "<head>\n"; #{{{
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/sha512.js\"></script>\n";
+    $html .= $indent . "<script type=\"text/javascript\" src=\"js/aes.js\"></script>\n";
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/css_browser_selector.js\"></script>\n";
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/jstz.js\"></script>\n";
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/shortcut.js\"></script>\n";
@@ -34,6 +39,7 @@ sub init { #{{{
     var username = '" . $session->param('user') . "';
     var userid = $userID;
     var domain = $domain;
+    var master_key = '$aesKey';
     window.onload = function() {
         document.body.style.backgroundSize = window.innerWidth + \"px \" + window.innerHeight + \"px\";
         theme = document.body.getAttribute('data-night-theme');

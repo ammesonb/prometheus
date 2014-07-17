@@ -22,7 +22,7 @@ var services = [];
 var userServices = [];
 var users = [];/*}}}*/
 
-media = {
+media = {/*{{{*/
     "movies": [],
     "mSeries": [],
     "mGenres": [],
@@ -31,7 +31,46 @@ media = {
     "tSeries": [],
     "tGenres": [],
     "tvGenres": []
-};
+};/*}}}*/
+
+function FileAPI(file, kind) {/*{{{*/
+    return {
+        // Attributes
+        file: file,
+        kind: kind,
+        progress: 0,
+        paused: false,
+        started: false,
+        failed: false,
+        downloadRes: '5M',
+        encKey: undefined,
+        fileBlob: undefined,
+        currentXHRReq: undefined,
+
+        // Functions
+        initialize: function() {
+            this.currentXHRReq = createPostReq('file.cgi', true);
+            fAPI = this;
+            this.currentXHRReq.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {this.start();}
+                else if (this.readyState == 4) {fAPI.failed = true;}
+            };
+            this.currentXHRReq.send('f=' + file + '&k=' + kind);
+        },
+
+        start: function() {
+        },
+
+        next: function() {
+        },
+
+        decrypt: function() {
+        },
+
+        store: function() {
+        }
+    };
+}/*}}}*/
 /*}}}*/
 
 /* General functions *//*{{{*/
@@ -4173,12 +4212,14 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     descriptionTitle = element('p');
     descriptionTitle.className = 'normal_section_header';
     descriptionTitle.style.clear = 'left';
-    descriptionTitle.style.float = 'left';
+    descriptionTitle.style.cssFloat = 'left';
     descriptionTitle.style.marginLeft = '10px';
     setText(descriptionTitle, 'Short description (may contain spoilers)');
 
     descriptionBox = element('div');
     descriptionBox.className = 'outline';
+    descriptionBox.style.clear = 'left';
+    descriptionBox.style.cssFloat = 'left';
     descriptionBox.style.marginLeft = '10px';
     descriptionBox.style.paddingLeft = '10px';
     descriptionBox.style.paddingRight = '10px';
@@ -4215,6 +4256,11 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     mediaGrid.appendChild(descriptionBox);
     /*}}}*/
 }/*}}}*/
+
+function requestFile(file, kind) {
+    f = FileAPI(file, kind);
+    f.start();
+}
 
 function openVideos() {/*{{{*/
     videoPanel = element('div');
