@@ -235,6 +235,16 @@ div.media_grid.night {/*{{{*/
     border: 1px solid silver;
 }/*}}}*/
 
+div.outline {/*{{{*/
+    color: black;
+    border: 1px solid black;
+}/*}}}*/
+
+div.outline.night {/*{{{*/
+    color: silver;
+    border: 1px solid silver;
+}/*}}}*/
+
 /*}}}*/
 
 /* span */ /*{{{*/

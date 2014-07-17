@@ -4074,7 +4074,7 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
     }/*}}}*/
 }/*}}}*/
 
-function openMediaDetails(mediaGrid, kind, item) {
+function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     deleteAllChildren(mediaGrid, true);
 
     // Back arrow/*{{{*/
@@ -4090,6 +4090,17 @@ function openMediaDetails(mediaGrid, kind, item) {
         items = filterMedia(kind, filters);
         populateMediaGrid(this.parentElement, items, this.getAttribute('data-kind'));
     };/*}}}*/
+
+    // Media poster/*{{{*/
+    poster = element('img');
+    poster.style.cssFloat = 'right';
+    poster.style.marginTop = '10px';
+    poster.style.marginRight = '10px';
+    poster.src = 'thumbs/' + item.ttid + '.jpg';
+    poster.title = item.title;
+    poster.alt = item.title;
+    poster.style.width = '200px';
+    poster.style.height = '300px';/*}}}*/
 
     // Media title/*{{{*/
     titleLink = element('a');
@@ -4127,10 +4138,69 @@ function openMediaDetails(mediaGrid, kind, item) {
         series.appendChild(episode);
     }/*}}}*/
 
-    
-    if (useNightTheme()) {switchToNight(title, titleLink);}
+    // Info labels/*{{{*/
+    detailLabels = element('div');
+    detailLabels.style.cssFloat = 'left';
+    detailLabels.style.textAlign = 'right';
+    detailLabels.style.marginLeft = '10px';
+    labels = element('p');
+    labels.style.className = 'normal_text';
+    l = 'Genre:<br>Released on:<br>Running time:';
+    if (item['director']) {
+        l += '<br>Directed by:';
+    }
+    setText(labels, l);
+    detailLabels.appendChild(labels);/*}}}*/
+
+    // Info values/*{{{*/
+    detailValues = element('div');
+    detailValues.style.cssFloat = 'left';
+    details = element('p');
+    genres = media[kind + 'Genres'][item.id]['genres'];
+    genreNames = [];
+    for (g = 0; g < genres.length; g++) {
+        genreNames.push(media[kind[0] + 'Genres'][genres[g]].name);
+    }
+    genreNames.sort();
+    str = '\u00a0\u00a0' + genreNames.join(', ') + "<br>\u00a0\u00a0" + item.released + "<br>\u00a0\u00a0" + item.duration + " minutes";
+    if (item['director']) {
+        str += "<br>\u00a0\u00a0" + item.director;
+    }
+    setText(details, str);
+    detailValues.appendChild(details);/*}}}*/
+
+    // Description/*{{{*/
+    descriptionTitle = element('p');
+    descriptionTitle.className = 'normal_section_header';
+    descriptionTitle.style.clear = 'left';
+    descriptionTitle.style.float = 'left';
+    descriptionTitle.style.marginLeft = '10px';
+    setText(descriptionTitle, 'Short description (may contain spoilers)');
+
+    descriptionBox = element('div');
+    descriptionBox.className = 'outline';
+    descriptionBox.style.marginLeft = '10px';
+    descriptionBox.style.paddingLeft = '10px';
+    descriptionBox.style.paddingRight = '10px';
+    descriptionBox.style.width = '75%';
+    showText = element('p');
+    setText(showText, 'Click to show description');
+    showText.onclick = function() {
+        this.style.display = 'none';
+        this.nextElementSibling.style.display = 'block';
+    };
+
+    description = element('p');
+    description.style.display = 'none';
+    setText(description, item.description);
+    descriptionBox.appendChild(showText);
+    descriptionBox.appendChild(description);/*}}}*/
+
+    // Add elements/*{{{*/
+    if (useNightTheme()) {switchToNight(title, titleLink, labels, details, descriptionTitle, descriptionBox);}
 
     mediaGrid.appendChild(back);
+    mediaGrid.appendChild(poster);
     mediaGrid.appendChild(titleLink);
     mediaGrid.appendChild(element('br'));
     if (item.series) {
@@ -4139,8 +4209,12 @@ function openMediaDetails(mediaGrid, kind, item) {
         series.style.left = title.offsetLeft + 'px';
         mediaGrid.appendChild(element('br'));
     }
-
-}
+    mediaGrid.appendChild(detailLabels);
+    mediaGrid.appendChild(detailValues);
+    mediaGrid.appendChild(descriptionTitle);
+    mediaGrid.appendChild(descriptionBox);
+    /*}}}*/
+}/*}}}*/
 
 function openVideos() {/*{{{*/
     videoPanel = element('div');
