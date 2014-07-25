@@ -33,43 +33,11 @@ media = {/*{{{*/
     "tvGenres": []
 };/*}}}*/
 
-function FileAPI(file, kind) {/*{{{*/
-    return {
-        // Attributes
-        file: file,
-        kind: kind,
-        progress: 0,
-        paused: false,
-        started: false,
-        failed: false,
-        downloadRes: '5M',
-        encKey: undefined,
-        fileBlob: undefined,
-        currentXHRReq: undefined,
-
-        // Functions
-        initialize: function() {
-            this.currentXHRReq = createPostReq('file.cgi', true);
-            fAPI = this;
-            this.currentXHRReq.onreadystatechange = function() {
-                if (this.readyState == 4 && this.status == 200) {this.start();}
-                else if (this.readyState == 4) {fAPI.failed = true;}
-            };
-            this.currentXHRReq.send('f=' + file + '&k=' + kind);
-        },
-
-        start: function() {
-        },
-
-        next: function() {
-        },
-
-        decrypt: function() {
-        },
-
-        store: function() {
-        }
-    };
+function getFile(file, kind) {/*{{{*/
+    f = FileAPI();
+    f.addEventListener('onstatusupdate', function(e) {console.log('Status: ' + e.target.status);});
+    f.addEventListener("onprogressupdate", function(e) {console.log('Progress: ' + f.progress *      100 + '%, ' + f.chunkSpeed + ' KB/s');});
+    f.initialize(file, kind);
 }/*}}}*/
 /*}}}*/
 
@@ -147,6 +115,23 @@ function verifyNum(value, min, max) {/*{{{*/
     if (isNaN(value)) {return 1;}
     else if (min <= parseInt(value, 10) && parseInt(value, 10) <= max) {return value;}
     else {return min;}
+}/*}}}*/
+
+function a2hex(str) {/*{{{*/
+    result = '';
+    for (i=0; i<str.length; i++) {
+        hex = str.charCodeAt(i).toString(16);
+        result += hex;
+    }
+    return result;
+}/*}}}*/
+
+function hex2a(hexx) {/*{{{*/
+    hex = hexx.toString();//force conversion
+    arr = new Uint8Array(new ArrayBuffer(hexx.length / 2));
+    for (var i = 0; i < hex.length; i += 2)
+        arr[i / 2] = parseInt(hex.substr(i, 2), 16);
+    return arr;
 }/*}}}*/
 
 function update() {/*{{{*/
@@ -4256,11 +4241,6 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     mediaGrid.appendChild(descriptionBox);
     /*}}}*/
 }/*}}}*/
-
-function requestFile(file, kind) {
-    f = FileAPI(file, kind);
-    f.start();
-}
 
 function openVideos() {/*{{{*/
     videoPanel = element('div');

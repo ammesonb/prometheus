@@ -28,6 +28,7 @@ sub init { #{{{
     my $html = "<!DOCTYPE html>\n";
     $html .= "<html>\n";
     $html .= "<head>\n"; #{{{
+    $html .= $indent . "<script type=\"text/javascript\" src=\"js/file_api.js\"></script>\n";
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/sha512.js\"></script>\n";
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/aes.js\"></script>\n";
     $html .= $indent . "<script type=\"text/javascript\" src=\"js/css_browser_selector.js\"></script>\n";
