@@ -1,0 +1,24 @@
+<div id="login">
+    <a href="/"><img src="images/prometheus.png" alt="Prometheus"></a>
+    <p id="error">%ERROR%</p>
+    Username:&nbsp;&nbsp;<input type="text">
+    <br><br>
+    &nbsp;Password:&nbsp;&nbsp;&nbsp;<input type="password">
+    <br><br>
+    <button onclick="login()">Log In</button>
+
+    <script type="text/javascript">
+    document.getElementsByTagName('input')[0].focus();
+    document.onkeydown = function (evt) {
+        var keyCode = evt ? (evt.which ? evt.which : evt.keyCode) : event.keyCode;
+        if (keyCode == 13) {
+            document.getElementsByTagName('button')[0].click();
+        }
+        if (keyCode == 27) {
+            document.getElementsByTagName('button')[0].click();
+        } else {
+            return true;
+        }
+    };
+    </script>
+</div>

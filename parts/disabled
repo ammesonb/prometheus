@@ -1,0 +1,8 @@
+<div id="login">
+    <img src="images/prometheus.png" alt="Prometheus">
+    <p>
+        <strong>This account has been disabled.<br>Please contact me at ammesonb@gmail.com.</strong>
+        <br><br>
+        If this has been resolved, click <a href="logout.cgi" class="normal_text">here</a>.
+    </p>
+</div>

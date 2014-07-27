@@ -127,6 +127,35 @@ function hex2a(hexx) {/*{{{*/
     return arr;
 }/*}}}*/
 
+function parseSize(bytes) {/*{{{*/
+    units = ['B', 'KB', 'MB', 'GB'];
+    base = 1;
+    for (u = 0; u < units.length; u++) {/*{{{*/
+        unit = units[u];
+        size = bytes / base;
+        size = size.toFixed(2);
+        if (size < 2048) {
+            return [size + '\u00a0 ' + unit + '/s', unit];
+        }
+        base *= 1024;
+    }/*}}}*/
+}/*}}}*/
+
+function parseTime(time) {/*{{{*/
+    units = ['s', 'm', 'h', 'd'];
+    conversion = [60, 60, 60, 24];
+    base = 1;
+    for (u = 0; u < units.length; u++) {/*{{{*/
+        unit = units[u];
+        time = time / base;
+        time = time.toFixed(2);
+        if (time < (1.5 * conversion[u])) {
+            return [time + '\u00a0 ' + unit + '/s', unit];
+        }
+        base *= conversion[u];
+    }/*}}}*/
+}/*}}}*/
+
 function update() {/*{{{*/
     var docHeadObj = document.getElementsByTagName("head")[0];
     var newScript = element("script");
@@ -3965,7 +3994,7 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
     clearTitle.src = 'images/x.png';
     clearTitle.onclick = function() {/*{{{*/
        titleFilter = this.previousElementSibling;
-       titleFilter.value = '';
+       titleFilter.value = 'Search titles....';
        titleFilter.onchange();
        titleFilter.onblur();
     };/*}}}*/
@@ -3986,9 +4015,9 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
     titlePanel.style.left = filterPanel.offsetLeft + filterPanel.offsetWidth + 10 + 'px';
     titlePanel.style.width = mediaPanel.offsetWidth - titlePanel.offsetLeft - 20 + 'px';
     mediaGrid.style.left = filterPanel.offsetLeft + filterPanel.offsetWidth + 10 + 'px';
-    mediaGrid.style.top = titlePanel.offsetTop + titlePanel.offsetHeight + 10 + 'px';
+    mediaGrid.style.top = titlePanel.offsetTop + titlePanel.offsetHeight + 'px';
     mediaGrid.style.width = mediaPanel.offsetWidth - titlePanel.offsetLeft - 10 + 'px';
-    mediaGrid.style.height = filterPanel.offsetHeight - titlePanel.offsetTop - 30 + 'px';/*}}}*/
+    mediaGrid.style.height = filterPanel.offsetHeight - titlePanel.offsetTop - titlePanel.offsetHeight + 5 + 'px';/*}}}*/
 
     setTimeout(function() {populateMediaGrid(mediaGrid, media[kind], kind);}, 100);
 }/*}}}*/
@@ -4240,13 +4269,16 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     /*}}}*/
 }/*}}}*/
 
-function getFile(file, kind, ttid) {/*{{{*/
-    if (document.getElementById(ttid)) {
+function getFile(file, kind, item) {/*{{{*/
+    if (document.getElementById(item.ttid)) {
         alert('Already in queue');
         return;
     }
     
     f = FileAPI();
+    addDownload(f, item);
+    return;
+
     f.initialize(file, kind);
 
     f.addEventListener('onstatusupdate', function(e) {/*{{{*/
@@ -4264,7 +4296,39 @@ function getFile(file, kind, ttid) {/*{{{*/
 
 }/*}}}*/
 
-function addDownload(fapi) {
+function populateDL(dlPanel) {/*{{{*/
+    title = element('p');
+    title.id = 'dl_title';
+    title.className = 'normal_section_header';
+    title.style.marginTop = '5px';
+    title.style.marginBottom = '5px';
+    setText(title, 'Downloads');
+
+    stats = element('p');
+    stats.id = 'dl_stats';
+    stats.className = 'normal_text';
+    stats.style.fontWeight = 'bold';
+    stats.style.fontSize = '90%';
+    setText(stats, 'Queued:\u00a01\u00a0\u00a0\u00a0\u00a0Size:\u00a0');
+
+    downloadList = element('div');
+    downloadList.id = 'dl_list';
+    downloadList.className = 'media_grid';
+    downloadList.style.position = 'absolute';
+    downloadList.style.width = '95%';
+
+    if (useNightTheme()) {switchToNight(title, stats, downloadList);}
+    dlPanel.appendChild(title);
+    dlPanel.appendChild(stats);
+    dlPanel.appendChild(downloadList);
+    setTimeout(function() {downloadList.style.height = /*{{{*/
+                            document.getElementById('main').offsetHeight - 
+                            document.getElementById('dl_stats').offsetTop - 
+                            document.getElementById('dl_stats').offsetHeight - 40 + 'px';
+                          }, 10);/*}}}*/
+}/*}}}*/
+
+function addDownload(fAPI, item) {/*{{{*/
     if (!document.getElementById('dl_list')) {/*{{{*//*{{{*/
         // Create download tab
         downloadPanel = element('div');
@@ -4280,31 +4344,43 @@ function addDownload(fapi) {
 
         switchTab('dl');
     }/*}}}*//*}}}*/
-}
 
-function populateDL(dlPanel) {
+    list = document.getElementById('dl_list');
+    dl = element('div');
+    dl.id = fAPI.ttid;
+    dl.className = 'dl_item outline';
+
+    // Poster/*{{{*/
+    poster = element('img');
+    poster.src = 'thumbs/' + item.ttid + '.jpg';
+    poster.width = '200px';
+    poster.height = '300px';
+    dl.appendChild(poster);/*}}}*/
+
+    // Title/*{{{*/
     title = element('p');
-    title.id = 'dl_title';
-    title.className = 'normal_section_header';
-    title.style.marginTop = '5px';
-    title.style.marginBottom = '5px';
-    setText(title, 'Downloads');
+    title.className = 'normal_text';
+    title.style.fontWeight = 'bold';
+    setText(title, item.title);
+    dl.appendChild(title);/*}}}*/
 
-    downloadList = element('div');
-    downloadList.id = 'dl_list';
-    downloadList.className = 'media_grid';
-    downloadList.style.position = 'absolute';
-    downloadList.style.width = '95%';
+    // Info/*{{{*/
+    info = element('p');
+    info.className = 'normal_text';
+    size = parseSize(item.size);
+    speed = (item.chunkSpeed + item.totalSpeed) / 2;
+    rate = parseSize(speed);
+    eta = (item.size - item.received) / speed;
+    eta = parseTime(eta);
+    setText(info, 
+        'Received:\u00a00/' + size[0] + '\u00a0' + size[1] + '\u000a' + 
+        stringFill('\u00a0', 3) + 'Speed:\u00a0' + rate[0] + '\u000a' + rate[1] + 
+        stringFill('\u00a0', 5) + 'ETA:\u00a0' + eta
+    );/*}}}*/
 
-    if (useNightTheme()) {switchToNight(title, downloadList);}
-    dlPanel.appendChild(title);
-    dlPanel.appendChild(downloadList);
-    setTimeout(function() {downloadList.style.height = 
-                            document.getElementById('main').offsetHeight - 
-                            document.getElementById('dl_title').offsetTop - 
-                            document.getElementById('dl_title').offsetHeight - 40 + 'px';
-                          }, 10);
-}
+    if (useNightTheme()) {switchToNight(dl, title, info);}
+    list.appendChild(dl);
+}/*}}}*/
 
 function openVideos() {/*{{{*/
     videoPanel = element('div');

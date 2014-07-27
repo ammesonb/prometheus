@@ -1,0 +1,21 @@
+<img src="images/prometheus.png" alt="Prometheus" style="margin-top: -.5%;">
+<p id="userinfo">Logged in as %USER%<br>
+    <a href="logout.cgi">Log Out</a>
+</p>
+<div id="tabs">
+    <a href="#"><div class="tab" onclick="switchTab('home');">Home</div></a>
+</div>
+
+<div id="main">
+<div id="home" class="selected">
+    <script type="text/javascript">
+    main = document.getElementById('main');
+    main.style.width = window.innerWidth - 300 + 'px';
+    main.style.marginLeft = -.5 * (window.innerWidth - 300) + 'px';
+    main.style.height = window.innerHeight - 150 + 'px';
+    main.style.marginTop = -.5 * (window.innerHeight - 150) + 'px';
+    tabs = document.getElementById('tabs');
+    tabs.style.width = window.innerWidth - 300 + 'px';
+    tabs.style.top = main.offsetTop - tabs.offsetHeight + 'px';
+    tabs.style.marginLeft = -.5 * (window.innerWidth - 300) + 'px';
+    </script>

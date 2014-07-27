@@ -54,10 +54,8 @@ div#tabs { /*{{{*/
     position: absolute;
     width: 800px;
     height: 40px;
-    top: 10%;
     left: 50%;
     margin-left: -400px;
-    margin-top: -20px;
 } /*}}}*/
 
 div#main { /*{{{*/
@@ -233,6 +231,12 @@ div.media_grid {/*{{{*/
 
 div.media_grid.night {/*{{{*/
     border: 1px solid silver;
+}/*}}}*/
+
+div.dl_item {/*{{{*/
+    margin-top: 5px;
+    margin-bottom: 5px;
+    height: 400px;
 }/*}}}*/
 
 div.outline {/*{{{*/

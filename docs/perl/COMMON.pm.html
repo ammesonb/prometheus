@@ -100,125 +100,32 @@ sub init { #{{{
     # equals (with quotes)
     # echo "str" | base64 --decode | openssl enc -aes-256-cbc -d -k "key"
     if (not $userID) {$userID = "''"; $domain = "''";}
-    my $html = "<!DOCTYPE html>\n";
-    $html .= "<html>\n";
-    $html .= "<head>\n"; #{{{
-    $html .= $indent . "<script type=\"text/javascript\" src=\"js/file_api.js\"></script>\n";
-    $html .= $indent . "<script type=\"text/javascript\" src=\"js/sha512.js\"></script>\n";
-    $html .= $indent . "<script type=\"text/javascript\" src=\"js/aes.js\"></script>\n";
-    $html .= $indent . "<script type=\"text/javascript\" src=\"js/css_browser_selector.js\"></script>\n";
-    $html .= $indent . "<script type=\"text/javascript\" src=\"js/jstz.js\"></script>\n";
-    $html .= $indent . "<script type=\"text/javascript\" src=\"js/shortcut.js\"></script>\n";
-    $html .= $indent . "<script type=\"text/javascript\" src=\"js/sprintf.js\"></script>\n";
-    $html .= $indent . "<script type=\"text/javascript\" src=\"js/site.js\"></script>\n";
-    $html .= $indent . "<script type=\"text/javascript\"> // #{{{
-    var username = '" . $session->param('user') . "';
-    var userid = $userID;
-    var domain = $domain;
-    var master_key = '$aesKey';
-    window.onload = function() {
-        document.body.style.backgroundSize = window.innerWidth + \"px \" + window.innerHeight + \"px\";
-        theme = document.body.getAttribute('data-night-theme');
-        d = new Date();
-        // Main page
-        try {
-            main = document.getElementById('main');
-            tabs = document.getElementById('tabs');
-            topOffset = (main.offsetTop - tabs.offsetHeight) + 10;
+    
+    my $html = read_file('parts/head');
+    my $user = $session->param('user');
+    my $theme = $session->param('night_theme');
+    $html =~ s/%USER%/$user/;
+    $html =~ s/%USERID%/$userID/;
+    $html =~ s/%DOMAIN%/$domain/;
+    $html =~ s/%KEY%/$aesKey/;
+    $html =~ s/%NIGHT%/$theme/;
 
-            if (useNightTheme()) {
-                main.className += ' night';
-                tools = document.getElementsByClassName('tool_name')
-                for (t = 0; t < tools.length; t++) {tools[t].className += ' night';}
-            }
-
-            // Because browsers and OSes are dumb at rendering things
-            if (css_browser_selector(navigator.userAgent).search(' win ') != -1) {
-                topOffset -= 10;
-                if (css_browser_selector(navigator.userAgent).search('gecko') != -1) {topOffset += 5;}
-            }
-            tabs.style.top = topOffset + 'px';
-        } catch(e) {}
-
-        // Login
-        try {
-            if (useNightTheme()) {
-                e = document.getElementsByClassName('normal_text');
-                switchToNight(e[e.length - 1]);
-                e[e.length - 1].style.textDecoration = 'underline';
-                switchToNight(document.getElementById('login'));
-                fields = document.getElementsByTagName('input')
-                switchToNight(fields);
-                switchToNight(document.getElementsByTagName('button')[0]);
-            }
-        } catch(e) {}
-        shortcut.add('Shift+Ctrl+U', function() {update();});
-        document.body.style.visibility = 'visible';
-    };
-    </script>\n"; #}}}
-    $html .= $indent . "<title>$title</title>\n";
-    $html .= $indent . "<link rel=\"stylesheet\" type=\"text/css\" href=\"res/style.css\"/>\n";
-    $html .= "</head>\n"; #}}}
-    $html .= "<body style=\"visibility: hidden;\" data-night-theme=" . $session->param('night_theme') . ">\n";
-    if ($authorized == 2) { #{{{
-        $html .= "<div id=\"login\">\n";
-        $html .= "<img src=\"images/prometheus.png\" alt=\"Prometheus\">\n";
-        my $class = "normal_text";
-        $html .= "<p><strong>You are not allowed to access this from your current location.<br>Please contact me at ammesonb\@gmail.com.</strong><br><br>If this has been resolved, click <a href=\"logout.cgi\" class=\"normal_text\">here</a>.</p>\n";
-        $html .= "</div>\n"; #}}}
-    } elsif ($authorized == 3) { #{{{
-        $html .= "<div id=\"login\">\n";
-        $html .= "<img src=\"images/prometheus.png\" alt=\"Prometheus\">\n";
-        $html .= "<p><strong>This account has been disabled.<br>Please contact me at ammesonb\@gmail.com.</strong><br><br>If this has been resolved, click <a href=\"logout.cgi\" class=\"normal_text\">here</a>.</p>\n"; #}}}
-    } elsif ($authorized == 1) { #{{{
-        $html .= "<div id=\"login\">\n";
-        $html .= $indent . "<a href=\"/\"><img src=\"images/prometheus.png\" alt=\"Prometheus\"></a>\n";
+    $html .= read_file('parts/blocked') if ($authorized == 2);
+    $html .= read_file('parts/disabled') if ($authorized == 3);
+    if ($authorized == 1) { #{{{
         my $error = "&nbsp;";
         if ($session->param('attempt_login') and not $session->param('logged_in') and (($session->param('attempt_login') == 1) and ($session->param('logged_in') == 0))) {
             $error = "Incorrect username or password";
         } elsif ($session->param('timed_out')) {
             $error = "Session timed out";
         }
-        $html .= $indent . "<p id=\"error\">$error</p>\n";
-        $html .= $indent . "Username:&nbsp;&nbsp;<input type=\"text\">\n";
-        $html .= $indent . "<br><br>\n";
-        $html .= $indent . "&nbsp;Password:&nbsp;&nbsp;&nbsp;<input type=\"password\">\n";
-        $html .= $indent . "<br><br>\n";
-        $html .= $indent . "<button onclick=\"login()\">Log In</button>\n";
-        $html .= $indent . "<script type=\"text/javascript\"> // #{{{
-    document.getElementsByTagName('input')[0].focus();
-    document.onkeydown = function (evt) {
-        var keyCode = evt ? (evt.which ? evt.which : evt.keyCode) : event.keyCode;
-        if (keyCode == 13) {
-            document.getElementsByTagName('button')[0].click();
-        }
-        if (keyCode == 27) {
-            document.getElementsByTagName('button')[0].click();
-        } else {
-            return true;
-        }
-    };
-    </script>\n"; #}}}
-        $html .= "</div>\n"; #}}}
+        my $data = read_file('parts/login');
+        $data =~ s/%ERROR%/$error/;
+        $html .= $data; #}}}
     } else { #{{{
-        $html .= "<img src=\"images/prometheus.png\" alt=\"Prometheus\" style=\"margin-top: -.5%;\">\n";
-        my $user = $session->param('user');
-        $html .= "<p id=\"userinfo\">Logged in as $user<br><a href=\"logout.cgi\">Log Out</a></p>\n";
-        $html .= "<div id=\"tabs\">\n";
-        $html .= $indent . "<a href=\"#\"><div class=\"tab\" onclick=\"switchTab('home');\">Home</div></a>\n";
-        $html .= "</div>\n";
-        $html .= "<div id=\"main\">\n";
-        $html .= "<div id=\"home\" class=\"selected\">\n"; #{{{
-        $html .= $indent . "<script type=\"text/javascript\"> // #{{{
-    main = document.getElementById('main');
-    main.style.width = window.innerWidth - 300 + 'px';
-    main.style.marginLeft = -.5 * (window.innerWidth - 300) + 'px';
-    main.style.height = window.innerHeight - 150 + 'px';
-    main.style.marginTop = -.5 * (window.innerHeight - 150) + 'px';
-    tabs = document.getElementById('tabs');
-    tabs.style.width = window.innerWidth - 300 + 'px';
-    tabs.style.marginLeft = -.5 * (window.innerWidth - 300) + 'px';
-    </script>\n"; #}}}
+        my $data = read_file('parts/main');
+        $data =~ s/%USER%/$user/;
+        $html .= $data;
 
         # Get services the user has access to #{{{
         my @returnCols = ('user_id', 'array_agg(service_id)');
@@ -255,7 +162,7 @@ sub init { #{{{
             $html .= $indent . "</a>\n";
         }
         $session->param('services', join(', ', @services));
-        $html .= "</div>\n"; #}}}
+        $html .= "</div>\n";
         $html .= "</div>\n";
     } #}}}
     $html .= "</body>\n";

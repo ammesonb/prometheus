@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script type="text/javascript" src="js/file_api.js"></script>
+    <script type="text/javascript" src="js/sha512.js"></script>
+    <script type="text/javascript" src="js/aes.js"></script>
+    <script type="text/javascript" src="js/css_browser_selector.js"></script>
+    <script type="text/javascript" src="js/jstz.js"></script>
+    <script type="text/javascript" src="js/shortcut.js"></script>
+    <script type="text/javascript" src="js/sprintf.js"></script>
+    <script type="text/javascript" src="js/site.js"></script>
+    <script type="text/javascript">
+        var username = '%USER%';
+        var userid = %USERID%;
+        var domain = %DOMAIN%;
+        var master_key = '%KEY%';
+
+        window.onload = function() {/*{{{*/
+            document.body.style.backgroundSize = window.innerWidth + "px " + window.innerHeight + "px";
+            theme = document.body.getAttribute('data-night-theme');
+            d = new Date();
+            // Main page
+            try {/*{{{*/
+                main = document.getElementById('main');
+
+                if (useNightTheme()) {
+                    main.className += ' night';
+                    tools = document.getElementsByClassName('tool_name')
+                    for (t = 0; t < tools.length; t++) {tools[t].className += ' night';}
+                }
+
+                // Because browsers and OSes are dumb at rendering things
+                if (css_browser_selector(navigator.userAgent).search(' win ') != -1) {
+                    topOffset -= 10;
+                    if (css_browser_selector(navigator.userAgent).search('gecko') != -1) {topOffset += 5;}
+                }
+            } catch(e) {}/*}}}*/
+
+            // Login/*{{{*/
+            try {
+                if (useNightTheme()) {
+                    e = document.getElementsByClassName('normal_text');
+                    switchToNight(e[e.length - 1]);
+                    e[e.length - 1].style.textDecoration = 'underline';
+                    switchToNight(document.getElementById('login'));
+                    fields = document.getElementsByTagName('input')
+                    switchToNight(fields);
+                    switchToNight(document.getElementsByTagName('button')[0]);
+                }
+            } catch(e) {}/*}}}*/
+
+            shortcut.add('Shift+Ctrl+U', function() {update();});
+            document.body.style.visibility = 'visible';
+        };/*}}}*/
+    </script>
+    <title>Prometheus</title>
+    <link rel="stylesheet" type="text/css" href="res/style.css"/>
+</head>
+<body style="visibility: hidden;" data-night-theme=%NIGHT%>

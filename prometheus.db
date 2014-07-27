@@ -282,7 +282,8 @@ CREATE TABLE movies (
     duration integer,
     director character varying,
     description character varying,
-    needs_attention boolean DEFAULT false
+    needs_attention boolean DEFAULT false,
+    size integer
 );
 
 
@@ -583,7 +584,8 @@ CREATE TABLE tv (
     description character varying,
     needs_attention boolean DEFAULT false,
     season integer,
-    episode integer
+    episode integer,
+    size integer
 );
 
 
