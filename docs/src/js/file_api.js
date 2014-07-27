@@ -324,14 +324,26 @@ function FileAPI() {/*{{{*/
 
         if (mode == M_GC) {/*{{{*/
             fAPI = this;
-            this.fs.root.getFile(this.sessionID, {create: false}, function(file) {
-                fAPI.dataURI = file.toURL();
+            this.fs.root.getFile(this.sessionID, {create: false}, function(entry) {
+                entry.fAPI = fAPI;
+                entry.file(function(file) {
+                    fr = new FileReader();
+                    fr.fAPI = this.fAPI;
+                    fr.onloadend = function(e) {
+                        b = new Blob([hex2a(this.result)]);
+                        this.fAPI.dataURI = window.URL.createObjectURL(b);
+                        entry.remove(function() {}, function() {});
+                    };
+                    fr.readAsText(file);
+                }, function(e) {
+                    this.fAPI.fail('Failed to read file');
+                });
             }, function(e) {
                 this.fAPI.fail('Failed to create URI');
             });/*}}}*/
         } else if (mode == M_FF) {/*{{{*/
             this.updateStatus("Creating URI for file");
-            r = db.transaction([dbName], 'readonly').objectStore(dbName).get(this.sessionID);
+            r = db.transaction([dbName], 'readwrite').objectStore(dbName).get(this.sessionID);
 
             r.fAPI = this;
             r.onsuccess = function(e) {

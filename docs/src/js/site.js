@@ -32,13 +32,6 @@ media = {/*{{{*/
     "tGenres": [],
     "tvGenres": []
 };/*}}}*/
-
-function getFile(file, kind) {/*{{{*/
-    f = FileAPI();
-    f.addEventListener('onstatusupdate', function(e) {console.log('Status: ' + e.target.status);});
-    f.addEventListener("onprogressupdate", function(e) {console.log('Progress: ' + f.progress *      100 + '%, ' + f.chunkSpeed + ' KB/s');});
-    f.initialize(file, kind);
-}/*}}}*/
 /*}}}*/
 
 /* General functions *//*{{{*/
@@ -304,7 +297,12 @@ function addTab(elem, tabElement) { /*{{{*/
     };
     setText(tabElement, tabElement.innerText + '\u00a0');
     tabElement.appendChild(x);
-    document.getElementById('tabs').appendChild(tabLink);
+    if (elem.id == 'dl') {
+        t = document.getElementById('tabs');
+        t.insertBefore(tabLink, t.children[1]);
+    } else {
+        document.getElementById('tabs').appendChild(tabLink);
+    }
     document.getElementById('main').appendChild(elem);
 } /*}}}*/
 
@@ -4241,6 +4239,72 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     mediaGrid.appendChild(descriptionBox);
     /*}}}*/
 }/*}}}*/
+
+function getFile(file, kind, ttid) {/*{{{*/
+    if (document.getElementById(ttid)) {
+        alert('Already in queue');
+        return;
+    }
+    
+    f = FileAPI();
+    f.initialize(file, kind);
+
+    f.addEventListener('onstatusupdate', function(e) {/*{{{*/
+        if (this.status.indexOf('local data store') != -1) {
+            addDownload(f);
+        } else if (this.failed) {
+            alert('Download failed - ' + this.status);
+        } else {
+        }
+        console.log('Status: ' + e.target.status);
+    });/*}}}*/
+    f.addEventListener("onprogressupdate", function(e) {/*{{{*/
+        console.log('Progress: ' + f.progress *      100 + '%, ' + f.chunkSpeed + ' KB/s');
+    });/*}}}*/
+
+}/*}}}*/
+
+function addDownload(fapi) {
+    if (!document.getElementById('dl_list')) {/*{{{*//*{{{*/
+        // Create download tab
+        downloadPanel = element('div');
+        downloadPanel.id = 'dl';
+        downloadTab = element('div');
+        setText(downloadTab, 'Downloads');
+        downloadTab.setAttribute('data-id', 'dl');
+        downloadTab.onclick = function() {switchTab(this.getAttribute('data-id'));}
+        addTab(downloadPanel, downloadTab);
+
+        populateDL(downloadPanel);
+        downloadPanel.style.height = main.offsetHeight + 'px';
+
+        switchTab('dl');
+    }/*}}}*//*}}}*/
+}
+
+function populateDL(dlPanel) {
+    title = element('p');
+    title.id = 'dl_title';
+    title.className = 'normal_section_header';
+    title.style.marginTop = '5px';
+    title.style.marginBottom = '5px';
+    setText(title, 'Downloads');
+
+    downloadList = element('div');
+    downloadList.id = 'dl_list';
+    downloadList.className = 'media_grid';
+    downloadList.style.position = 'absolute';
+    downloadList.style.width = '95%';
+
+    if (useNightTheme()) {switchToNight(title, downloadList);}
+    dlPanel.appendChild(title);
+    dlPanel.appendChild(downloadList);
+    setTimeout(function() {downloadList.style.height = 
+                            document.getElementById('main').offsetHeight - 
+                            document.getElementById('dl_title').offsetTop - 
+                            document.getElementById('dl_title').offsetHeight - 40 + 'px';
+                          }, 10);
+}
 
 function openVideos() {/*{{{*/
     videoPanel = element('div');
