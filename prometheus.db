@@ -286,7 +286,8 @@ CREATE TABLE movies (
     description character varying,
     needs_attention boolean DEFAULT false,
     size integer,
-    file character varying
+    file character varying,
+    has_subtitle boolean DEFAULT false
 );
 
 
@@ -589,7 +590,8 @@ CREATE TABLE tv (
     season integer,
     episode integer,
     size integer,
-    file character varying
+    file character varying,
+    has_subtitle boolean DEFAULT false
 );
 
 

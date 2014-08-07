@@ -4249,8 +4249,24 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     descriptionBox.appendChild(showText);
     descriptionBox.appendChild(description);/*}}}*/
 
+    // Download
+    downloadButton = element('button');
+    setText(downloadButton, 'Download');
+    downloadButton.style.cssFloat = 'left';
+    downloadButton.style.clear = 'both';
+    downloadButton.style.marginLeft = '10px';
+    downloadButton.style.marginTop = '20px';
+
+    subButton = element('button');
+    if (item.has_subtitle) {
+        setText(subButton, 'Download subtitles');
+        subButton.style.cssFloat = 'left';
+        subButton.style.marginLeft = '10px';
+        subButton.style.marginTop = '20px';
+    }
+
     // Add elements/*{{{*/
-    if (useNightTheme()) {switchToNight(title, titleLink, labels, details, descriptionTitle, descriptionBox);}
+    if (useNightTheme()) {switchToNight(title, titleLink, labels, details, descriptionTitle, descriptionBox, downloadButton, subButton);}
 
     mediaGrid.appendChild(back);
     mediaGrid.appendChild(poster);
@@ -4266,6 +4282,9 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     mediaGrid.appendChild(detailValues);
     mediaGrid.appendChild(descriptionTitle);
     mediaGrid.appendChild(descriptionBox);
+    mediaGrid.appendChild(element('br'));
+    mediaGrid.appendChild(downloadButton);
+    if (item.has_subtitle) {mediaGrid.appendChild(subButton);}
     /*}}}*/
 }/*}}}*/
 
