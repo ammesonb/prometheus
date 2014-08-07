@@ -64,15 +64,12 @@ sub init { #{{{
         my %services = %$servicesRef;
         my @serviceKeys = keys(%services);
         $servicesRef = $services{$serviceKeys[0]};
-        %services = %$servicesRef;
-        @serviceKeys = keys(%services);
-        my @services = @services{$serviceKeys[0]};
-        $servicesRef = $services[0];
-        my @serviceIDs = @$servicesRef; #}}}
+        my %services = %$servicesRef;
+        my @serviceIDs = @{$services{'array_agg'}}; #}}}
 
         my $toolsRef = getSortedTable($session, "services", "row_order");
         my @tools = @$toolsRef;
-        @services = ();
+        my @services = ();
         foreach (@tools) {
             my %tool = %$_;
             if ((first_index {$_ == $tool{'id'}} @serviceIDs) == -1) {next;}

@@ -3,6 +3,7 @@
 --
 
 SET statement_timeout = 0;
+SET lock_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
@@ -20,6 +21,7 @@ ALTER DATABASE prometheus OWNER TO root;
 \connect prometheus
 
 SET statement_timeout = 0;
+SET lock_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
@@ -240,8 +242,8 @@ ALTER SEQUENCE genres_id_seq OWNED BY genres.id;
 
 CREATE TABLE movies_genre (
     id integer NOT NULL,
-    movie integer,
-    genre integer
+    movie integer NOT NULL,
+    genre integer NOT NULL
 );
 
 
@@ -283,7 +285,8 @@ CREATE TABLE movies (
     director character varying,
     description character varying,
     needs_attention boolean DEFAULT false,
-    size integer
+    size integer,
+    file character varying
 );
 
 
@@ -585,7 +588,8 @@ CREATE TABLE tv (
     needs_attention boolean DEFAULT false,
     season integer,
     episode integer,
-    size integer
+    size integer,
+    file character varying
 );
 
 
@@ -597,8 +601,8 @@ ALTER TABLE public.tv OWNER TO root;
 
 CREATE TABLE tv_genre (
     id integer NOT NULL,
-    episode integer,
-    genre integer
+    episode integer NOT NULL,
+    genre integer NOT NULL
 );
 
 
