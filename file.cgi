@@ -25,18 +25,27 @@ if ($state == 0) { #{{{
     my $key = encode_base64(random_bytes(32));
     chomp($key);
     my $file = $q->param('f');
+    my $kind = $q->param('k');
+    my $v = substr($kind, 0, 1) . substr($file, 0, 1);
+    my $hn = `echo -n $v | sha256sum | awk -F ' ' '{printf $1}'`;
     
     # Set session variables for file
     my $sessionID = `echo -n "$key" | sha512sum | tr ' ' '\n' | head -1 | perl -pe 'chomp'`;
     $session->param("$sessionID-key", $key);
     $session->param("$sessionID-offset", 0);
 
+    # Mount source file container
+    `/var/www/encfs/./fs.py m $v /data/$hn`
+
     # Encrypt source file with master key and read properties
     my $encKey = $session->param('master_key');
-    `openssl enc -a -aes-256-cbc -e -k "$encKey" -in $file -out /files/$sessionID`;
+    `openssl enc -a -aes-256-cbc -e -k "$encKey" -in /data/$hn/$file -out /files/$sessionID`;
     my $size = `stat -c %s "/files/$sessionID"`;
     chomp($size);
     if ($size == 0) {print "nofile"; exit;}
+
+    # Dismount container
+    `/var/www/encfs/./fs.py d $v`
 
     # Send session information and encryption key
     print `echo -n "$key" | openssl enc -aes-256-cbc -e -k "$encKey" | base64 -w 0`;
