@@ -4235,7 +4235,7 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     descriptionBox.style.marginLeft = '10px';
     descriptionBox.style.paddingLeft = '10px';
     descriptionBox.style.paddingRight = '10px';
-    descriptionBox.style.width = '75%';
+    descriptionBox.style.width = mediaGrid.offsetWidth - 200 - 50 + 'px';
     showText = element('p');
     setText(showText, 'Click to show description');
     showText.onclick = function() {
@@ -4249,21 +4249,21 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     descriptionBox.appendChild(showText);
     descriptionBox.appendChild(description);/*}}}*/
 
-    // Download
+    // Download/*{{{*/
     downloadButton = element('button');
     setText(downloadButton, 'Download');
     downloadButton.style.cssFloat = 'left';
-    downloadButton.style.clear = 'both';
+    downloadButton.style.clear = 'left';
     downloadButton.style.marginLeft = '10px';
-    downloadButton.style.marginTop = '20px';
+    downloadButton.style.marginTop = '10px';
 
     subButton = element('button');
-    if (item.has_subtitle) {
+    if (item.has_subtitle) {/*{{{*/
         setText(subButton, 'Download subtitles');
         subButton.style.cssFloat = 'left';
         subButton.style.marginLeft = '10px';
-        subButton.style.marginTop = '20px';
-    }
+        subButton.style.marginTop = '10px';
+    }/*}}}*//*}}}*/
 
     // Add elements/*{{{*/
     if (useNightTheme()) {switchToNight(title, titleLink, labels, details, descriptionTitle, descriptionBox, downloadButton, subButton);}
@@ -4282,7 +4282,6 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     mediaGrid.appendChild(detailValues);
     mediaGrid.appendChild(descriptionTitle);
     mediaGrid.appendChild(descriptionBox);
-    mediaGrid.appendChild(element('br'));
     mediaGrid.appendChild(downloadButton);
     if (item.has_subtitle) {mediaGrid.appendChild(subButton);}
     /*}}}*/
