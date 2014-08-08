@@ -4264,10 +4264,10 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     downloadButton.style.marginTop = '10px';
     downloadButton.setAttribute('data-kind', kind);
     downloadButton.setAttribute('data-item', JSON.stringify(item));
-    downloadButton.onclick = function() {
+    downloadButton.onclick = function() {/*{{{*/
         i = JSON.parse(this.getAttribute('data-item'));
         getFile(i.file, this.getAttribute('data-kind'), i);
-    };
+    };/*}}}*/
 
     subButton = element('button');
     if (item.has_subtitle) {/*{{{*/
@@ -4398,7 +4398,7 @@ function addDownload(fAPI, item) {/*{{{*/
     title.className = 'normal_text';
     title.style.position = 'relative';
     title.style.left = '10px';
-    title.style.top = '30px';
+    title.style.top = '20px';
     title.style.fontWeight = 'bold';
     setText(title, item.title);/*}}}*/
 
