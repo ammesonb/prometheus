@@ -64,7 +64,7 @@ sub init { #{{{
         my %services = %$servicesRef;
         my @serviceKeys = keys(%services);
         $servicesRef = $services{$serviceKeys[0]};
-        my %services = %$servicesRef;
+        %services = %$servicesRef;
         my @serviceIDs = @{$services{'array_agg'}}; #}}}
 
         my $toolsRef = getSortedTable($session, "services", "row_order");

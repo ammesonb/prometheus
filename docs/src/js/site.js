@@ -4307,24 +4307,36 @@ function getFile(file, kind, item) {/*{{{*/
     }
     
     f = FileAPI();
+    f.ttid = item.ttid;
+    f.title = item.title;
     addDownload(f, item);
-    return;
 
     if (document.getElementById('dl_list').childElementCount < 2) {
-        // f.initialize(file, kind);
+        f.initialize(file, kind);
     }
 
     f.addEventListener('onstatusupdate', function(e) {/*{{{*/
-        if (this.status.indexOf('local data store') != -1) {
-            addDownload(f);
-        } else if (this.failed) {
-            alert('Download failed - ' + this.status);
+        if (this.failed) {
+            alert('Download of ' + this.title + ' failed - ' + this.status);
+            document.getElementById(this.ttid + '_pause').style.display = 'none';
+            document.getElementById(this.ttid + '_up').style.display = 'none';
+            document.getElementById(this.ttid + '_down').style.display = 'none';
         } else {
+            setText(document.getElementById(this.ttid + '_status'), this.status);
+            if (this.status == 'Complete') {
+            }
         }
         console.log('Status: ' + e.target.status);
     });/*}}}*/
     f.addEventListener("onprogressupdate", function(e) {/*{{{*/
-        console.log('Progress: ' + f.progress *      100 + '%, ' + f.chunkSpeed + ' KB/s');
+        bar = document.getElementById(this.ttid + '_progress');
+        w = bar.getAttribute('data-width');
+        h = bar.getAttribute('data-height');
+        c = bar.getAttribute('data-curve');
+        s = bar.getAttribute('data-stroke');
+        updateProgressBar(bar.getContext('2d'), w, h, c, s, this.progress);
+        updateInfo(document.getElementById(this.ttid + '_info'), this);
+        console.log('Progress: ' + f.progress * 100 + '%, ' + f.chunkSpeed + ' KB/s');
     });/*}}}*/
 
 }/*}}}*/
@@ -4409,6 +4421,11 @@ function addDownload(fAPI, item) {/*{{{*/
     stroke = 4;
 
     progress = element('canvas');
+    progress.id = item.ttid + '_progress';
+    progress.setAttribute('data-width', width);
+    progress.setAttribute('data-height', height);
+    progress.setAttribute('data-curve', curve);
+    progress.setAttribute('data-stroke', stroke);
     progress.width = width;
     progress.height = height;
     progress.style.marginLeft = '10px';
@@ -4416,62 +4433,35 @@ function addDownload(fAPI, item) {/*{{{*/
 
     ctx = progress.getContext('2d');
 
-    g = ctx.createLinearGradient(0, height, width, 0);
-    g.addColorStop('0', '#AAAAAA');
-    g.addColorStop('.15', '#8C85AA');
-    g.addColorStop('.65', '#7766AA');
-    g.addColorStop('.95', '#6655AA');
-    ctx.lineWidth = stroke;
-    ctx.strokeStyle = g;
-
-    traceCurvedRect(ctx, width, height, curve, stroke, 1);
-    ctx.stroke();
-    
-    ctx.fillStyle = g;
-    traceCurvedRect(ctx, width, height, curve, stroke, 0);
-    ctx.fill();
+    updateProgressBar(ctx, width, height, curve, stroke, 0);
     /*}}}*/
 
     // Status /*{{{*/
     stat = element('p');
+    stat.id = item.ttid + '_status';
     stat.className = 'normal_text';
     stat.style.display = 'inline';
     stat.style.marginLeft = '15px';
     setText(stat, fAPI.status);/*}}}*/
 
-    // Action buttons
+    // Action buttons/*{{{*/
     pause = createActionButton('pause', 0);
+    pause.id = item.ttid + '_pause';
     remove = createActionButton('remove', 0);
+    remove.id = item.ttid + '_remove';
     down = createActionButton('down', 0);
+    down.id = item.ttid + '_down';
     up = createActionButton('up', 0);
+    up.id = item.ttid + '_up';/*}}}*/
     
     // Info/*{{{*/
     info = element('p');
+    info.id = item.ttid + '_info';
     info.className = 'normal_text';
     info.style.position = 'relative';
     info.style.left = '10px';
-    size = parseSize(item.size)[0].slice(0, -2);
-    speed = (fAPI.chunkSpeed + fAPI.totalSpeed) / 2;
 
-    if (!speed) {
-        rate = ['-- KB/s'];
-        time = '-- minutes';
-    } else {
-        rate = parseSize(speed);
-        time = (item.size - fAPI.received) / speed;
-        time = parseTime(eta);
-    }
-
-    setText(info, 
-        'Started at:\u00a0\u00a0' + 
-            new Date().toString().split(/ [A-Z]{3}/)[0].
-                replace(' ', ', ', 1).
-                replace(/( [A-Za-z]+) ([0-9]{2})/, ' $2$1').
-                replace(/([0-9]{4})/, '$1,') + '\u00a0<br>' + 
-        'Received:\u00a0\u00a00\u00a0/\u00a0' + size + '\u00a0<br>' +
-        stringFill('\u00a0', 5) + 'Speed:\u00a0\u00a0' + rate + '\u000a<br>' +
-        stringFill('\u00a0', 2) + 'Time left:\u00a0\u00a0' + time
-    );/*}}}*/
+    updateInfo(info, fAPI, item.size);/*}}}*/
 
     if (useNightTheme()) {switchToNight(dl, title, info, stat);}
 
@@ -4488,6 +4478,49 @@ function addDownload(fAPI, item) {/*{{{*/
     dl.appendChild(element('br'));
     dl.appendChild(info);
     list.appendChild(dl);/*}}}*/
+}/*}}}*/
+
+function updateProgressBar(ctx, width, height, curve, stroke, percent) {/*{{{*/
+    g = ctx.createLinearGradient(0, height, width, 0);
+    g.addColorStop('0', '#AAAAAA');
+    g.addColorStop('.15', '#8C85AA');
+    g.addColorStop('.65', '#7766AA');
+    g.addColorStop('.95', '#6655AA');
+    ctx.lineWidth = stroke;
+    ctx.strokeStyle = g;
+
+    traceCurvedRect(ctx, width, height, curve, stroke, 1);
+    ctx.stroke();
+    
+    ctx.fillStyle = g;
+    traceCurvedRect(ctx, width, height, curve, stroke, percent);
+    ctx.fill();
+}/*}}}*/
+
+function updateInfo(elem, fAPI) {/*{{{*/
+    size = fAPI.size;
+    if (!size) {size = '0 MB';}
+    else {size = parseSize(size)[0].slice(0, -2);}
+    speed = (fAPI.chunkSpeed + fAPI.totalSpeed) / 2;
+    if (!speed) {
+        rate = ['-- KB/s'];
+        time = '-- minutes';
+    } else {
+        rate = parseSize(speed);
+        time = (size - fAPI.received) / speed;
+        time = parseTime(eta);
+    }
+
+    setText(elem, /*{{{*/
+        'Started at:\u00a0\u00a0' + 
+            new Date().toString().split(/ [A-Z]{3}/)[0].
+                replace(' ', ', ', 1).
+                replace(/( [A-Za-z]+) ([0-9]{2})/, ' $2$1').
+                replace(/([0-9]{4})/, '$1,') + '\u00a0<br>' + 
+        'Received:\u00a0\u00a00\u00a0/\u00a0' + size + '\u00a0<br>' +
+        stringFill('\u00a0', 5) + 'Speed:\u00a0\u00a0' + rate + '\u000a<br>' +
+        stringFill('\u00a0', 2) + 'Time left:\u00a0\u00a0' + time
+   );/*}}}*/
 }/*}}}*/
 
 function createActionButton(symbol, hover) {/*{{{*/

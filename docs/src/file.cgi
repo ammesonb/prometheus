@@ -35,7 +35,7 @@ if ($state == 0) { #{{{
     $session->param("$sessionID-offset", 0);
 
     # Mount source file container
-    `/var/www/encfs/./fs.py m $v /data/$hn`
+    `/var/www/encfs/./fs.py m $v /data/$hn`;
 
     # Encrypt source file with master key and read properties
     my $encKey = $session->param('master_key');
@@ -45,7 +45,7 @@ if ($state == 0) { #{{{
     if ($size == 0) {print "nofile"; exit;}
 
     # Dismount container
-    `/var/www/encfs/./fs.py d $v`
+    `/var/www/encfs/./fs.py d $v`;
 
     # Send session information and encryption key
     print `echo -n "$key" | openssl enc -aes-256-cbc -e -k "$encKey" | base64 -w 0`;
