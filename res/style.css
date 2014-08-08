@@ -236,7 +236,9 @@ div.media_grid.night {/*{{{*/
 div.dl_item {/*{{{*/
     margin-top: 5px;
     margin-bottom: 5px;
-    height: 400px;
+    margin-left: .75%;
+    width: 98%;
+    height: 225px;
 }/*}}}*/
 
 div.outline {/*{{{*/

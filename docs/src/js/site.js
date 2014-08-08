@@ -316,22 +316,28 @@ function addTab(elem, tabElement) { /*{{{*/
     tabLink = element('a');
     tabLink.href = '#';
     tabLink.appendChild(tabElement);
-    x = element('img');
-    x.src = 'images/x.png';
-    x.alt = 'Close tab';
-    x.title = 'Close tab';
-    x.setAttribute('data-id', elem.id);
-    x.onclick = function() {
-        closeTab(this.getAttribute('data-id'));
-    };
-    setText(tabElement, tabElement.innerText + '\u00a0');
-    tabElement.appendChild(x);
+    // If not download tab, add close button/*{{{*/
+    if (elem.id != 'dl') {
+        x = element('img');
+        x.src = 'images/x.png';
+        x.alt = 'Close tab';
+        x.title = 'Close tab';
+        x.setAttribute('data-id', elem.id);
+        x.onclick = function() {
+            closeTab(this.getAttribute('data-id'));
+        };
+        setText(tabElement, tabElement.innerText + '\u00a0');
+        tabElement.appendChild(x);
+    }/*}}}*/
+
+    // If download tab, insert after home/*{{{*/
     if (elem.id == 'dl') {
         t = document.getElementById('tabs');
-        t.insertBefore(tabLink, t.children[1]);
+        t.insertBefore(tabLink, t.children[1]);/*}}}*/
+    // Otherwise append/*{{{*/
     } else {
         document.getElementById('tabs').appendChild(tabLink);
-    }
+    }/*}}}*/
     document.getElementById('main').appendChild(elem);
 } /*}}}*/
 
@@ -4256,6 +4262,12 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     downloadButton.style.clear = 'left';
     downloadButton.style.marginLeft = '10px';
     downloadButton.style.marginTop = '10px';
+    downloadButton.setAttribute('data-kind', kind);
+    downloadButton.setAttribute('data-item', JSON.stringify(item));
+    downloadButton.onclick = function() {
+        i = JSON.parse(this.getAttribute('data-item'));
+        getFile(i.file, this.getAttribute('data-kind'), i);
+    };
 
     subButton = element('button');
     if (item.has_subtitle) {/*{{{*/
@@ -4288,8 +4300,9 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
 }/*}}}*/
 
 function getFile(file, kind, item) {/*{{{*/
+    item.size *= 1024;
     if (document.getElementById(item.ttid)) {
-        alert('Already in queue');
+        switchTab('dl');
         return;
     }
     
@@ -4297,7 +4310,9 @@ function getFile(file, kind, item) {/*{{{*/
     addDownload(f, item);
     return;
 
-    f.initialize(file, kind);
+    if (document.getElementById('dl_list').childElementCount < 2) {
+        // f.initialize(file, kind);
+    }
 
     f.addEventListener('onstatusupdate', function(e) {/*{{{*/
         if (this.status.indexOf('local data store') != -1) {
@@ -4314,7 +4329,7 @@ function getFile(file, kind, item) {/*{{{*/
 
 }/*}}}*/
 
-function populateDL(dlPanel) {/*{{{*/
+function populateDL(dlPanel, firstSize) {/*{{{*/
     title = element('p');
     title.id = 'dl_title';
     title.className = 'normal_section_header';
@@ -4327,7 +4342,7 @@ function populateDL(dlPanel) {/*{{{*/
     stats.className = 'normal_text';
     stats.style.fontWeight = 'bold';
     stats.style.fontSize = '90%';
-    setText(stats, 'Queued:\u00a01\u00a0\u00a0\u00a0\u00a0Size:\u00a0');
+    setText(stats, 'Queued:\u00a01\u00a0\u00a0\u00a0\u00a0Size:\u00a0' + firstSize);
 
     downloadList = element('div');
     downloadList.id = 'dl_list';
@@ -4347,7 +4362,7 @@ function populateDL(dlPanel) {/*{{{*/
 }/*}}}*/
 
 function addDownload(fAPI, item) {/*{{{*/
-    if (!document.getElementById('dl_list')) {/*{{{*//*{{{*/
+    if (!document.getElementById('dl_list')) {/*{{{*/
         // Create download tab
         downloadPanel = element('div');
         downloadPanel.id = 'dl';
@@ -4357,47 +4372,220 @@ function addDownload(fAPI, item) {/*{{{*/
         downloadTab.onclick = function() {switchTab(this.getAttribute('data-id'));}
         addTab(downloadPanel, downloadTab);
 
-        populateDL(downloadPanel);
+        populateDL(downloadPanel, parseSize(item.size)[0].slice(0, -2));
         downloadPanel.style.height = main.offsetHeight + 'px';
 
         switchTab('dl');
-    }/*}}}*//*}}}*/
+    }/*}}}*/
 
     list = document.getElementById('dl_list');
     dl = element('div');
-    dl.id = fAPI.ttid;
+    dl.id = item.ttid;
     dl.className = 'dl_item outline';
 
     // Poster/*{{{*/
     poster = element('img');
     poster.src = 'thumbs/' + item.ttid + '.jpg';
-    poster.width = '200px';
-    poster.height = '300px';
-    dl.appendChild(poster);/*}}}*/
+    poster.style.cssFloat = 'left';
+    poster.style.width = '135px';
+    poster.style.height = '200px';
+    poster.style.marginTop = '12.5px';
+    poster.style.marginLeft = '10px';
+    /*}}}*/
 
     // Title/*{{{*/
     title = element('p');
     title.className = 'normal_text';
+    title.style.position = 'relative';
+    title.style.left = '10px';
+    title.style.top = '30px';
     title.style.fontWeight = 'bold';
-    setText(title, item.title);
-    dl.appendChild(title);/*}}}*/
+    setText(title, item.title);/*}}}*/
 
+    // Progress bar/*{{{*/
+    width = 350;
+    height = 15;
+    curve = 25;
+    stroke = 4;
+
+    progress = element('canvas');
+    progress.width = width;
+    progress.height = height;
+    progress.style.marginLeft = '10px';
+    progress.style.marginTop = '10px';
+
+    ctx = progress.getContext('2d');
+
+    g = ctx.createLinearGradient(0, height, width, 0);
+    g.addColorStop('0', '#AAAAAA');
+    g.addColorStop('.15', '#8C85AA');
+    g.addColorStop('.65', '#7766AA');
+    g.addColorStop('.95', '#6655AA');
+    ctx.lineWidth = stroke;
+    ctx.strokeStyle = g;
+
+    traceCurvedRect(ctx, width, height, curve, stroke, 1);
+    ctx.stroke();
+    
+    ctx.fillStyle = g;
+    traceCurvedRect(ctx, width, height, curve, stroke, .25);
+    ctx.fill();
+    /*}}}*/
+
+    // ETA/*{{{*/
+    if (item.received) {
+        time = (item.size - item.received) / speed;
+        time = parseTime(eta);
+    } else {
+        time = '-- minutes';
+    }
+    eta = element('p');
+    eta.className = 'normal_text';
+    eta.style.display = 'inline';
+    eta.style.marginLeft = '15px';
+    setText(eta, time);
+    /*}}}*/
+
+    // Action buttons
+    pause = createActionButton('pause', 0);
+    remove = createActionButton('remove', 0);
+    down = createActionButton('down', 0);
+    up = createActionButton('up', 0);
+    
     // Info/*{{{*/
     info = element('p');
     info.className = 'normal_text';
-    size = parseSize(item.size);
+    info.style.position = 'relative';
+    info.style.left = '10px';
+    size = parseSize(item.size)[0].slice(0, -2);
     speed = (item.chunkSpeed + item.totalSpeed) / 2;
-    rate = parseSize(speed);
-    eta = (item.size - item.received) / speed;
-    eta = parseTime(eta);
+    if (!speed) {
+        rate = ['-- KB/s'];
+    } else {
+        rate = parseSize(speed);
+    }
     setText(info, 
-        'Received:\u00a00/' + size[0] + '\u00a0' + size[1] + '\u000a' + 
-        stringFill('\u00a0', 3) + 'Speed:\u00a0' + rate[0] + '\u000a' + rate[1] + 
-        stringFill('\u00a0', 5) + 'ETA:\u00a0' + eta
+        'Received:\u00a00\u00a0/\u00a0' + size + '\u00a0<br>' +
+        stringFill('\u00a0', 5) + 'Speed:\u00a0' + rate + '\u000a<br>' +
+        'Started at:\u00a0' + new Date().toLocaleString()
     );/*}}}*/
 
-    if (useNightTheme()) {switchToNight(dl, title, info);}
-    list.appendChild(dl);
+    if (useNightTheme()) {switchToNight(dl, title, info, eta);}
+
+    // Add elements/*{{{*/
+    dl.appendChild(poster);
+    dl.appendChild(title);
+    dl.appendChild(element('br'));
+    dl.appendChild(progress);
+    dl.appendChild(eta);
+    dl.appendChild(up);
+    dl.appendChild(down);
+    dl.appendChild(remove);
+    dl.appendChild(pause);
+    dl.appendChild(element('br'));
+    dl.appendChild(info);
+    list.appendChild(dl);/*}}}*/
+}/*}}}*/
+
+function createActionButton(symbol, hover) {/*{{{*/
+    length = 30;
+    btn = element('canvas');
+    btn.width = length;
+    btn.height = length;
+    btn.style.display = 'inline';
+    btn.style.cssFloat = 'right';
+    btn.style.marginRight = '15px';
+    btn.setAttribute('data-symbol', symbol);
+    btn.onmouseover = function() {drawActionButton(this, this.getAttribute('data-symbol'), 1);}
+    btn.onmouseout = function() {drawActionButton(this, this.getAttribute('data-symbol'), 0);}
+
+    drawActionButton(btn, symbol, hover);
+    return btn;
+}/*}}}*/
+
+function drawActionButton(btn, symbol, hover) {/*{{{*/
+    ctx = btn.getContext('2d');
+    color = '#6655AA';
+    border = '#888888';
+    back = '#AAAAAA';
+    if (hover) {
+        color = '#CFCFCF';
+    }
+    drawSquare(ctx, length, back, border);
+
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    if (symbol == 'pause') {/*{{{*/
+        ctx.moveTo(10, 7.5);
+        ctx.lineTo(10, 22.5);
+        ctx.moveTo(20, 7.5);
+        ctx.lineTo(20, 22.5);/*}}}*/
+    } else if (symbol == 'play') {
+    } else if (symbol == 'remove') {/*{{{*/
+        ctx.moveTo(7.5, 7.5);
+        ctx.lineTo(22.5, 22.5);
+        ctx.moveTo(22.5, 7.5);
+        ctx.lineTo(7.5, 22.5);/*}}}*/
+    } else if (symbol == 'down') {/*{{{*/
+        ctx.moveTo(15, 5.5);
+        ctx.lineTo(15, 22.5);
+        ctx.moveTo(15.5, 25);
+        ctx.lineTo(7.5, 15);
+        ctx.moveTo(15, 5.5);
+        ctx.lineTo(15, 22.5);
+        ctx.moveTo(14.5, 25);
+        ctx.lineTo(22.5, 15);/*}}}*/
+    } else if (symbol == 'up') {/*{{{*/
+        ctx.moveTo(15, 25);
+        ctx.lineTo(15, 5.5);
+        ctx.moveTo(15.5, 5.25);
+        ctx.lineTo(7.5, 15);
+        ctx.moveTo(15, 25);
+        ctx.lineTo(15, 5.5);
+        ctx.moveTo(14.5, 5.25);
+        ctx.lineTo(22.5, 15);
+    }/*}}}*/
+    ctx.strokeStyle = color;
+    ctx.stroke();
+}/*}}}*/
+
+function traceCurvedRect(ctx, width, height, curve, stroke, percentage) {/*{{{*/
+    adjWidth = width - stroke / 2;
+    adjHeight = height - stroke / 2;
+    rightCurve = adjWidth - curve;
+    leftCurve = curve + stroke / 2;
+    percentWidth = width * (1 - percentage);
+
+    ctx.beginPath();
+    ctx.moveTo(stroke / 2, height / 2);
+    ctx.quadraticCurveTo(0, 0, leftCurve, stroke / 2);
+    ctx.lineTo(rightCurve - percentWidth, stroke / 2);
+    ctx.quadraticCurveTo(width - percentWidth, 0, adjWidth - percentWidth, height / 2);
+    ctx.quadraticCurveTo(width - percentWidth, height, rightCurve - percentWidth, adjHeight);
+    ctx.lineTo(leftCurve, adjHeight);
+    ctx.quadraticCurveTo(0, height, stroke / 2, height / 2);
+    ctx.closePath();
+}/*}}}*/
+
+function drawSquare(ctx, length, fill, stroke) {/*{{{*/
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(length, 0);
+    ctx.lineTo(length, length);
+    ctx.lineTo(0, length);
+    ctx.lineTo(0, 0);
+    ctx.closePath();
+    ctx.fill()
+
+    width = 3;
+    ctx.moveTo(width / 2, width / 2);
+    ctx.lineTo(length - width / 2, width / 2);
+    ctx.lineTo(length - width / 2, length - width / 2);
+    ctx.lineTo(width / 2, length - width / 2);
+    ctx.lineTo(width / 2, width / 2);
+    ctx.strokeStyle = stroke;
+    ctx.stroke();
 }/*}}}*/
 
 function openVideos() {/*{{{*/
