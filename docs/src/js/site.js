@@ -4428,23 +4428,16 @@ function addDownload(fAPI, item) {/*{{{*/
     ctx.stroke();
     
     ctx.fillStyle = g;
-    traceCurvedRect(ctx, width, height, curve, stroke, .25);
+    traceCurvedRect(ctx, width, height, curve, stroke, 0);
     ctx.fill();
     /*}}}*/
 
-    // ETA/*{{{*/
-    if (item.received) {
-        time = (item.size - item.received) / speed;
-        time = parseTime(eta);
-    } else {
-        time = '-- minutes';
-    }
-    eta = element('p');
-    eta.className = 'normal_text';
-    eta.style.display = 'inline';
-    eta.style.marginLeft = '15px';
-    setText(eta, time);
-    /*}}}*/
+    // Status /*{{{*/
+    stat = element('p');
+    stat.className = 'normal_text';
+    stat.style.display = 'inline';
+    stat.style.marginLeft = '15px';
+    setText(stat, fAPI.status);/*}}}*/
 
     // Action buttons
     pause = createActionButton('pause', 0);
@@ -4458,26 +4451,36 @@ function addDownload(fAPI, item) {/*{{{*/
     info.style.position = 'relative';
     info.style.left = '10px';
     size = parseSize(item.size)[0].slice(0, -2);
-    speed = (item.chunkSpeed + item.totalSpeed) / 2;
+    speed = (fAPI.chunkSpeed + fAPI.totalSpeed) / 2;
+
     if (!speed) {
         rate = ['-- KB/s'];
+        time = '-- minutes';
     } else {
         rate = parseSize(speed);
+        time = (item.size - fAPI.received) / speed;
+        time = parseTime(eta);
     }
+
     setText(info, 
-        'Received:\u00a00\u00a0/\u00a0' + size + '\u00a0<br>' +
-        stringFill('\u00a0', 5) + 'Speed:\u00a0' + rate + '\u000a<br>' +
-        'Started at:\u00a0' + new Date().toLocaleString()
+        'Started at:\u00a0\u00a0' + 
+            new Date().toString().split(/ [A-Z]{3}/)[0].
+                replace(' ', ', ', 1).
+                replace(/( [A-Za-z]+) ([0-9]{2})/, ' $2$1').
+                replace(/([0-9]{4})/, '$1,') + '\u00a0<br>' + 
+        'Received:\u00a0\u00a00\u00a0/\u00a0' + size + '\u00a0<br>' +
+        stringFill('\u00a0', 5) + 'Speed:\u00a0\u00a0' + rate + '\u000a<br>' +
+        stringFill('\u00a0', 2) + 'Time left:\u00a0\u00a0' + time
     );/*}}}*/
 
-    if (useNightTheme()) {switchToNight(dl, title, info, eta);}
+    if (useNightTheme()) {switchToNight(dl, title, info, stat);}
 
     // Add elements/*{{{*/
     dl.appendChild(poster);
     dl.appendChild(title);
     dl.appendChild(element('br'));
     dl.appendChild(progress);
-    dl.appendChild(eta);
+    dl.appendChild(stat);
     dl.appendChild(up);
     dl.appendChild(down);
     dl.appendChild(remove);
@@ -4550,6 +4553,8 @@ function drawActionButton(btn, symbol, hover) {/*{{{*/
 }/*}}}*/
 
 function traceCurvedRect(ctx, width, height, curve, stroke, percentage) {/*{{{*/
+    if (percentage == 0) {ctx.beginPath(); ctx.moveTo(0, 0); ctx.moveTo(1, 1); ctx.closePath(); return;}
+
     adjWidth = width - stroke / 2;
     adjHeight = height - stroke / 2;
     rightCurve = adjWidth - curve;

@@ -40,7 +40,7 @@ function FileAPI() {/*{{{*/
     return {
         // Attributes/*{{{*/
         events: {},
-        status: 'Constructed',
+        status: 'Requested',
         sessionID: undefined,
         progress: 0,
         completed: false,
