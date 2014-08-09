@@ -132,27 +132,25 @@ function parseSize(bytes) {/*{{{*/
     base = 1;
     for (u = 0; u < units.length; u++) {/*{{{*/
         unit = units[u];
-        size = bytes / base;
-        size = size.toFixed(2);
-        if (size < 2048) {
-            return [size + '\u00a0 ' + unit + '/s', unit];
+        tmpSize = bytes / base;
+        tmpSize = tmpSize.toFixed(2);
+        if (tmpSize < 2048) {
+            return [tmpSize + '\u00a0' + unit, unit];
         }
         base *= 1024;
     }/*}}}*/
 }/*}}}*/
 
-function parseTime(time) {/*{{{*/
+function parseTime(tmpT) {/*{{{*/
     units = ['s', 'm', 'h', 'd'];
-    conversion = [60, 60, 60, 24];
-    base = 1;
+    conversion = [60, 60, 24];
+    maxT = [119, 119, 23, 999999];
     for (u = 0; u < units.length; u++) {/*{{{*/
-        unit = units[u];
-        time = time / base;
-        time = time.toFixed(2);
-        if (time < (1.5 * conversion[u])) {
-            return [time + '\u00a0 ' + unit + '/s', unit];
+        if ((tmpT / conversion[u]) < maxT[u]) {
+            return [(tmpT / conversion[u]).toFixed(2) + '\u00a0 ' + units[u + 1], units[u + 1]];
         }
-        base *= conversion[u];
+        tmpT /= conversion[u];
+        tmpT = tmpT.toFixed(2);
     }/*}}}*/
 }/*}}}*/
 
@@ -4309,11 +4307,6 @@ function getFile(file, kind, item) {/*{{{*/
     f = FileAPI();
     f.ttid = item.ttid;
     f.title = item.title;
-    addDownload(f, item);
-
-    if (document.getElementById('dl_list').childElementCount < 2) {
-        f.initialize(file, kind);
-    }
 
     f.addEventListener('onstatusupdate', function(e) {/*{{{*/
         fAPI = this.target;
@@ -4339,8 +4332,14 @@ function getFile(file, kind, item) {/*{{{*/
         ctx = bar.getContext('2d');
         updateProgressBar(ctx, w, h, c, s, fAPI.progress);
         updateInfo(document.getElementById(fAPI.ttid + '_info'), fAPI);
-        console.log('Progress: ' + f.progress * 100 + '%, ' + f.chunkSpeed + ' KB/s');
+        console.log('Progress: ' + f.progress * 100 + '%, ' + f.chunkSpeed + ' B/s');
     });/*}}}*/
+
+    addDownload(f, item);
+
+    if (document.getElementById('dl_list').childElementCount < 2) {
+        f.initialize(file, kind);
+    }
 
 }/*}}}*/
 
@@ -4357,7 +4356,7 @@ function populateDL(dlPanel, firstSize) {/*{{{*/
     stats.className = 'normal_text';
     stats.style.fontWeight = 'bold';
     stats.style.fontSize = '90%';
-    setText(stats, 'Queued:\u00a01\u00a0\u00a0\u00a0\u00a0Size:\u00a0' + firstSize);
+    setText(stats, 'Queued:\u00a01\u00a0\u00a0\u00a0\u00a0File size:\u00a0' + firstSize);
 
     downloadList = element('div');
     downloadList.id = 'dl_list';
@@ -4387,7 +4386,7 @@ function addDownload(fAPI, item) {/*{{{*/
         downloadTab.onclick = function() {switchTab(this.getAttribute('data-id'));}
         addTab(downloadPanel, downloadTab);
 
-        populateDL(downloadPanel, parseSize(item.size)[0].slice(0, -2));
+        populateDL(downloadPanel, parseSize(item.size)[0]);
         downloadPanel.style.height = main.offsetHeight + 'px';
 
         switchTab('dl');
@@ -4502,28 +4501,36 @@ function updateProgressBar(ctx, width, height, curve, stroke, percent) {/*{{{*/
 }/*}}}*/
 
 function updateInfo(elem, fAPI) {/*{{{*/
-    size = fAPI.size;
+    size = parseInt(fAPI.size, 10);
     if (!size) {size = '0 MB';}
-    else {size = parseSize(size)[0].slice(0, -2);}
-    speed = (fAPI.chunkSpeed + fAPI.totalSpeed) / 2;
+    else {size = parseSize(size)[0];}
+    speed = (parseInt(fAPI.chunkSpeed, 10) + parseInt(fAPI.totalSpeed, 10)) / 2;
     if (!speed) {
+        received = '0';
         rate = ['-- KB/s'];
-        time = '-- minutes';
+        eta = '-- minutes';
     } else {
-        rate = parseSize(speed);
-        time = (size - fAPI.received) / speed;
-        time = parseTime(eta);
+        received = parseSize(parseInt(fAPI.received), 10)[0];
+        rate = parseSize(speed)[0] + '/s';
+        eta = (parseInt(fAPI.size, 10) - parseInt(fAPI.received, 10)) / speed;
+        eta = parseTime(eta)[0];
     }
 
+    d = new Date();
+    if (!fAPI.startedAt) {
+        d = '';
+    } else {
+        d.setTime(fAPI.startedAt);
+    }
     setText(elem, /*{{{*/
         'Started at:\u00a0\u00a0' + 
-            new Date().toString().split(/ [A-Z]{3}/)[0].
+            d.toString().split(/ [A-Z]{3}/)[0].
                 replace(' ', ', ', 1).
                 replace(/( [A-Za-z]+) ([0-9]{2})/, ' $2$1').
                 replace(/([0-9]{4})/, '$1,') + '\u00a0<br>' + 
-        'Received:\u00a0\u00a00\u00a0/\u00a0' + size + '\u00a0<br>' +
+        'Received:\u00a0\u00a0' + received + '\u00a0/\u00a0' + size + '\u00a0<br>' +
         stringFill('\u00a0', 5) + 'Speed:\u00a0\u00a0' + rate + '\u000a<br>' +
-        stringFill('\u00a0', 2) + 'Time left:\u00a0\u00a0' + time
+        stringFill('\u00a0', 2) + 'Time left:\u00a0\u00a0' + eta
    );/*}}}*/
 }/*}}}*/
 

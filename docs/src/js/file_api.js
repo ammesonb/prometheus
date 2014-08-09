@@ -56,7 +56,7 @@ function FileAPI() {/*{{{*/
         size: undefined,
         received: 0,
         currentData: '',
-        res: 1000000,
+        res: 500000,
         totalSpeed: 0,
         startedAt: undefined,
         chunkSpeed: 0,
@@ -98,17 +98,15 @@ function FileAPI() {/*{{{*/
     updateProgress: function(bytesTransferred, time) {/*{{{*/
         // Change time into seconds
         time /= 1000;
-        //if (time < 2 || time > 5) {this.res = (bytesTransferred / time) * 3;}
+        //if (time < 2 || time > 4) {this.res = parseInt((bytesTransferred / time) * 3, 10);}
+        if (time < 3) {this.res *= 2;}
+        else if (time > 5) {this.res /= 2; this.res = parseInt(this.res, 10);}
         // this.received += bytesTransferred;
         this.progress = this.received / this.size;
         this.chunkSpeed = bytesTransferred / time;
-        this.chunkSpeed /= 1024;
         this.totalSpeed = this.received / ((new Date().getTime() - this.startedAt) / 1000);
-        this.totalSpeed /= 1024;
         if (this.failed) {this.progress = '--';}
-        else {this.progress = this.progress.toFixed(2);}
-        this.chunkSpeed = this.chunkSpeed.toFixed(2);
-        this.totalSpeed = this.totalSpeed.toFixed(2);
+        else {this.progress = this.progress.toFixed(4);}
         this.dispatchEvent('onprogressupdate');
     },/*}}}*/
 
@@ -131,9 +129,9 @@ function FileAPI() {/*{{{*/
 
     // Functions
     initialize: function(file, kind) {/*{{{*/
+        this.updateStatus('Preparing download');
         this.file = file;
         this.kind = kind;
-        this.updateStatus('Initializing');
         this.currentXHRReq = createPostReq('/file.cgi', true);
         this.currentXHRReq.fAPI = this;
         this.currentXHRReq.onreadystatechange = function() {/*{{{*/
@@ -141,7 +139,6 @@ function FileAPI() {/*{{{*/
             else if (this.responseText.indexOf('nofile') != -1) {this.fAPI.fail('File does not exist');}
             else if (this.readyState == 4) {this.fAPI.fail('Internal error - contact me');}
         };/*}}}*/
-        this.updateStatus('Retrieving session data');
         this.currentXHRReq.send('s=0&f=' + file + '&k=' + kind);
     },/*}}}*/
 
