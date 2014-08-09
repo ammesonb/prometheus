@@ -27,7 +27,8 @@ if ($state == 0) { #{{{
     my $file = $q->param('f');
     my $kind = $q->param('k');
     my $v = substr($kind, 0, 1) . substr($file, 0, 1);
-    my $hn = `echo -n $v | sha256sum | awk -F ' ' '{printf $1}'`;
+    my $m = $v . "_m";
+    my $hn = `echo -n "$m" | sha256sum | awk -F ' ' '{printf \$1}'`;
     
     # Set session variables for file
     my $sessionID = `echo -n "$key" | sha512sum | tr ' ' '\n' | head -1 | perl -pe 'chomp'`;
