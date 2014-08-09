@@ -39,7 +39,7 @@ if ($state == 0) { #{{{
 
     # Encrypt source file with master key and read properties
     my $encKey = $session->param('master_key');
-    `openssl enc -a -aes-256-cbc -e -k "$encKey" -in /data/$hn/$file -out /files/$sessionID`;
+    `openssl enc -a -aes-256-cbc -e -k "$encKey" -in "/data/$hn/$file" -out /files/$sessionID`;
     my $size = `stat -c %s "/files/$sessionID"`;
     chomp($size);
     if ($size == 0) {print "nofile"; exit;}

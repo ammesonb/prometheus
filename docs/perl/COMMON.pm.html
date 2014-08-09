@@ -104,6 +104,8 @@ sub init { #{{{
     my $html = read_file('parts/head');
     my $user = $session->param('user');
     my $theme = $session->param('night_theme');
+    $user = '' if (not $user);
+    $theme = '2' if (not $theme);
     $html =~ s/%USER%/$user/;
     $html =~ s/%USERID%/$userID/;
     $html =~ s/%DOMAIN%/$domain/;

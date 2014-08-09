@@ -37,9 +37,12 @@ my @searchCols = ('username');
 my @operators = ('=');
 my @patterns = ("'" . $q->param('a') . "'");
 my @logic = ();
+$session->param('attempt_login', 1);
+$session->expire('attempt_login', '+30m');
 my $userRef = COMMON::searchTable($session, 'users', \@returnCols, \@searchCols, \@operators,\@patterns, \@logic);
 my %userData = %$userRef;
 my @userIDs = keys %userData;
+if ($#userIDs < 0) {print $q->redirect('/'); exit;}
 my $userID = $userIDs[0]; #}}}
 
 my $response = COMMON::attempt_login($session, $q->param('a'), $q->param('c'), $userData{$userID}{'domain'});
@@ -52,8 +55,6 @@ chomp($key);
 $session->param('master_key', $key); #}}}
 
 # Set session parameters #{{{
-$session->param('attempt_login', 1);
-$session->expire('attempt_login', '+30m');
 $session->param('night_theme', $userData{$userID}{'theme'});
 $session->expire('night_theme', '+30m');
 $session->param('user', $q->param("a"));

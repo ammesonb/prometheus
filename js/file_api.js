@@ -141,8 +141,8 @@ function FileAPI() {/*{{{*/
             else if (this.responseText.indexOf('nofile') != -1) {this.fAPI.fail('File does not exist');}
             else if (this.readyState == 4) {this.fAPI.fail('Internal error - contact me');}
         };/*}}}*/
-        this.currentXHRReq.send('s=0&f=' + file + '&k=' + kind);
         this.updateStatus('Retrieving session data');
+        this.currentXHRReq.send('s=0&f=' + file + '&k=' + kind);
     },/*}}}*/
 
     start: function() {/*{{{*/

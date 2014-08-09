@@ -4464,7 +4464,7 @@ function addDownload(fAPI, item) {/*{{{*/
     info.style.position = 'relative';
     info.style.left = '10px';
 
-    updateInfo(info, fAPI, item.size);/*}}}*/
+    updateInfo(info, fAPI);/*}}}*/
 
     if (useNightTheme()) {switchToNight(dl, title, info, stat);}
 

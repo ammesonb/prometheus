@@ -32,6 +32,8 @@ do
     /var/www/encfs/./fs.py m $v /data/$n #}}}
 
     cp "$mfile" /data/$n/
+    chown root:prometheus "/data/$n/$mfile"
+    chmod 750 "/data/$n/$mfile"
 
     if [ $mounted = 0 ]; then #{{{
         /var/www/encfs/./fs.py d $v
