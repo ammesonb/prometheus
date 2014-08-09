@@ -113,13 +113,16 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
 
     fail: function(text) {/*{{{*/
+        this.currentXHRReq = createPostReq('/file.cgi', true);
+        this.currentXHRReq.send('s=2&si=' + this.sessionID);
+
         if (text) {
             this.updateStatus(text);
         } else {
             this.updateStatus('Failed');
         }
         this.failed = 1;
-        this.received = -1;
+        this.received = 0;
         this.chunkSpeed = '--';
         this.totalSpeed = '--';
         this.dispatchEvent('onprogressupdate');

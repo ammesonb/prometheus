@@ -4332,10 +4332,10 @@ function getFile(file, kind, item) {/*{{{*/
     f.addEventListener("onprogressupdate", function(e) {/*{{{*/
         fAPI = this.target;
         bar = document.getElementById(fAPI.ttid + '_progress');
-        w = bar.getAttribute('data-width');
-        h = bar.getAttribute('data-height');
-        c = bar.getAttribute('data-curve');
-        s = bar.getAttribute('data-stroke');
+        w = parseInt(bar.getAttribute('data-width'), 10);
+        h = parseInt(bar.getAttribute('data-height'), 10);
+        c = parseInt(bar.getAttribute('data-curve'), 10);
+        s = parseInt(bar.getAttribute('data-stroke'), 10);
         ctx = bar.getContext('2d');
         updateProgressBar(ctx, w, h, c, s, fAPI.progress);
         updateInfo(document.getElementById(fAPI.ttid + '_info'), fAPI);
