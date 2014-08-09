@@ -118,6 +118,7 @@ function FileAPI() {/*{{{*/
         } else {
             this.updateStatus('Failed');
         }
+        this.failed = 1;
         this.received = -1;
         this.chunkSpeed = '--';
         this.totalSpeed = '--';

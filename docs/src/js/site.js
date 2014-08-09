@@ -4316,26 +4316,29 @@ function getFile(file, kind, item) {/*{{{*/
     }
 
     f.addEventListener('onstatusupdate', function(e) {/*{{{*/
-        if (this.failed) {
-            alert('Download of ' + this.title + ' failed - ' + this.status);
-            document.getElementById(this.ttid + '_pause').style.display = 'none';
-            document.getElementById(this.ttid + '_up').style.display = 'none';
-            document.getElementById(this.ttid + '_down').style.display = 'none';
+        fAPI = this.target;
+        if (fAPI.failed) {
+            alert('Download of ' + fAPI.title + ' failed - ' + fAPI.status);
+            document.getElementById(fAPI.ttid + '_pause').style.display = 'none';
+            document.getElementById(fAPI.ttid + '_up').style.display = 'none';
+            document.getElementById(fAPI.ttid + '_down').style.display = 'none';
         } else {
-            setText(document.getElementById(this.ttid + '_status'), this.status);
-            if (this.status == 'Complete') {
+            setText(document.getElementById(fAPI.ttid + '_status'), fAPI.status);
+            if (fAPI.status == 'Complete') {
             }
         }
         console.log('Status: ' + e.target.status);
     });/*}}}*/
     f.addEventListener("onprogressupdate", function(e) {/*{{{*/
-        bar = document.getElementById(this.ttid + '_progress');
+        fAPI = this.target;
+        bar = document.getElementById(fAPI.ttid + '_progress');
         w = bar.getAttribute('data-width');
         h = bar.getAttribute('data-height');
         c = bar.getAttribute('data-curve');
         s = bar.getAttribute('data-stroke');
-        updateProgressBar(bar.getContext('2d'), w, h, c, s, this.progress);
-        updateInfo(document.getElementById(this.ttid + '_info'), this);
+        ctx = bar.getContext('2d');
+        updateProgressBar(ctx, w, h, c, s, fAPI.progress);
+        updateInfo(document.getElementById(fAPI.ttid + '_info'), fAPI);
         console.log('Progress: ' + f.progress * 100 + '%, ' + f.chunkSpeed + ' KB/s');
     });/*}}}*/
 
@@ -4481,6 +4484,7 @@ function addDownload(fAPI, item) {/*{{{*/
 }/*}}}*/
 
 function updateProgressBar(ctx, width, height, curve, stroke, percent) {/*{{{*/
+    ctx.clearRect(0, 0, width, height);
     g = ctx.createLinearGradient(0, height, width, 0);
     g.addColorStop('0', '#AAAAAA');
     g.addColorStop('.15', '#8C85AA');
@@ -4588,18 +4592,22 @@ function drawActionButton(btn, symbol, hover) {/*{{{*/
 function traceCurvedRect(ctx, width, height, curve, stroke, percentage) {/*{{{*/
     if (percentage == 0) {ctx.beginPath(); ctx.moveTo(0, 0); ctx.moveTo(1, 1); ctx.closePath(); return;}
 
+    percentWidth = width * (1 - percentage);
     adjWidth = width - stroke / 2;
     adjHeight = height - stroke / 2;
     rightCurve = adjWidth - curve;
     leftCurve = curve + stroke / 2;
-    percentWidth = width * (1 - percentage);
+    bottomCurve = adjWidth - percentWidth;
+    if (bottomCurve < stroke) {bottomCurve = stroke;}
+    topCurve = rightCurve - percentWidth;
+    if (topCurve < stroke) {topCurve = stroke;}
 
     ctx.beginPath();
     ctx.moveTo(stroke / 2, height / 2);
     ctx.quadraticCurveTo(0, 0, leftCurve, stroke / 2);
-    ctx.lineTo(rightCurve - percentWidth, stroke / 2);
-    ctx.quadraticCurveTo(width - percentWidth, 0, adjWidth - percentWidth, height / 2);
-    ctx.quadraticCurveTo(width - percentWidth, height, rightCurve - percentWidth, adjHeight);
+    ctx.lineTo(topCurve, stroke / 2);
+    ctx.quadraticCurveTo(width - percentWidth, 0, bottomCurve, height / 2);
+    ctx.quadraticCurveTo(width - percentWidth, height, topCurve, adjHeight);
     ctx.lineTo(leftCurve, adjHeight);
     ctx.quadraticCurveTo(0, height, stroke / 2, height / 2);
     ctx.closePath();
