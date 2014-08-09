@@ -99,8 +99,6 @@ function FileAPI() {/*{{{*/
         // Change time into seconds
         time /= 1000;
         //if (time < 2 || time > 4) {this.res = parseInt((bytesTransferred / time) * 3, 10);}
-        if (time < 3) {this.res *= 2;}
-        else if (time > 5) {this.res /= 2; this.res = parseInt(this.res, 10);}
         // this.received += bytesTransferred;
         this.progress = this.received / this.size;
         this.chunkSpeed = bytesTransferred / time;
