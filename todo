@@ -2,11 +2,12 @@ Logging
 Images for/write other services
 Handle resize of window more gracefully, somehow?
 Download:
+    Dynamically adjust resolution - VERY IMPORTANT - BIGGER SIZES FOR MINIMAL TIME INCREASE
+        Find way to do readyState == 3
     Add DL percentage to left of status
     Remove old files from idb/fs api
     Make sure containers are unmounted/files are cleaned up via onbeforeunmount event
     Action buttons need scripting
-    Dynamically adjust resolution - changing res breaks AES?
     Prepare all downloads on request, update status to 'queued' for anything after 2
     Close downloads tab when everything completes
     Reorganize media/download JS functions

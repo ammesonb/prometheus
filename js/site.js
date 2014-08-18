@@ -142,16 +142,21 @@ function parseSize(bytes) {/*{{{*/
 }/*}}}*/
 
 function parseTime(tmpT) {/*{{{*/
-    units = ['s', 'm', 'h', 'd'];
-    conversion = [60, 60, 24];
-    maxT = [119, 119, 23, 999999];
-    for (u = 0; u < units.length; u++) {/*{{{*/
-        if ((tmpT / conversion[u]) < maxT[u]) {
-            return [(tmpT / conversion[u]).toFixed(2) + '\u00a0 ' + units[u + 1], units[u + 1]];
-        }
-        tmpT /= conversion[u];
-        tmpT = tmpT.toFixed(2);
-    }/*}}}*/
+    units = ['d', 'h', 'm', 's'];
+    conversions = [24 * 60 * 60, 60 * 60, 60];
+    fractions = [24, 60, 60];
+    u = 0;
+    while (tmpT < conversions[u]) {u++;}
+    tmpT = tmpT / conversions[u];
+    tmpI = parseInt(tmpT, 10);
+    tmpF = parseInt(tmpT % 1 * fractions[u], 10);
+    if (u != 0) {
+        if (tmpF < 10) {tmpF = '0' + tmpF;}
+        return [tmpI + ':' + tmpF + ' ' + units[u], units[u]];
+    } else {
+        return [tmpI + ' days ' + tmpF + ' hours', units[0]];
+    }
+
 }/*}}}*/
 
 function update() {/*{{{*/
@@ -4504,7 +4509,7 @@ function updateInfo(elem, fAPI) {/*{{{*/
     size = parseInt(fAPI.size, 10);
     if (!size) {size = '0 MB';}
     else {size = parseSize(size)[0];}
-    speed = (parseInt(fAPI.chunkSpeed, 10) + parseInt(fAPI.totalSpeed, 10)) / 2;
+    speed = (parseInt(fAPI.chunkSpeed, 10) + parseInt(fAPI.avgSpeed, 10)) / 2;
     if (!speed) {
         received = '0';
         rate = ['-- KB/s'];
@@ -4525,7 +4530,7 @@ function updateInfo(elem, fAPI) {/*{{{*/
     setText(elem, /*{{{*/
         'Started at:\u00a0\u00a0' + 
             d.toString().split(/ [A-Z]{3}/)[0].
-                replace(' ', ', ', 1).
+                replace(/ /, ', ').
                 replace(/( [A-Za-z]+) ([0-9]{2})/, ' $2$1').
                 replace(/([0-9]{4})/, '$1,') + '\u00a0<br>' + 
         'Received:\u00a0\u00a0' + received + '\u00a0/\u00a0' + size + '\u00a0<br>' +

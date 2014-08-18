@@ -40,7 +40,7 @@ if ($state == 0) { #{{{
 
     # Encrypt source file with master key and read properties
     my $encKey = $session->param('master_key');
-    `openssl enc -a -aes-256-cbc -e -k "$encKey" -in "/data/$hn/$file" -out /files/$sessionID`;
+    `openssl enc -a -aes-256-cbc -e -pass pass:"$encKey" -in "/data/$hn/$file" -out /files/$sessionID`;
     my $size = `stat -c %s "/files/$sessionID"`;
     chomp($size);
     if ($size == 0) {print "nofile"; exit;}
@@ -49,7 +49,7 @@ if ($state == 0) { #{{{
     `/var/www/encfs/./fs.py d $v`;
 
     # Send session information and encryption key
-    print `echo -n "$key" | openssl enc -aes-256-cbc -e -k "$encKey" | base64 -w 0`;
+    print `echo -n "$key" | openssl enc -a -aes-256-cbc -e -pass pass:"$encKey"`;
     print ";;;$sessionID;;;$size"; #}}}
 } elsif ($state == 1) { #{{{
     # Read session parameters
@@ -61,13 +61,14 @@ if ($state == 0) { #{{{
     my $key = $session->param("$sessionID-key");
 
     # Decrypt file and re-encrypt proper chunk for sending
-    my $data = `openssl enc -a -aes-256-cbc -d -k "$encKey" -in /files/$sessionID`;
+    my $data = `openssl enc -a -aes-256-cbc -d -pass pass:"$encKey" -in /files/$sessionID`;
     open(FILE, ">/tmp/$sessionID");
     print FILE substr($data, $offset, $res);
     close(FILE);
     `echo -n "<<#EOF#>>" >> /tmp/$sessionID` if (($offset + $res) > length($data));
-    print `openssl enc -aes-256-cbc -e -k "$key" -in /tmp/$sessionID | base64 -w 0`;
-    `rm /tmp/$sessionID`;
+    my $new = `openssl enc -a -aes-256-cbc -e -pass pass:"$key" -in /tmp/$sessionID`;
+    `shred -u -n 5 /tmp/$sessionID`;
+    print $new;
     $session->param("$sessionID-offset", $session->param("$sessionID-offset") + $res) #}}}
 } elsif ($state == 2) { #{{{
     my $sessionID = $q->param('si');
