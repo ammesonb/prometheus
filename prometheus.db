@@ -3,7 +3,6 @@
 --
 
 SET statement_timeout = 0;
-SET lock_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
@@ -21,7 +20,6 @@ ALTER DATABASE prometheus OWNER TO root;
 \connect prometheus
 
 SET statement_timeout = 0;
-SET lock_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
@@ -242,8 +240,8 @@ ALTER SEQUENCE genres_id_seq OWNED BY genres.id;
 
 CREATE TABLE movies_genre (
     id integer NOT NULL,
-    movie integer NOT NULL,
-    genre integer NOT NULL
+    movie integer,
+    genre integer
 );
 
 
@@ -286,8 +284,7 @@ CREATE TABLE movies (
     description character varying,
     needs_attention boolean DEFAULT false,
     size integer,
-    file character varying,
-    has_subtitle boolean DEFAULT false
+    file character varying
 );
 
 
@@ -590,8 +587,7 @@ CREATE TABLE tv (
     season integer,
     episode integer,
     size integer,
-    file character varying,
-    has_subtitle boolean DEFAULT false
+    file character varying
 );
 
 
@@ -603,8 +599,8 @@ ALTER TABLE public.tv OWNER TO root;
 
 CREATE TABLE tv_genre (
     id integer NOT NULL,
-    episode integer NOT NULL,
-    genre integer NOT NULL
+    episode integer,
+    genre integer
 );
 
 
@@ -871,6 +867,14 @@ ALTER TABLE ONLY movies_genre
 
 
 --
+-- Name: movies_file_key; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY movies
+    ADD CONSTRAINT movies_file_key UNIQUE (file);
+
+
+--
 -- Name: movies_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
 --
 
@@ -988,6 +992,14 @@ ALTER TABLE ONLY sms
 
 ALTER TABLE ONLY tasks
     ADD CONSTRAINT tasks_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tv_file_key; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY tv
+    ADD CONSTRAINT tv_file_key UNIQUE (file);
 
 
 --

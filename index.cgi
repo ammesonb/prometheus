@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-use lib '/var/www/perl/';
+use lib 'perl/';
 use CGI;
 use CGI::Carp qw(fatalsToBrowser);
 use CGI::Session;
