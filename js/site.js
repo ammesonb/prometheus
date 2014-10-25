@@ -3833,6 +3833,10 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
 
     fetchMedia(kind);
     
+    // Default time
+    minTime = 1;
+    maxTime = 120;
+
     // Filter criteria
     filterPanel = element('div');
     filterPanel.className = 'media_filter';
@@ -3945,11 +3949,11 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
         check.onclick = function() {
             genre = parseInt(this.value, 10);
             filters = JSON.parse(this.parentElement.parentElement.getAttribute('data-filters'));
-            genres = filters.find(function(e) {return e[0] == 'genres';});
-            if (!genres) {
+            genres = filters.filter(function(e) {return e[0] == 'genres';});
+            if (genres.length) {genres = genres[0][1];}
+            if (!genres.length) {
                 genres = [genre];
             } else {
-                genres = genres[1];
                 if (genres.indexOf(genre) != -1) {
                     genres.splice(genres.indexOf(genre), 1);
                 } else {
@@ -3988,13 +3992,13 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
     titleFilter.onclick = function() {if (this.value == 'Search titles....') {this.value = '';}};
     titleFilter.onblur = function() {if (this.value == '') {this.value = 'Search titles....';}};
     titleFilter.setAttribute('data-kind', kind);
-    titleFilter.onchange = function() {
+    titleFilter.onchange = function() {/*{{{*/
         filters = JSON.parse(this.parentElement.parentElement.getAttribute('data-filters'));
         found = 0;
         if (filters.find(function(e) {return e[0] == 'title'})) {found = 1;}
         if ((this.value == '' || this.value == 'Search titles....') && !found) {return};
         addFilter('title', this.value, this.parentElement.parentElement, this.getAttribute('data-kind'));
-    };
+    };/*}}}*/
     clearTitle = element('img');
     clearTitle.src = 'images/x.png';
     clearTitle.onclick = function() {/*{{{*/
