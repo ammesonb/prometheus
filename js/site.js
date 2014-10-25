@@ -3995,7 +3995,7 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
     titleFilter.onchange = function() {/*{{{*/
         filters = JSON.parse(this.parentElement.parentElement.getAttribute('data-filters'));
         found = 0;
-        if (filters.find(function(e) {return e[0] == 'title'})) {found = 1;}
+        if (filters.filter(function(e) {return e[0] == 'title'})) {found = 1;}
         if ((this.value == '' || this.value == 'Search titles....') && !found) {return};
         addFilter('title', this.value, this.parentElement.parentElement, this.getAttribute('data-kind'));
     };/*}}}*/
