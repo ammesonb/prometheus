@@ -2,8 +2,6 @@ Logging
 Images for/write other services
 Handle resize of window more gracefully, somehow?
 Download:
-    Dynamically adjust resolution - VERY IMPORTANT - BIGGER SIZES FOR MINIMAL TIME INCREASE
-        Find way to do readyState == 3
     Add DL percentage to left of status
     Remove old files from idb/fs api
     Make sure containers are unmounted/files are cleaned up via onbeforeunmount event

@@ -223,7 +223,7 @@ function FileAPI() {/*{{{*/
             w.postMessage(['getChunk', this.sessionID, this.res, this.encKey].join(':'));
             w.fAPI = this;
             w.addEventListener('message', function(e) {/*{{{*/
-                if (e.data.length < 15 || /^\d+$/.test(e.data)) {
+                if (e.data.length < 15 || /^\d+$/.test(e.data)) {/*{{{*/
                     if (e.data == 'fail') {
                         this.fAPI.fail('Failed to obtain next chunk');
                     } else if (e.data == 'load') {
@@ -234,16 +234,17 @@ function FileAPI() {/*{{{*/
                     } else {
                         this.fAPI.chunkLength = parseInt(e.data, 10);
                         this.fAPI.received += this.fAPI.chunkLength;
-                    }
-                } else {
+                    }/*}}}*/
+                } else {/*{{{*/
                     if (e.data == '____<<<#EOA#>>>____') {
                         w.terminate();
                         this.fAPI.resume();
                     } else {
                         this.fAPI.currentData = e.data;
                         this.fAPI.storeChunk();
+                        this.postMessage('next');
                     }
-                }
+                }/*}}}*/
             });/*}}}*/
         } else {
             this.getChunk();
@@ -264,21 +265,19 @@ function FileAPI() {/*{{{*/
                         hex = new Blob([CryptoJS.AES.decrypt(this.responseText, k, {mode: CryptoJS.mode.CBC}).toString()]);
                         offset = 0;
                         iterSize = S_200K;
-                        read = 0;
 
-                        /*while (offset < hex.size) {
+                       while (offset < hex.size) {
                             hexChunk = hex.slice(offset, offset + iterSize);
                             fr = new FileReader();
                             fr.onload = function() {
                                 self.postMessage(this.result);
                                 offset += iterSize;
-                                read = 1;
                             }
                             fr.readAsText(hexChunk);
-                            while (!read) {}
-                            read = 0;
+                            while (!self.readyToParse) {}
+                            self.readyToParse = false;
                         }
-                        self.postMessage('____<<<#EOA#>>>____');*/
+                        self.postMessage('____<<<#EOA#>>>____');
                         // While reading, pass data as it is read and increment offset?
                             // Use abort, but then how to offset string from decryption?
                         // Use oncomplete for termination postMessage
@@ -430,11 +429,14 @@ function FileAPI() {/*{{{*/
 }/*}}}*/
 
 if (isWorker) {/*{{{*/
+    self.readyToParse = false;
     self.addEventListener('message', function(e) {
         data = e.data.split(':');
         if (data[0] == 'getChunk') {/*{{{*/
             fAPI = FileAPI();
             fAPI.getChunk(data[1], data[2], data[3]);/*}}}*/
+        } else if (data[0] == 'next') {
+            self.readyToParse = true;
         }
     });
 }/*}}}*/

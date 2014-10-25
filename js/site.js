@@ -803,7 +803,7 @@ function switchDeadlineTimezone(d) { /*{{{*/
 function deadlineToDate(deadline) { /*{{{*/
     deadline = deadline.replace('-', '/');
     deadline = deadline.replace('-', '/');
-    deadline = deadline.split('+')[0];
+    deadline = deadline.substr(0, deadline.length - 3);
     d = new Date(deadline);
     return d;
 } /*}}}*/
@@ -2191,11 +2191,7 @@ function addTask(task, parent, showTime, fromOverview) { /*{{{*/
         taskDate.style.display = 'inline';
         taskDate.style.color = color;
 
-        deadline = task.deadline;
-        deadline = deadline.replace('-', '/');
-        deadline = deadline.replace('-', '/');
-        deadline = deadline.split('+')[0];
-        d = new Date(deadline);
+        deadline = deadlineToDate(task.deadline);
         time = getTimeFromString(d.toString());
         setText(taskDate, time + stringFill('\u00a0', 2));
     } /*}}}*/

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-use lib '/var/www/perl';
+use lib '/var/www/prometheus/perl';
 use Date::Simple qw(date today);
 use Date::Parse qw(str2time);
 use POSIX qw(strftime);
