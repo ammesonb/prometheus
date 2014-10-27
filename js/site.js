@@ -3801,6 +3801,15 @@ function addFilter(filter, value, mediaPanel, kind) {/*{{{*/
     populateMediaGrid(mediaGrid, items, kind);
 }/*}}}*/
 
+function removeFilter(filter, mediaPanel, kind) {/*{{{*/
+    filters = JSON.parse(mediaPanel.getAttribute('data-filters'));
+    filters = filters.filter(function(f) {return f[0] != filter;});
+    mediaPanel.setAttribute('data-filters', JSON.stringify(filters));
+    items = filterMedia(kind, filters);
+    mediaGrid = mediaPanel.getElementsByClassName('media_grid')[0];
+    populateMediaGrid(mediaGrid, items, kind);
+}/*}}}*/
+
 function filterMedia(kind, filters) {/*{{{*/
     items = media[kind];
     return items.filter(function(m) {
@@ -3960,7 +3969,12 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
                     genres.push(genre);
                 }
             }
-            addFilter('genres', genres, this.parentElement.parentElement, this.getAttribute('data-kind'));
+
+            if (genres.length) {
+                addFilter('genres', genres, this.parentElement.parentElement, this.getAttribute('data-kind'));
+            } else {
+                removeFilter('genres', this.parentElement.parentElement, this.getAttribute('data-kind'));
+            }
         };
         checkP = element('p');
         checkP.className = 'normal_text';
