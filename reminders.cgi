@@ -65,6 +65,7 @@ if ($mode == 0) { #{{{
 
         $subject = $q->param('subject');
         if (not COMMON::checkPrintable($subject)) {print 'Invalid subject'; exit;} #}}}
+        $subject =~ s/'/''/;
     } elsif ($type eq 's') { #{{{
         $recipient = $q->param('recipient');
         if ($recipient !~ /^[A-Za-z ]+(, *[A-Za-z ])*$/) {
@@ -74,6 +75,7 @@ if ($mode == 0) { #{{{
 
     my $message = $q->param('message');
     if (not COMMON::checkPrintable($message)) {print 'Invalid message'; exit;}
+    $message =~ s/'/''/;
     if ($type eq 's' and length($message) == 0) {print 'Message cannot be empty'; exit;}
 
     my $first = $q->param('first');
@@ -89,7 +91,6 @@ if ($mode == 0) { #{{{
     my @vals = ($session->param('user_id'), "'$type'", "'$recipient'", "'$message'", "'$first'", "'$first'", "'$repeat'", "'$duration'");
     if ($type eq 'e') {
         push(@cols, 'subject');
-        push(@vals, "'$recipient'");
         push(@vals, "'$subject'");
     }
     my $rows;

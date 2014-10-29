@@ -213,7 +213,7 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
 
     next: function() {/*{{{*/
-        if (this.paused) {this.updateStatus('Paused'); this.chunkSpeed = '--'; this.avgSpeed = '--'; this.dispatchEvent('onprogressupdate');}
+        if (this.paused) {this.updateStatus('Paused'); this.chunkSpeed = '--'; this.avgSpeed = '--'; this.dispatchEvent('onprogressupdate'); return;}
         this.updateStatus('Downloading');
         this.currentData = '';
         this.firstChunk = true;
@@ -223,7 +223,7 @@ function FileAPI() {/*{{{*/
             w.postMessage(['getChunk', this.sessionID, this.res, this.encKey].join(':'));
             w.fAPI = this;
             w.addEventListener('message', function(e) {/*{{{*/
-                if (e.data.length < 15 || /^\d+$/.test(e.data)) {/*{{{*/
+                if (typeof(e.data) != "object") {//e.data.length < 15 || /^\d+$/.test(e.data)) {/*{{{*/
                     if (e.data == 'fail') {
                         this.fAPI.fail('Failed to obtain next chunk');
                     } else if (e.data == 'load') {
@@ -231,19 +231,16 @@ function FileAPI() {/*{{{*/
                     } else if (e.data == 'decrypt') {
                         this.fAPI.endedChunkTransferAt = new Date().getTime();
                         this.fAPI.updateStatus('Decrypting');
-                    } else {
+                    } else if (/^\d+$/.test(e.data)) {
                         this.fAPI.chunkLength = parseInt(e.data, 10);
                         this.fAPI.received += this.fAPI.chunkLength;
+                    } else {
+                        console.log(e.data);
                     }/*}}}*/
                 } else {/*{{{*/
-                    if (e.data == '____<<<#EOA#>>>____') {
-                        w.terminate();
-                        this.fAPI.resume();
-                    } else {
-                        this.fAPI.currentData = e.data;
-                        this.fAPI.storeChunk();
-                        this.postMessage('next');
-                    }
+                    this.fAPI.storeChunk();
+                    w.terminate();
+                    this.fAPI.resume();
                 }/*}}}*/
             });/*}}}*/
         } else {
@@ -262,8 +259,8 @@ function FileAPI() {/*{{{*/
                     else {
                         self.postMessage(this.responseText.length);
                         self.postMessage('decrypt');
-                        hex = new Blob([CryptoJS.AES.decrypt(this.responseText, k, {mode: CryptoJS.mode.CBC}).toString()]);
-                        offset = 0;
+                        hex = new Blob([CryptoJS.AES.decrypt(this.responseText, k, {mode: CryptoJS.mode.CBC}).toString()], {type: 'Application/octet-stream'});
+                        /*offset = 0;
                         iterSize = S_200K;
 
                        while (offset < hex.size) {
@@ -276,7 +273,8 @@ function FileAPI() {/*{{{*/
                             fr.readAsText(hexChunk);
                             while (!self.readyToParse) {}
                             self.readyToParse = false;
-                        }
+                        }*/
+                        self.postMessage(hex);
                         self.postMessage('____<<<#EOA#>>>____');
                         // While reading, pass data as it is read and increment offset?
                             // Use abort, but then how to offset string from decryption?
@@ -323,7 +321,7 @@ function FileAPI() {/*{{{*/
 
         fr = new FileReader();
         fr.fAPI = this;
-        fr.onload = function() {
+        fr.onloadend = function() {
             if (this.result.indexOf('<<#EOF#>>') != -1) {
                 this.fAPI.completed = true;
                 this.fAPI.currentData = this.fAPI.currentData.slice(0, -18);
@@ -337,8 +335,7 @@ function FileAPI() {/*{{{*/
                 fileEntry.fAPI = this;
                 fileEntry.createWriter(function(w) {
                     w.seek(w.length);
-                    blob = new Blob([this.fAPI.currentData], {type: 'Application/octet-stream'});
-                    w.write(blob);
+                    w.write(this.fAPI.currentData);
                 }, function(e) {fAPI.fail('Failed to open file for writing');});
             }, function(e) {fAPI.fail('Failed to open cache');});/*}}}*/
         } else {/*{{{*/
@@ -347,14 +344,22 @@ function FileAPI() {/*{{{*/
             req.fAPI = this;
             req.onsuccess = function(e) {
                 this.fAPI.updateStatus('Appending data');
-                this.result.data += this.fAPI.currentData;
-                this.fAPI.updateStatus('Storing data');
-                reqUpdate = obj.put(this.result);
-                reqUpdate.fAPI = this.fAPI;
+                // Need to do filereader to get data from currentData
+                fr = new FileReader();
+                fr.fAPI = this;
+                fr.req = req;
+                fr.onloadend = function(e) {
+                    this.req.result.data += this.fAPI.currentData;
+                    this.fAPI.updateStatus('Storing data');
+                    reqUpdate = obj.put(this.req.result);
+                    reqUpdate.fAPI = this.fAPI;
 
-                reqUpdate.onerror = function(e) {
-                    this.fAPI.fail('Failed to save data');
-                };
+                    reqUpdate.onerror = function(e) {
+                        this.fAPI.fail('Failed to save data');
+                    };
+                }
+                fr.readAsText(this.fAPI.currentData);
+
             };
 
             req.onerror = function(e) {
@@ -424,7 +429,6 @@ function FileAPI() {/*{{{*/
     clean: function() {/*{{{*/
         window.URL.revokeObjectURL(this.dataURI);
     }/*}}}*/
-
     };
 }/*}}}*/
 
