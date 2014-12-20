@@ -3,7 +3,7 @@ addgroup prometheus
 adduser root prometheus
 adduser www-data prometheus
 sed -i 's/^www-data:\(.*\):\/usr\/sbin\/nologin/www-data:\1:\/bin\/bash/' /etc/passwd
-echo "www-data ALL=NOPASSWD:/sbin/losetup,/sbin/cryptsetup,/bin/mount,/bin/umount,/bin/dd,/sbin/mkfs.ext4,/sbin/tune2fs,/sbin/e2fsck,/sbin/resize2fs,/usr/bin/python,/usr/bin/perl" >> /etc/sudoers
+echo "www-data ALL=NOPASSWD:/sbin/losetup,/sbin/cryptsetup,/bin/mount,/bin/umount,/bin/dd,/sbin/mkfs.ext4,/sbin/tune2fs,/sbin/e2fsck,/sbin/resize2fs,/usr/bin/python,/usr/bin/perl,/bin/rmdir" >> /etc/sudoers
 service sudo restart
 
 if [ -d "/data" ]; then
