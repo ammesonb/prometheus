@@ -60,7 +60,7 @@ function FileAPI() {/*{{{*/
         received: 0,
         chunkLength: 0,
         currentData: '',
-        res: S_1M * 75,
+        res: S_200K * .1,
         avgSpeed: 0,
         startedAt: undefined,
         firstChunk: true,
@@ -118,12 +118,12 @@ function FileAPI() {/*{{{*/
         else {this.progress = this.progress.toFixed(4);}
 
         //if (transferTime < 1 || transferTime > 3) {this.res = 1.5 * (bytesTransferred / transferTime);}
-        timeRatio = transferTime / totalTime;
+        /*timeRatio = transferTime / totalTime;
         if (timeRatio < .1) {this.res *= parseInt(.1 / timeRatio, 10);}
         else if (timeRatio > .3) {this.res *= parseInt(.3 / timeRatio);}
         if (!this.res) {this.res = S_1M;}
         else if (this.res > S_100M) {this.res = S_100M;}
-        console.log('New res - ' + this.res);
+        console.log('New res - ' + this.res);*/
         this.dispatchEvent('onprogressupdate');
     },/*}}}*/
 

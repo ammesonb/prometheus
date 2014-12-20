@@ -3,6 +3,7 @@
 --
 
 SET statement_timeout = 0;
+SET lock_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
@@ -20,6 +21,7 @@ ALTER DATABASE prometheus OWNER TO root;
 \connect prometheus
 
 SET statement_timeout = 0;
+SET lock_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
@@ -164,6 +166,31 @@ ALTER FUNCTION public.update_mtime() OWNER TO root;
 SET default_tablespace = '';
 
 SET default_with_oids = false;
+
+--
+-- Name: sms; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE sms (
+    id integer NOT NULL,
+    name character varying NOT NULL,
+    address character varying NOT NULL
+);
+
+
+ALTER TABLE public.sms OWNER TO root;
+
+--
+-- Name: contacts; Type: VIEW; Schema: public; Owner: root
+--
+
+CREATE VIEW contacts AS
+ SELECT sms.name
+   FROM sms
+  ORDER BY sms.name;
+
+
+ALTER TABLE public.contacts OWNER TO root;
 
 --
 -- Name: domains; Type: TABLE; Schema: public; Owner: root; Tablespace: 
@@ -494,19 +521,6 @@ ALTER TABLE public.services_id_seq OWNER TO root;
 
 ALTER SEQUENCE services_id_seq OWNED BY services.id;
 
-
---
--- Name: sms; Type: TABLE; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE TABLE sms (
-    id integer NOT NULL,
-    name character varying NOT NULL,
-    address character varying NOT NULL
-);
-
-
-ALTER TABLE public.sms OWNER TO root;
 
 --
 -- Name: sms_id_seq; Type: SEQUENCE; Schema: public; Owner: root

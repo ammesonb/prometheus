@@ -4317,7 +4317,6 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
 }/*}}}*/
 
 function getFile(file, kind, item) {/*{{{*/
-    item.size *= 1024;
     if (document.getElementById(item.ttid)) {
         switchTab('dl');
         return;
