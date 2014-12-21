@@ -182,7 +182,7 @@ function FileAPI() {/*{{{*/
             trans.oncomplete = function(e) {this.fAPI.startedAt = new Date().getTime(); this.fAPI.next();}
             trans.onerror = function(e) {this.fAPI.failed = 1; this.fAPI.updateStatus('Failed');}
             obj = trans.objectStore(dbName);
-            obj.put({sessionID: this.sessionID, data: ''});/*}}}*/
+            obj.put({sessionID: this.sessionID, avail: 0, data: ''});/*}}}*/
         } else {/*{{{*/
             if (navigator.webkitPersistentStorage) {
                 fAPI = this;
@@ -200,7 +200,17 @@ function FileAPI() {/*{{{*/
     initData: function(fAPI, fs) {/*{{{*/
         fAPI.fs = fs;
         fAPI.fs.fAPI = this;
-        fAPI.fs.root.getFile(fAPI.sessionID, {create: true}, function(fileEntry) {
+        fAPI.fs.root.getFile(fAPI.sessionID + '-avail', {create: true}, function(fileEntry) {{{{
+            fileEntry.fAPI = fAPI;
+            fileEntry.createWriter(function(writer) {
+                writer.fAPI = fAPI;
+                writer.onwritestart = function() {fAPI.updateStatus("Creating data availability object");};
+                writer.onwriteend = function() {fAPI.updateStatus("Created"); fAPI.startedAt = new Date().getTime(); fAPI.next();};
+                blob = new Blob(['0'], {type: 'text/plain'});
+                writer.write(blob);
+            }, fAPI.fail);
+        }, function(e) {fAPI.fail(fAPI, e);});}}}
+        fAPI.fs.root.getFile(fAPI.sessionID, {create: true}, function(fileEntry) {{{{
             fileEntry.fAPI = fAPI;
             fileEntry.createWriter(function(writer) {
                 writer.fAPI = fAPI;
@@ -209,7 +219,7 @@ function FileAPI() {/*{{{*/
                 blob = new Blob([''], {type: 'text/plain'});
                 writer.write(blob);
             }, fAPI.fail);
-        }, function(e) {fAPI.fail(fAPI, e);});
+        }, function(e) {fAPI.fail(fAPI, e);});}}}
     },/*}}}*/
 
     next: function() {/*{{{*/
@@ -247,6 +257,28 @@ function FileAPI() {/*{{{*/
             this.getChunk();
         }
     },/*}}}*/
+
+    getParsed: function(sID) {
+    },
+
+    setParsed: function(sID, num) {
+    },
+
+    dlLoop: function(sID, res, k) {
+        if (paused) {return;}
+        this.setParsed(sID);
+        dl(sID, res, k);
+    },
+
+    dl: function(sID, res, k) {
+    },
+
+    decryptLoop(sID) {
+        this.getParsed
+    },
+
+    decrypt(sID, num) {
+    }
 
     getChunk: function(sID, res, k) {/*{{{*/
         if (isWorker) {/*{{{*/
@@ -433,6 +465,8 @@ function FileAPI() {/*{{{*/
 }/*}}}*/
 
 if (isWorker) {/*{{{*/
+    var paused = 0;
+    var parsed = 0;
     self.readyToParse = false;
     self.addEventListener('message', function(e) {
         data = e.data.split(':');
