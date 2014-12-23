@@ -200,17 +200,17 @@ function FileAPI() {/*{{{*/
     initData: function(fAPI, fs) {/*{{{*/
         fAPI.fs = fs;
         fAPI.fs.fAPI = this;
-        fAPI.fs.root.getFile(fAPI.sessionID + '-avail', {create: true}, function(fileEntry) {{{{
+        fAPI.fs.root.getFile(fAPI.sessionID + '-avail', {create: true}, function(fileEntry) {/*{{{*/
             fileEntry.fAPI = fAPI;
             fileEntry.createWriter(function(writer) {
                 writer.fAPI = fAPI;
                 writer.onwritestart = function() {fAPI.updateStatus("Creating data availability object");};
-                writer.onwriteend = function() {fAPI.updateStatus("Created"); fAPI.startedAt = new Date().getTime(); fAPI.next();};
+                writer.onwriteend = function() {fAPI.updateStatus("Created");};
                 blob = new Blob(['0'], {type: 'text/plain'});
                 writer.write(blob);
             }, fAPI.fail);
-        }, function(e) {fAPI.fail(fAPI, e);});}}}
-        fAPI.fs.root.getFile(fAPI.sessionID, {create: true}, function(fileEntry) {{{{
+        }, function(e) {fAPI.fail(fAPI, e);});/*}}}*/
+        fAPI.fs.root.getFile(fAPI.sessionID, {create: true}, function(fileEntry) {/*{{{*/
             fileEntry.fAPI = fAPI;
             fileEntry.createWriter(function(writer) {
                 writer.fAPI = fAPI;
@@ -219,7 +219,7 @@ function FileAPI() {/*{{{*/
                 blob = new Blob([''], {type: 'text/plain'});
                 writer.write(blob);
             }, fAPI.fail);
-        }, function(e) {fAPI.fail(fAPI, e);});}}}
+        }, function(e) {fAPI.fail(fAPI, e);});/*}}}*/
     },/*}}}*/
 
     next: function() {/*{{{*/
@@ -233,8 +233,10 @@ function FileAPI() {/*{{{*/
             w.postMessage(['getChunk', this.sessionID, this.res, this.encKey].join(':'));
             w.fAPI = this;
             w.addEventListener('message', function(e) {/*{{{*/
-                if (typeof(e.data) != "object") {//e.data.length < 15 || /^\d+$/.test(e.data)) {/*{{{*/
-                    if (e.data == 'fail') {
+                if (typeof(e.data) != "object") {/*{{{*/
+                    if (e.data == 'parse') {
+                        this.fAPI.incrementParsed(this.fAPI.sessionID);
+                    } else if (e.data == 'fail') {
                         this.fAPI.fail('Failed to obtain next chunk');
                     } else if (e.data == 'load') {
                         this.fAPI.startedChunkTransferAt = new Date().getTime();
@@ -258,27 +260,79 @@ function FileAPI() {/*{{{*/
         }
     },/*}}}*/
 
-    getParsed: function(sID) {
-    },
+    next: function() {/*{{{*/
+        if (this.paused) {this.updateStatus('Paused'); this.chunkSpeed = '--'; this.avgSpeed = '--'; this.dispatchEvent('onprogressupdate'); return;}
+        this.updateStatus('Downloading');
+        this.startedChunkAt = new Date().getTime();
+        if (workers) {startWorkers();}
+        else {// manual}
+    },/*}}}*/
 
-    setParsed: function(sID, num) {
-    },
+    startWorkers: function() {/*{{{*/
+        ajaxWorker = new Worker('js/file_api.js');
+        cryptWorker = new Worker('js/file_api.js');
 
-    dlLoop: function(sID, res, k) {
+        ajaxWorker.cryptWorker = cryptWorker;
+        ajaxWorker.fAPI = this;
+        ajaxWorker.postMessage(['dl', this.sessionID, this.res, this.encKey].join(':'));
+        ajaxWorker.addEventListener('message', function(m) {
+        });
+
+        cryptWorker.ajaxWorker = ajaxWorker;
+        cryptWorker.fAPI = this;
+        cryptWorker.postMessage(['decrypt', this.sessionID].join(':'));
+        cryptWorker.addEventListener('message', function(m) {
+        });
+    },/*}}}*/
+
+    getParsed: function(sID) {/*{{{*/
+    },/*}}}*/
+
+    incrementParsed: function(sID, num) {/*{{{*/
+    },/*}}}*/
+
+    dlLoop: function(sID, res, k) {/*{{{*/
         if (paused) {return;}
-        this.setParsed(sID);
-        dl(sID, res, k);
-    },
+        // Need some way to determine loop termination - and set up loop
+        while (true) {
+            if (dl(sID, res, k)) {self.terminate();}
+            self.postMessage('parse');
+        }
+    },/*}}}*/
 
-    dl: function(sID, res, k) {
-    },
+    dl: function(sID, res, k) {/*{{{*/
+        chunkReq = createPostReq('/file.cgi', false);
+        chunkReq.send();
+        if (chunkReq.status != 200) {self.postMessage('fail'); return 1;}
+        sent = chunkReq.responseText.length;
+        return storePart(sID, chunkReq.responseText);
+    },/*}}}*/
 
-    decryptLoop(sID) {
-        this.getParsed
-    },
+    storePart: function(sID, data) {/*{{{*/
+        if (data.indexOf('<<#EOF#>>') != -1) {self.postMessage('done');}
+        return 0;
+    },/*}}}*/
 
-    decrypt(sID, num) {
-    }
+    decryptLoop: function(sID) {/*{{{*/
+        avail = -1;
+        // Need to spawn another worker above first
+        // Send a get_parse message and then do a while avail == -1 loop until set
+        while (parsed < avail) {
+            if (paused) {return;}
+            this.decrypt(sID, parsed);
+            parsed++;
+        }
+
+        setTimeout(function() {decryptLoop(sID);}, 500);
+    },/*}}}*/
+
+    decrypt: function(sID, num) {/*{{{*/
+        data = '';
+        append(sID, data);
+    },/*}}}*/
+
+    append: function(sID, data) {/*{{{*/
+    },/*}}}*/
 
     getChunk: function(sID, res, k) {/*{{{*/
         if (isWorker) {/*{{{*/
