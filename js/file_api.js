@@ -11,6 +11,7 @@ S_1M = 1048576;
 S_100M = 104857600;
 
 mode = M_GC;
+// Pause button?
 // If not worker, use asynchronous methods/*{{{*/
 if (notWorker) {
     // Check if File System API supported
@@ -235,7 +236,7 @@ function FileAPI() {/*{{{*/
             w.addEventListener('message', function(e) {/*{{{*/
                 if (typeof(e.data) != "object") {/*{{{*/
                     if (e.data == 'parse') {
-                        this.fAPI.incrementParsed(this.fAPI.sessionID);
+                        this.fAPI.incrementAvail(this.fAPI.sessionID);
                     } else if (e.data == 'fail') {
                         this.fAPI.fail('Failed to obtain next chunk');
                     } else if (e.data == 'load') {
@@ -275,20 +276,55 @@ function FileAPI() {/*{{{*/
         ajaxWorker.cryptWorker = cryptWorker;
         ajaxWorker.fAPI = this;
         ajaxWorker.postMessage(['dl', this.sessionID, this.res, this.encKey].join(':'));
-        ajaxWorker.addEventListener('message', function(m) {
-        });
+        ajaxWorker.addEventListener('message', function(m) {/*{{{*/
+            msg = m.data;
+            if (msg === 'dl') {
+                this.fAPI.startedChunkTransferAt = new Date().getTime();
+            } else if (msg === 'dlend') {
+                this.fAPI.endedChunkTransferAt = new Date().getTime();
+            } else if (msg === 'parse') {
+                this.fAPI.incrementParsed();
+                this.updateProgress(this.chunkLength, this.endedChunkTransferAt - this.startedChunkTransferAt, this.endedChunkAt - this.startedChunkAt);
+            } else if (msg === 'dlfail') {
+                this.cryptWorker.terminate();
+                this.fAPI.fail('Download failed');
+            }
+        });/*}}}*/
 
         cryptWorker.ajaxWorker = ajaxWorker;
         cryptWorker.fAPI = this;
         cryptWorker.postMessage(['decrypt', this.sessionID].join(':'));
-        cryptWorker.addEventListener('message', function(m) {
-        });
+        cryptWorker.addEventListener('message', function(m) {/*{{{*/
+            msg = m.data;
+            if (msg === 'getAvail') {
+                self.fAPI.getAvail(cryptWorker.fAPI.sessionID, this);
+            }
+        });/*}}}*/
     },/*}}}*/
 
-    getParsed: function(sID) {/*{{{*/
+    getAvail: function(sID, cryptWorker) {/*{{{*/
+        if (mode == M_FF) {/*{{{*/
+            trans = db.transaction([dbName]);
+            trans.fAPI = this;
+            obj = trans.objectStore(dbName);
+            req = obj.get(sID);
+            req.onsuccess = function(e) {cryptWorker.postMessage('avail:' + this.result.avail);};
+            req.onerror = function(e) {this.fAPI.fail('Failed to get available data quantity');}/*}}}*/
+        } else {/*{{{*/
+            this.fs.fAPI = this;
+            this.fs.root.getFile(fAPI.sessionID + '-avail', {}, function(fE) {
+                fE.fAPI = fAPI;
+                fE.createReader(function(reader) {
+                    reader.onloadend = function(e) {
+                        cryptWorker.postMessage('avail:' + this.result);
+                    };
+                    reader.readAsText(fE);
+                });
+            }, function(e) {fAPI.fail(fAPI, e); return -1;});
+        }/*}}}*/
     },/*}}}*/
 
-    incrementParsed: function(sID, num) {/*{{{*/
+    incrementAvail: function(sID, num) {/*{{{*/
     },/*}}}*/
 
     dlLoop: function(sID, res, k) {/*{{{*/
@@ -302,19 +338,23 @@ function FileAPI() {/*{{{*/
 
     dl: function(sID, res, k) {/*{{{*/
         chunkReq = createPostReq('/file.cgi', false);
+        self.postMessage('dl');
         chunkReq.send();
-        if (chunkReq.status != 200) {self.postMessage('fail'); return 1;}
+        self.postMessage('dlend');
+        if (chunkReq.status != 200) {self.postMessage('dlfail'); return 1;}
         sent = chunkReq.responseText.length;
         return storePart(sID, chunkReq.responseText);
     },/*}}}*/
 
     storePart: function(sID, data) {/*{{{*/
         if (data.indexOf('<<#EOF#>>') != -1) {self.postMessage('done');}
+        // Store data
         return 0;
     },/*}}}*/
 
     decryptLoop: function(sID) {/*{{{*/
         avail = -1;
+        self.postMessage('getAvail');
         // Need to spawn another worker above first
         // Send a get_parse message and then do a while avail == -1 loop until set
         while (parsed < avail) {
@@ -521,6 +561,7 @@ function FileAPI() {/*{{{*/
 if (isWorker) {/*{{{*/
     var paused = 0;
     var parsed = 0;
+    var avail = -1;
     self.readyToParse = false;
     self.addEventListener('message', function(e) {
         data = e.data.split(':');
@@ -529,6 +570,8 @@ if (isWorker) {/*{{{*/
             fAPI.getChunk(data[1], data[2], data[3]);/*}}}*/
         } else if (data[0] == 'next') {
             self.readyToParse = true;
+        } else if (data[0] === 'avail') {
+            avail = parseInt(data[0].split(':')[1], 10);
         }
     });
 }/*}}}*/
