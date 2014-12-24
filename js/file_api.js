@@ -10,6 +10,7 @@ S_200K = 204800;
 S_1M = 1048576;
 S_100M = 104857600;
 
+f_avail = {}:
 mode = M_GC;
 // Pause button?
 // If not worker, use asynchronous methods/*{{{*/
@@ -297,7 +298,7 @@ function FileAPI() {/*{{{*/
         cryptWorker.addEventListener('message', function(m) {/*{{{*/
             msg = m.data;
             if (msg === 'getAvail') {
-                self.fAPI.getAvail(cryptWorker.fAPI.sessionID, this);
+                self.fAPI.getAvail(this.fAPI.sessionID, this);
             }
         });/*}}}*/
     },/*}}}*/
@@ -308,14 +309,18 @@ function FileAPI() {/*{{{*/
             trans.fAPI = this;
             obj = trans.objectStore(dbName);
             req = obj.get(sID);
-            req.onsuccess = function(e) {cryptWorker.postMessage('avail:' + this.result.avail);};
-            req.onerror = function(e) {this.fAPI.fail('Failed to get available data quantity');}/*}}}*/
+            req.onsuccess = function(e) {
+                f_avail[sID] = this.result.avail;
+                cryptWorker.postMessage('avail:' + this.result.avail);
+            };
+            req.onerror = function(e) {this.fAPI.fail('Failed to get available data quantity'); return -1;}/*}}}*/
         } else {/*{{{*/
-            this.fs.fAPI = this;
-            this.fs.root.getFile(fAPI.sessionID + '-avail', {}, function(fE) {
+            fAPI = this;
+            this.fs.root.getFile(this.sessionID + '-avail', {}, function(fE) {
                 fE.fAPI = fAPI;
                 fE.createReader(function(reader) {
                     reader.onloadend = function(e) {
+                        f_avail[sID] = this.result;
                         cryptWorker.postMessage('avail:' + this.result);
                     };
                     reader.readAsText(fE);
@@ -325,6 +330,35 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
 
     incrementAvail: function(sID, num) {/*{{{*/
+        f_avail[sID]++;
+        if (mode == M_FF) {/*{{{*/
+            trans = db.transaction([dbName], "readwrite");
+            trans.fAPI = this;
+            obj = trans.objectStore(dbName);
+            req = obj.get(sID);
+            req.onerror = function(e) {this.fAPI.fail('Failed to get available data quantity for update'); return -1;}
+            req.onsuccess = function(e) {
+                data = this.result;
+                data.avail++;
+
+                reqUpdate = obj.put(data);
+                reqUpdate.fAPI = this.fAPI;
+                req.onerror = function(e) {this.fAPI.fail('Failed to update available data quantity');}
+            };/*}}}*/
+        } else {/*{{{*/
+            fAPI = this;
+            this.fs.root.getFile(this.sessionID + '-avail', {create: true}, function(fE) {
+                fE.fAPI = this.fAPI;
+                fE.createWriter(function(writer) {
+                    fE.onerror = function(e) {
+                        this.fAPI.fail('Failed to write to data availability file');
+                    };
+
+                    blob = new Blob([f_avail[this.fAPI.sessionID]], {type: 'text/plain'});
+                    writer.write(blob);
+                }, function(e) {this.fAPI.fail('Failed to update data availability file');}
+            }, function(e) {fAPI.fail('Failed to get data availability file');});
+        }/*}}}*/
     },/*}}}*/
 
     dlLoop: function(sID, res, k) {/*{{{*/
