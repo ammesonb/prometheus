@@ -5,14 +5,15 @@ workers = !!window.Worker;
 // Google Chrome
 M_GC = 0;
 // Firefox
-M_FF = 1;
+M_IDB = 1;
 S_200K = 204800;
 S_1M = 1048576;
 S_100M = 104857600;
 
 f_avail = {}:
 mode = M_GC;
-// Pause button?
+// TODO Pause button - functioning in workers?
+// TODO Failed check - will it stop workers/trigger a return value?
 // If not worker, use asynchronous methods/*{{{*/
 if (notWorker) {
     // Check if File System API supported
@@ -22,7 +23,7 @@ if (notWorker) {
 
     // If not, drop to Indexed DB/*{{{*/
     if (!requestFileSystem) {
-        mode = M_FF;
+        mode = M_IDB;
         window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.OIndexedDB || window.msIndexedDB,
             IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || window.OIDBTransaction || window.msIDBTransaction,
             dbVersion = 5;
@@ -178,7 +179,7 @@ function FileAPI() {/*{{{*/
         this.updateStatus('Creating local data store');
         size = this.size + (1024*1024*1024*1024) * Math.ceil(this.size / (1024 * 1024 * 1024 *1024));
 
-        if (mode == M_FF) {/*{{{*/
+        if (mode == M_IDB) {/*{{{*/
             trans = db.transaction([dbName], "readwrite");
             trans.fAPI = this;
             trans.oncomplete = function(e) {this.fAPI.startedAt = new Date().getTime(); this.fAPI.next();}
@@ -284,7 +285,7 @@ function FileAPI() {/*{{{*/
             } else if (msg === 'dlend') {
                 this.fAPI.endedChunkTransferAt = new Date().getTime();
             } else if (msg === 'parse') {
-                this.fAPI.incrementParsed();
+                this.fAPI.incrementAvail();
                 this.updateProgress(this.chunkLength, this.endedChunkTransferAt - this.startedChunkTransferAt, this.endedChunkAt - this.startedChunkAt);
             } else if (msg === 'dlfail') {
                 this.cryptWorker.terminate();
@@ -304,7 +305,7 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
 
     getAvail: function(sID, cryptWorker) {/*{{{*/
-        if (mode == M_FF) {/*{{{*/
+        if (mode == M_IDB) {/*{{{*/
             trans = db.transaction([dbName]);
             trans.fAPI = this;
             obj = trans.objectStore(dbName);
@@ -331,7 +332,7 @@ function FileAPI() {/*{{{*/
 
     incrementAvail: function(sID, num) {/*{{{*/
         f_avail[sID]++;
-        if (mode == M_FF) {/*{{{*/
+        if (mode == M_IDB) {/*{{{*/
             trans = db.transaction([dbName], "readwrite");
             trans.fAPI = this;
             obj = trans.objectStore(dbName);
@@ -343,7 +344,7 @@ function FileAPI() {/*{{{*/
 
                 reqUpdate = obj.put(data);
                 reqUpdate.fAPI = this.fAPI;
-                req.onerror = function(e) {this.fAPI.fail('Failed to update available data quantity');}
+                reqUpdate.onerror = function(e) {this.fAPI.fail('Failed to update available data quantity');}
             };/*}}}*/
         } else {/*{{{*/
             fAPI = this;
@@ -382,7 +383,31 @@ function FileAPI() {/*{{{*/
 
     storePart: function(sID, data) {/*{{{*/
         if (data.indexOf('<<#EOF#>>') != -1) {self.postMessage('done');}
-        // Store data
+        if (mode == M_IDB) {/*{{{*/
+            trans = db.transaction([dbName], "readwrite");
+            trans.fAPI = this;
+            obj = trans.objectStore(dbName);
+            req = obj.get(sID + '-' + f_avail[sID]);
+            req.onerror = function(e) {this.fAPI.fail('Failed to get file part');};
+            req.onsuccess = function(e) {
+                reqUpdate = obj.put(data);
+                reqUpdate.fAPI = this.fAPI;
+                reqUpdate.onerror = function(e) {this.fAPI.fail('Failed to update file part');};
+            };/*}}}*/
+        } else {/*{{{*/
+            fAPI = this;
+            this.fs.getFile(sID + '-' + f_avail[sID], {create: true}, function(fE) {
+                fE.fAPI = this.fAPI;
+                fE.createWriter(function(writer) {
+                    fE.onerror = function(e) {
+                        this.fAPI.fail('Failed to write to file part');
+                    };
+
+                    blob = new Blob([data], {type: 'text/plain'});
+                    writer.write(blob);
+                }, function(e) {this.fAPI.fail('Failed to create writer for file part');});
+            }, function(e) {fAPI.fail('Failed to get file part');});
+        }/*}}}*/
         return 0;
     },/*}}}*/
 
@@ -567,7 +592,7 @@ function FileAPI() {/*{{{*/
             }, function(e) {
                 this.fAPI.fail('Failed to create URI');
             });/*}}}*/
-        } else if (mode == M_FF) {/*{{{*/
+        } else if (mode == M_IDB) {/*{{{*/
             this.updateStatus("Creating URI for file");
             r = db.transaction([dbName], 'readwrite').objectStore(dbName).get(this.sessionID);
 
