@@ -290,6 +290,23 @@ function FileAPI() {/*{{{*/
             } else if (msg === 'dlfail') {
                 this.cryptWorker.terminate();
                 this.fAPI.fail('Download failed');
+                this.terminate();
+            } else if (msg == 'getpartfail') {
+                this.cryptWorker.terminate();
+                this.fAPI.fail('Failed to get file part');
+                this.terminate();
+            } else if (msg == 'updpartfail') {
+                this.cryptWorker.terminate();
+                this.fAPI.fail('Failed to update file part');
+                this.terminate();
+            } else if (msg == 'wrtpartfail') {
+                this.cryptWorker.terminate();
+                this.fAPI.fail('Failed to write to file part');
+                this.terminate();
+            } else if (msg == 'cwtpartfail') {
+                this.cryptWorker.terminate();
+                this.fAPI.fail('Failed to create writer for file part');
+                this.terminate();
             }
         });/*}}}*/
 
@@ -365,48 +382,46 @@ function FileAPI() {/*{{{*/
     dlLoop: function(sID, res, k) {/*{{{*/
         if (paused) {return;}
         // Need some way to determine loop termination - and set up loop
+        dled = 0;
         while (true) {
-            if (dl(sID, res, k)) {self.terminate();}
+            if (dl(sID, res, k, dled)) {self.terminate();}
+            dled++;
             self.postMessage('parse');
         }
     },/*}}}*/
 
-    dl: function(sID, res, k) {/*{{{*/
+    dl: function(sID, res, k, num) {/*{{{*/
         chunkReq = createPostReq('/file.cgi', false);
         self.postMessage('dl');
         chunkReq.send();
         self.postMessage('dlend');
         if (chunkReq.status != 200) {self.postMessage('dlfail'); return 1;}
         sent = chunkReq.responseText.length;
-        return storePart(sID, chunkReq.responseText);
+        return storePart(sID, chunkReq.responseText, num);
     },/*}}}*/
 
-    storePart: function(sID, data) {/*{{{*/
+    storePart: function(sID, data, num) {/*{{{*/
         if (data.indexOf('<<#EOF#>>') != -1) {self.postMessage('done');}
         if (mode == M_IDB) {/*{{{*/
             trans = db.transaction([dbName], "readwrite");
-            trans.fAPI = this;
             obj = trans.objectStore(dbName);
-            req = obj.get(sID + '-' + f_avail[sID]);
-            req.onerror = function(e) {this.fAPI.fail('Failed to get file part');};
+            req = obj.get(sID + '-' + num);
+            req.onerror = function(e) {self.postMessage('getpartfail');};
             req.onsuccess = function(e) {
                 reqUpdate = obj.put(data);
-                reqUpdate.fAPI = this.fAPI;
-                reqUpdate.onerror = function(e) {this.fAPI.fail('Failed to update file part');};
+                reqUpdate.onerror = function(e) {self.postMessage('updpartfail');};
             };/*}}}*/
         } else {/*{{{*/
-            fAPI = this;
-            this.fs.getFile(sID + '-' + f_avail[sID], {create: true}, function(fE) {
-                fE.fAPI = this.fAPI;
+            this.fs.getFile(sID + '-' + num, {create: true}, function(fE) {
                 fE.createWriter(function(writer) {
                     fE.onerror = function(e) {
-                        this.fAPI.fail('Failed to write to file part');
+                        self.postMessage('wrtpartfail');
                     };
 
                     blob = new Blob([data], {type: 'text/plain'});
                     writer.write(blob);
-                }, function(e) {this.fAPI.fail('Failed to create writer for file part');});
-            }, function(e) {fAPI.fail('Failed to get file part');});
+                }, function(e) {self.postMessage('cwtpartfail');});
+            }, function(e) {self.postMessage('getpartfail');});
         }/*}}}*/
         return 0;
     },/*}}}*/
