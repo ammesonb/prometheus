@@ -295,7 +295,7 @@ function FileAPI() {/*{{{*/
 
         cryptWorker.ajaxWorker = ajaxWorker;
         cryptWorker.fAPI = this;
-        cryptWorker.postMessage(['decrypt', this.sessionID].join(':'));
+        cryptWorker.postMessage(['decrypt', this.sessionID, this.encKey].join(':'));
         cryptWorker.addEventListener('message', function(m) {/*{{{*/
             msg = m.data;
             if (msg === 'getAvail') {
@@ -411,26 +411,29 @@ function FileAPI() {/*{{{*/
         return 0;
     },/*}}}*/
 
-    decryptLoop: function(sID) {/*{{{*/
+    decryptLoop: function(sID, k) {/*{{{*/
         avail = -1;
         self.postMessage('getAvail');
         // Need to spawn another worker above first
         // Send a get_parse message and then do a while avail == -1 loop until set
         while (parsed < avail) {
             if (paused) {return;}
-            this.decrypt(sID, parsed);
+            this.decrypt(sID, parsed, k);
             parsed++;
         }
 
         setTimeout(function() {decryptLoop(sID);}, 500);
     },/*}}}*/
 
-    decrypt: function(sID, num) {/*{{{*/
+    decrypt: function(sID, num, k) {/*{{{*/
         data = '';
-        append(sID, data);
+        // Read file part here
+        if (data === '') {return 1;}
+        blob = new Blob([CryptoJS.AES.decrypt(data, k, {mode: CryptoJS.mode.CBC}).toString()], {type: 'text/plain'});
+        append(sID, blob);
     },/*}}}*/
 
-    append: function(sID, data) {/*{{{*/
+    append: function(sID, blob) {/*{{{*/
     },/*}}}*/
 
     getChunk: function(sID, res, k) {/*{{{*/
