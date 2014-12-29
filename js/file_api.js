@@ -381,11 +381,11 @@ function FileAPI() {/*{{{*/
 
     dlLoop: function(sID, res, k) {/*{{{*/
         if (paused) {return;}
-        // Need some way to determine loop termination - and set up loop
-        dled = 0;
+        transferred = 0;
         while (true) {
-            if (dl(sID, res, k, dled)) {self.terminate();}
-            dled++;
+            // This will return 1 on failure or completion
+            if (dl(sID, res, k, transferred)) {self.terminate();}
+            transferred++;
             self.postMessage('parse');
         }
     },/*}}}*/
@@ -427,17 +427,22 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
 
     decryptLoop: function(sID, k) {/*{{{*/
-        avail = -1;
-        self.postMessage('getAvail');
-        // Need to spawn another worker above first
-        // Send a get_parse message and then do a while avail == -1 loop until set
+        // Inform parent that we need availability for this sID
+        // Give it one second to respond then try again
+        if (avail == -1) {
+            self.postMessage('getAvail');
+            setTimeout(function() {decryptLoop(sID, k);}, 1000);
+            return;
+        }
         while (parsed < avail) {
             if (paused) {return;}
             this.decrypt(sID, parsed, k);
             parsed++;
         }
+        // Clear avail for next loop, wait half a second before retry
+        avail = -1;
 
-        setTimeout(function() {decryptLoop(sID);}, 500);
+        setTimeout(function() {decryptLoop(sID, k);}, 500);
     },/*}}}*/
 
     decrypt: function(sID, num, k) {/*{{{*/
@@ -449,6 +454,7 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
 
     append: function(sID, blob) {/*{{{*/
+        // Append part to whole (unencrypted, hex-encoded) file
     },/*}}}*/
 
     getChunk: function(sID, res, k) {/*{{{*/
