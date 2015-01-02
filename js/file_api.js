@@ -391,6 +391,9 @@ function FileAPI() {/*{{{*/
             if (msg === 'getAvail') {
                 this.fAPI.getFile(this.fAPI.sessionID + '-avail', this.fAPI.getAvail, [this.fAPI.sessionID, this]);
                 //self.fAPI.getAvail(this.fAPI.sessionID, this);
+            } else if (msg === 'appendFail') {
+                this.ajaxWorker.terminate();
+                this.fAPI.fail('Failed to store decrypted data');
             }
         });/*}}}*/
     },/*}}}*/
@@ -536,12 +539,13 @@ function FileAPI() {/*{{{*/
 
     decrypt: function(sID, num, k, name, data) {/*{{{*/
         if (data == NaN) {return 1;}
-        blob = new Blob([CryptoJS.AES.decrypt(data, k, {mode: CryptoJS.mode.CBC}).toString()], {type: 'text/plain'});
-        append(sID, blob);
+        hex = CryptoJS.AES.decrypt(data, k, {mode: CryptoJS.mode.CBC}).toString();
+        updateFile(sID, 'data', data, 'text/plain', false, append, [0]);
     },/*}}}*/
 
-    append: function(sID, blob) {/*{{{*/
-        // Append part to whole (unencrypted, hex-encoded) file
+    append: function(repeat, sID, data) {/*{{{*/
+        if (value == NaN && !repeat) {updateFile(sID, 'data', data, 'text/plain', false, append, [1]);}
+        else if (value == NaN && repeat) {self.postMessage('appendFail');}
     },/*}}}*/
 
     getChunk: function(sID, res, k) {/*{{{*/
