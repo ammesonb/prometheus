@@ -744,6 +744,12 @@ if (isWorker) {/*{{{*/
             fAPI.getChunk(data[1], data[2], data[3]);/*}}}*/
         } else if (data[0] == 'next') {
             self.readyToParse = true;
+        } else if (data[0] === 'dl') {
+            fAPI = FileAPI();
+            fAPI.dlLoop(data[1], data[2], data[3]);
+        } else if (data[0] === 'decrypt') {
+            fAPI = FileAPI();
+            fAPI.decryptLoop(data[1], data[2]);
         } else if (data[0] === 'avail') {
             avail = parseInt(data[0].split(':')[1], 10);
         }
