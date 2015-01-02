@@ -233,6 +233,7 @@ function FileAPI() {/*{{{*/
 
     getFile: function(name, callback, args) {/*{{{*/
         args.push(name);
+        fAPI = this;
         if (mode == M_IDB) {/*{{{*/
             trans = db.transaction([dbName]);
             trans.fAPI = this;
@@ -240,7 +241,7 @@ function FileAPI() {/*{{{*/
             req = obj.get(name);
             req.onsuccess = function(e) {
                 args.push(this.result);
-                callback.apply(args);
+                callback.apply(fAPI, args);
             };
             req.onerror = function(e) {
                 callback(NaN);
@@ -253,27 +254,28 @@ function FileAPI() {/*{{{*/
                     reader = new FileReader();
                     reader.onloadend = function(e) {
                         args.push(this.result);
-                        callback.apply(args);
+                        callback.apply(fAPI, args);
                     };
-                    reader.readAsText(fE);
+                    reader.readAsText(file);
                 }, function(e) {
                     args.push(NaN);
-                    callback.apply(args);
+                    callback.apply(fAPI, args);
                 });
             }, function(e) {
                 args.push(NaN);
-                callback.apply(args);
+                callback.apply(fAPI, args);
             });
         }/*}}}*/
     },/*}}}*/
 
     updateFile: function(name, field, value, type, overwite, callback, args) {/*{{{*/
         args.push(name);
+        fAPI = this;
         if (mode == M_IDB) {/*{{{*/
             trans = db.transaction([dbName], "readwrite");
             obj = trans.objectStore(dbName);
             req = obj.get(name);
-            req.onerror = function(e) {args.push(NaN); callback.apply(args);}
+            req.onerror = function(e) {args.push(NaN); callback.apply(fAPI, args);}
             req.onsuccess = function(e) {
                 data = this.result;
                 if (overwrite) {
@@ -283,15 +285,15 @@ function FileAPI() {/*{{{*/
                 }
 
                 reqUpdate = obj.put(data);
-                reqUpdate.onerror = function(e) {args.push(NaN); callback.apply(args);}
-                reqUpdate.onsuccess = function(e) {args.push(1); callback.apply(args);}
+                reqUpdate.onerror = function(e) {args.push(NaN); callback.apply(fAPI, args);}
+                reqUpdate.onsuccess = function(e) {args.push(1); callback.apply(fAPI, args);}
             };/*}}}*/
         } else {/*{{{*/
             this.fs.root.getFile(name, {create: overwrite}, function(fE) {
                 fE.createWriter(function(writer) {
                     writer.onerror = function(e) {
                         args.push(NaN);
-                        callback.apply(args);
+                        callback.apply(fAPI, args);
                     };
                     writer.onsuccess = function(e) {
                         callback
@@ -304,8 +306,8 @@ function FileAPI() {/*{{{*/
                         blob = new Blob([data], {type: type});
                         writer.write(blob);
                     }
-                }, function(e) {args.push(NaN); callback.apply(args);});
-            }, function(e) {args.push(NaN); callback.apply(args);});
+                }, function(e) {args.push(NaN); callback.apply(fAPI, args);});
+            }, function(e) {args.push(NaN); callback.apply(fAPI, args);});
         }/*}}}*/
     },/*}}}*/
 
