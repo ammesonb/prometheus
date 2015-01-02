@@ -523,7 +523,7 @@ function FileAPI() {/*{{{*/
                 reqUpdate.onerror = function(e) {self.postMessage('updpartfail');};
             };/*}}}*/
         } else {/*{{{*/
-            this.updateFile(sID + '-' + num, num, 'text/plain', true, partVerify, []);
+            this.updateFile(sID + '-' + num, num, data, 'text/plain', true, this.partVerify, []);
             /*this.fs.getFile(sID + '-' + num, {create: true}, function(fE) {
                 fE.createWriter(function(writer) {
                     fE.onerror = function(e) {
@@ -538,9 +538,9 @@ function FileAPI() {/*{{{*/
         return 0;
     },/*}}}*/
 
-    partVerify: function(name, part) {
+    partVerify: function(name, part) {/*{{{*/
         if (part === NaN) {self.postMessage('wrtpartfail');}
-    },
+    },/*}}}*/
 
     decryptLoop: function(sID, k) {/*{{{*/
         // Inform parent that we need availability for this sID
