@@ -10,7 +10,7 @@ S_200K = 204800;
 S_1M = 1048576;
 S_100M = 104857600;
 
-f_avail = {}:
+f_avail = {};
 mode = M_GC;
 // TODO Pause button - functioning in workers?
 // TODO Failed check - will it stop workers/trigger a return value?
@@ -293,55 +293,55 @@ function FileAPI() {/*{{{*/
                         blob = new Blob([data], {type: type});
                         writer.write(blob);
                     }
-                }, function(e) {args.push(NaN); callback.apply(args);}
-            }, function(e) {args.push(NaN); callback.apply(args);};
+                }, function(e) {args.push(NaN); callback.apply(args);});
+            }, function(e) {args.push(NaN); callback.apply(args);});
         }/*}}}*/
     },/*}}}*/
 
-    next: function() {/*{{{*/
-        if (this.paused) {this.updateStatus('Paused'); this.chunkSpeed = '--'; this.avgSpeed = '--'; this.dispatchEvent('onprogressupdate'); return;}
-        this.updateStatus('Downloading');
-        this.currentData = '';
-        this.firstChunk = true;
-        this.startedChunkAt = new Date().getTime();
-        if (workers) {
-            w = new Worker('js/file_api.js');
-            w.postMessage(['getChunk', this.sessionID, this.res, this.encKey].join(':'));
-            w.fAPI = this;
-            w.addEventListener('message', function(e) {/*{{{*/
-                if (typeof(e.data) != "object") {/*{{{*/
-                    if (e.data == 'parse') {
-                        this.fAPI.incrementAvail(this.fAPI.sessionID);
-                    } else if (e.data == 'fail') {
-                        this.fAPI.fail('Failed to obtain next chunk');
-                    } else if (e.data == 'load') {
-                        this.fAPI.startedChunkTransferAt = new Date().getTime();
-                    } else if (e.data == 'decrypt') {
-                        this.fAPI.endedChunkTransferAt = new Date().getTime();
-                        this.fAPI.updateStatus('Decrypting');
-                    } else if (/^\d+$/.test(e.data)) {
-                        this.fAPI.chunkLength = parseInt(e.data, 10);
-                        this.fAPI.received += this.fAPI.chunkLength;
-                    } else {
-                        console.log(e.data);
-                    }/*}}}*/
-                } else {/*{{{*/
-                    this.fAPI.storeChunk();
-                    w.terminate();
-                    this.fAPI.resume();
-                }/*}}}*/
-            });/*}}}*/
-        } else {
-            this.getChunk();
-        }
-    },/*}}}*/
+//    next: function() {/*{{{*/
+//        if (this.paused) {this.updateStatus('Paused'); this.chunkSpeed = '--'; this.avgSpeed = '--'; this.dispatchEvent('onprogressupdate'); return;}
+//        this.updateStatus('Downloading');
+//        this.currentData = '';
+//        this.firstChunk = true;
+//        this.startedChunkAt = new Date().getTime();
+//        if (workers) {
+//            w = new Worker('js/file_api.js');
+//            w.postMessage(['getChunk', this.sessionID, this.res, this.encKey].join(':'));
+//            w.fAPI = this;
+//            w.addEventListener('message', function(e) {/*{{{*/
+//                if (typeof(e.data) != "object") {/*{{{*/
+//                    if (e.data == 'parse') {
+//                        this.fAPI.incrementAvail(this.fAPI.sessionID);
+//                    } else if (e.data == 'fail') {
+//                        this.fAPI.fail('Failed to obtain next chunk');
+//                    } else if (e.data == 'load') {
+//                        this.fAPI.startedChunkTransferAt = new Date().getTime();
+//                    } else if (e.data == 'decrypt') {
+//                        this.fAPI.endedChunkTransferAt = new Date().getTime();
+//                        this.fAPI.updateStatus('Decrypting');
+//                    } else if (/^\d+$/.test(e.data)) {
+//                        this.fAPI.chunkLength = parseInt(e.data, 10);
+//                        this.fAPI.received += this.fAPI.chunkLength;
+//                    } else {
+//                        console.log(e.data);
+//                    }/*}}}*/
+//                } else {/*{{{*/
+//                    this.fAPI.storeChunk();
+//                    w.terminate();
+//                    this.fAPI.resume();
+//                }/*}}}*/
+//            });/*}}}*/
+//        } else {
+//            this.getChunk();
+//        }
+//    },/*}}}*/
 
     next: function() {/*{{{*/
         if (this.paused) {this.updateStatus('Paused'); this.chunkSpeed = '--'; this.avgSpeed = '--'; this.dispatchEvent('onprogressupdate'); return;}
         this.updateStatus('Downloading');
         this.startedChunkAt = new Date().getTime();
         if (workers) {startWorkers();}
-        else {// manual}
+        else {} // TODO download in main thread
     },/*}}}*/
 
     startWorkers: function() {/*{{{*/
@@ -468,7 +468,7 @@ function FileAPI() {/*{{{*/
     availVerify: function(sID, repeat, name, avail) {/*{{{*/
         if (avail == NaN && !repeat) {updateFile(sID + '-avail', 'avail', 'text/plain', true, availVerify, [sID, 1]);}
         else if (avail == NaN && repeat) {this.fail('Couldn\'t update available data quantity');}
-    }/*}}}*/
+    },/*}}}*/
 
     dlLoop: function(sID, res, k) {/*{{{*/
         if (paused) {return;}
