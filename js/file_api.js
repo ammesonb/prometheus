@@ -525,6 +525,7 @@ function FileAPI() {/*{{{*/
         while (parsed < avail) {
             if (paused) {return;}
             this.decrypt(sID, parsed, k);
+            this.getFile(sID + '-' + parsed, this.decrypt, [sID, parsed, k]);
             parsed++;
         }
         // Clear avail for next loop, wait half a second before retry
@@ -533,10 +534,8 @@ function FileAPI() {/*{{{*/
         setTimeout(function() {decryptLoop(sID, k);}, 500);
     },/*}}}*/
 
-    decrypt: function(sID, num, k) {/*{{{*/
-        data = '';
-        // Read file part here
-        if (data === '') {return 1;}
+    decrypt: function(sID, num, k, name, data) {/*{{{*/
+        if (data == NaN) {return 1;}
         blob = new Blob([CryptoJS.AES.decrypt(data, k, {mode: CryptoJS.mode.CBC}).toString()], {type: 'text/plain'});
         append(sID, blob);
     },/*}}}*/
