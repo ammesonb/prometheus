@@ -225,6 +225,79 @@ function FileAPI() {/*{{{*/
         }, function(e) {fAPI.fail(fAPI, e);});/*}}}*/
     },/*}}}*/
 
+    getFile: function(name, callback, args) {/*{{{*/
+        args.push(name);
+        if (mode == M_IDB) {/*{{{*/
+            trans = db.transaction([dbName]);
+            trans.fAPI = this;
+            obj = trans.objectStore(dbName);
+            req = obj.get(name);
+            req.onsuccess = function(e) {
+                args.push(this.result);
+                callback.apply(args);
+            };
+            req.onerror = function(e) {
+                callback(NaN);
+            }/*}}}*/
+        } else {/*{{{*/
+            fAPI = this;
+            this.fs.root.getFile(this.sessionID + '-avail', {}, function(fE) {
+                fE.fAPI = fAPI;
+                fE.createReader(function(reader) {
+                    reader.onloadend = function(e) {
+                        args.push(this.result);
+                        callback.apply(args);
+                    };
+                    reader.readAsText(fE);
+                });
+            }, function(e) {
+                callback(NaN);
+            });
+        }/*}}}*/
+    },/*}}}*/
+
+    updateFile: function(name, field, value, type, overwite, callback, args) {/*{{{*/
+        args.push(name);
+        if (mode == M_IDB) {/*{{{*/
+            trans = db.transaction([dbName], "readwrite");
+            obj = trans.objectStore(dbName);
+            req = obj.get(name);
+            req.onerror = function(e) {args.push(NaN); callback.apply(args);}
+            req.onsuccess = function(e) {
+                data = this.result;
+                if (overwrite) {
+                    data[field] = value;
+                } else {
+                    data[field] += value;
+                }
+
+                reqUpdate = obj.put(data);
+                reqUpdate.onerror = function(e) {args.push(NaN); callback.apply(args);}
+                reqUpdate.onsuccess = function(e) {args.push(1); callback.apply(args);}
+            };/*}}}*/
+        } else {/*{{{*/
+            this.fs.root.getFile(name, {create: overwrite}, function(fE) {
+                fE.createWriter(function(writer) {
+                    writer.onerror = function(e) {
+                        args.push(NaN);
+                        callback.apply(args);
+                    };
+                    writer.onsuccess = function(e) {
+                        callback
+                    };
+
+                    if (!overwrite) {
+                        writer.seek(writer.length);
+                        writer.write(value);
+                    } else {
+                        blob = new Blob([data], {type: type});
+                        writer.write(blob);
+                    }
+                }, function(e) {args.push(NaN); callback.apply(args);}
+            }, function(e) {args.push(NaN); callback.apply(args);};
+        }/*}}}*/
+    },/*}}}*/
+
     next: function() {/*{{{*/
         if (this.paused) {this.updateStatus('Paused'); this.chunkSpeed = '--'; this.avgSpeed = '--'; this.dispatchEvent('onprogressupdate'); return;}
         this.updateStatus('Downloading');
@@ -285,8 +358,8 @@ function FileAPI() {/*{{{*/
             } else if (msg === 'dlend') {
                 this.fAPI.endedChunkTransferAt = new Date().getTime();
             } else if (msg === 'parse') {
-                this.fAPI.incrementAvail();
-                this.updateProgress(this.chunkLength, this.endedChunkTransferAt - this.startedChunkTransferAt, this.endedChunkAt - this.startedChunkAt);
+                this.fAPI.getFile(this.fAPI.sessionID + '-avail', this.fAPI.incrementAvail, [this.fAPI.sessionID, this]);
+                //this.updateProgress(this.chunkLength, this.endedChunkTransferAt - this.startedChunkTransferAt, this.endedChunkAt - this.startedChunkAt);
             } else if (msg === 'dlfail') {
                 this.cryptWorker.terminate();
                 this.fAPI.fail('Download failed');
@@ -316,68 +389,83 @@ function FileAPI() {/*{{{*/
         cryptWorker.addEventListener('message', function(m) {/*{{{*/
             msg = m.data;
             if (msg === 'getAvail') {
-                self.fAPI.getAvail(this.fAPI.sessionID, this);
+                this.fAPI.getFile(this.fAPI.sessionID + '-avail', this.fAPI.getAvail, [this.fAPI.sessionID, this]);
+                //self.fAPI.getAvail(this.fAPI.sessionID, this);
             }
         });/*}}}*/
     },/*}}}*/
 
-    getAvail: function(sID, cryptWorker) {/*{{{*/
-        if (mode == M_IDB) {/*{{{*/
-            trans = db.transaction([dbName]);
-            trans.fAPI = this;
-            obj = trans.objectStore(dbName);
-            req = obj.get(sID);
-            req.onsuccess = function(e) {
-                f_avail[sID] = this.result.avail;
-                cryptWorker.postMessage('avail:' + this.result.avail);
-            };
-            req.onerror = function(e) {this.fAPI.fail('Failed to get available data quantity'); return -1;}/*}}}*/
-        } else {/*{{{*/
-            fAPI = this;
-            this.fs.root.getFile(this.sessionID + '-avail', {}, function(fE) {
-                fE.fAPI = fAPI;
-                fE.createReader(function(reader) {
-                    reader.onloadend = function(e) {
-                        f_avail[sID] = this.result;
-                        cryptWorker.postMessage('avail:' + this.result);
-                    };
-                    reader.readAsText(fE);
-                });
-            }, function(e) {fAPI.fail(fAPI, e); return -1;});
-        }/*}}}*/
+//    getAvail: function(sID, cryptWorker) {/*{{{*/
+//        if (mode == M_IDB) {/*{{{*/
+//            trans = db.transaction([dbName]);
+//            trans.fAPI = this;
+//            obj = trans.objectStore(dbName);
+//            req = obj.get(sID);
+//            req.onsuccess = function(e) {
+//                f_avail[sID] = this.result.avail;
+//                cryptWorker.postMessage('avail:' + this.result.avail);
+//            };
+//            req.onerror = function(e) {this.fAPI.fail('Failed to get available data quantity'); return -1;}/*}}}*/
+//        } else {/*{{{*/
+//            fAPI = this;
+//            this.fs.root.getFile(this.sessionID + '-avail', {}, function(fE) {
+//                fE.fAPI = fAPI;
+//                fE.createReader(function(reader) {
+//                    reader.onloadend = function(e) {
+//                        f_avail[sID] = this.result;
+//                        cryptWorker.postMessage('avail:' + this.result);
+//                    };
+//                    reader.readAsText(fE);
+//                });
+//            }, function(e) {fAPI.fail(fAPI, e); return -1;});
+//        }/*}}}*/
+//    },/*}}}*/
+
+    getAvail: function(sID, cryptWorker, name, avail) {/*{{{*/
+        if (avail == NaN) {this.fail("Couldn't get available data quantity");}
+        f_avail[sID] = avail;
+        cryptWorker.postMessage('avail:' + avail);
     },/*}}}*/
 
-    incrementAvail: function(sID, num) {/*{{{*/
+    incrementAvail: function(sID, name, avail) {/*{{{*/
         f_avail[sID]++;
-        if (mode == M_IDB) {/*{{{*/
-            trans = db.transaction([dbName], "readwrite");
-            trans.fAPI = this;
-            obj = trans.objectStore(dbName);
-            req = obj.get(sID);
-            req.onerror = function(e) {this.fAPI.fail('Failed to get available data quantity for update'); return -1;}
-            req.onsuccess = function(e) {
-                data = this.result;
-                data.avail++;
-
-                reqUpdate = obj.put(data);
-                reqUpdate.fAPI = this.fAPI;
-                reqUpdate.onerror = function(e) {this.fAPI.fail('Failed to update available data quantity');}
-            };/*}}}*/
-        } else {/*{{{*/
-            fAPI = this;
-            this.fs.root.getFile(this.sessionID + '-avail', {create: true}, function(fE) {
-                fE.fAPI = this.fAPI;
-                fE.createWriter(function(writer) {
-                    fE.onerror = function(e) {
-                        this.fAPI.fail('Failed to write to data availability file');
-                    };
-
-                    blob = new Blob([f_avail[this.fAPI.sessionID]], {type: 'text/plain'});
-                    writer.write(blob);
-                }, function(e) {this.fAPI.fail('Failed to update data availability file');}
-            }, function(e) {fAPI.fail('Failed to get data availability file');});
-        }/*}}}*/
+        avail = parseInt(avail, 10);
+        avail++;
+        updateFile(sID + '-avail', 'avail', avail, 'text/plain', true, availVerify, [sID, 0]);
+//        if (mode == M_IDB) {/*{{{*/
+//            trans = db.transaction([dbName], "readwrite");
+//            trans.fAPI = this;
+//            obj = trans.objectStore(dbName);
+//            req = obj.get(sID);
+//            req.onerror = function(e) {this.fAPI.fail('Failed to get available data quantity for update'); return -1;}
+//            req.onsuccess = function(e) {
+//                data = this.result;
+//                data.avail++;
+//
+//                reqUpdate = obj.put(data);
+//                reqUpdate.fAPI = this.fAPI;
+//                reqUpdate.onerror = function(e) {this.fAPI.fail('Failed to update available data quantity');}
+//            };/*}}}*/
+//        } else {/*{{{*/
+//            fAPI = this;
+//            this.fs.root.getFile(this.sessionID + '-avail', {create: true}, function(fE) {
+//                fE.fAPI = this.fAPI;
+//                fE.createWriter(function(writer) {
+//                    fE.onerror = function(e) {
+//                        this.fAPI.fail('Failed to write to data availability file');
+//                    };
+//
+//                    blob = new Blob([f_avail[this.fAPI.sessionID]], {type: 'text/plain'});
+//                    writer.write(blob);
+//                }, function(e) {this.fAPI.fail('Failed to update data availability file');}
+//            }, function(e) {fAPI.fail('Failed to get data availability file');});
+//        }/*}}}*/
     },/*}}}*/
+
+    availVerify: function(sID, repeat, name, avail) {/*{{{*/
+        if (avail == NaN && !repeat) {updateFile(sID + '-avail', 'avail', 'text/plain', true, availVerify, [sID, 1]);}
+        else if (avail == NaN && repeat) {this.fail('Couldn\'t update available data quantity');}
+    }/*}}}*/
 
     dlLoop: function(sID, res, k) {/*{{{*/
         if (paused) {return;}
