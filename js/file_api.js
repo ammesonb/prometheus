@@ -18,6 +18,8 @@ mode = M_GC;
     End of file transfer signaled somehow?
     Differentiate download/decrypt times
     Allow three parallel downloads
+    IndexedDB downloads WILL NOT WORK - writes to a field but getFile returns the whole object
+    IndexedDB won't work in workers for Firefox - need to check access to window.indexedDB to determine that
 */ /*}}}*/
 
 // If not worker, use asynchronous methods/*{{{*/
@@ -521,7 +523,8 @@ function FileAPI() {/*{{{*/
                 reqUpdate.onerror = function(e) {self.postMessage('updpartfail');};
             };/*}}}*/
         } else {/*{{{*/
-            this.fs.getFile(sID + '-' + num, {create: true}, function(fE) {
+            this.updateFile(sID + '-' + num, num, 'text/plain', true, partVerify, []);
+            /*this.fs.getFile(sID + '-' + num, {create: true}, function(fE) {
                 fE.createWriter(function(writer) {
                     fE.onerror = function(e) {
                         self.postMessage('wrtpartfail');
@@ -530,10 +533,14 @@ function FileAPI() {/*{{{*/
                     blob = new Blob([data], {type: 'text/plain'});
                     writer.write(blob);
                 }, function(e) {self.postMessage('cwtpartfail');});
-            }, function(e) {self.postMessage('getpartfail');});
+            }, function(e) {self.postMessage('getpartfail');});*/
         }/*}}}*/
         return 0;
     },/*}}}*/
+
+    partVerify: function(name, part) {
+        if (part === NaN) {self.postMessage('wrtpartfail');}
+    },
 
     decryptLoop: function(sID, k) {/*{{{*/
         // Inform parent that we need availability for this sID
@@ -546,7 +553,6 @@ function FileAPI() {/*{{{*/
         }
         while (parsed < avail) {
             if (paused) {return;}
-            this.decrypt(sID, parsed, k);
             this.getFile(sID + '-' + parsed, this.decrypt, [sID, parsed, k]);
             parsed++;
         }
