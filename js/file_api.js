@@ -60,6 +60,7 @@ function FileAPI() {/*{{{*/
         failed: 0,
 
         fs: undefined,
+        availCreated: 0,
         kind: '',
         file: '',
         dataURI: undefined,
@@ -188,7 +189,7 @@ function FileAPI() {/*{{{*/
         if (mode == M_IDB) {/*{{{*/
             trans = db.transaction([dbName], "readwrite");
             trans.fAPI = this;
-            trans.oncomplete = function(e) {this.fAPI.startedAt = new Date().getTime(); this.fAPI.next();}
+            trans.oncomplete = function(e) {this.fAPI.startedAt = new Date().getTime(); this.fAPI.next(2);}
             trans.onerror = function(e) {this.fAPI.failed = 1; this.fAPI.updateStatus('Failed');}
             obj = trans.objectStore(dbName);
             obj.put({sessionID: this.sessionID, avail: 0, data: ''});/*}}}*/
@@ -214,7 +215,7 @@ function FileAPI() {/*{{{*/
             fileEntry.createWriter(function(writer) {
                 writer.fAPI = fAPI;
                 writer.onwritestart = function() {fAPI.updateStatus("Creating data availability object");};
-                writer.onwriteend = function() {fAPI.updateStatus("Created");};
+                writer.onwriteend = function() {fAPI.updateStatus("Created"); fAPI.next(this.availCreated);};
                 blob = new Blob(['0'], {type: 'text/plain'});
                 writer.write(blob);
             }, fAPI.fail);
@@ -224,7 +225,7 @@ function FileAPI() {/*{{{*/
             fileEntry.createWriter(function(writer) {
                 writer.fAPI = fAPI;
                 writer.onwritestart = function() {fAPI.updateStatus("Creating data object");};
-                writer.onwriteend = function() {fAPI.updateStatus("Created"); fAPI.startedAt = new Date().getTime(); fAPI.next();};
+                writer.onwriteend = function() {fAPI.updateStatus("Created"); fAPI.next(this.availCreated);};
                 blob = new Blob([''], {type: 'text/plain'});
                 writer.write(blob);
             }, fAPI.fail);
@@ -349,7 +350,10 @@ function FileAPI() {/*{{{*/
 //        }
 //    },/*}}}*/
 
-    next: function() {/*{{{*/
+    next: function(set) {/*{{{*/
+        this.availCreated++;
+        if (set < 2) {return;}
+        fAPI.startedAt = new Date().getTime();
         if (this.paused) {this.updateStatus('Paused'); this.chunkSpeed = '--'; this.avgSpeed = '--'; this.dispatchEvent('onprogressupdate'); return;}
         this.updateStatus('Downloading');
         this.startedChunkAt = new Date().getTime();
@@ -498,11 +502,11 @@ function FileAPI() {/*{{{*/
     dl: function(sID, res, k, num) {/*{{{*/
         chunkReq = createPostReq('/file.cgi', false);
         self.postMessage('dl');
-        chunkReq.send();
+        chunkReq.send('s=1&si=' + sID + '&r=' + res);
         self.postMessage('dlend');
         if (chunkReq.status != 200) {self.postMessage('dlfail'); return 1;}
         sent = chunkReq.responseText.length;
-        return storePart(sID, chunkReq.responseText, num);
+        return this.storePart(sID, chunkReq.responseText, num);
     },/*}}}*/
 
     storePart: function(sID, data, num) {/*{{{*/
@@ -536,7 +540,8 @@ function FileAPI() {/*{{{*/
         // Give it one second to respond then try again
         if (avail == -1) {
             self.postMessage('getAvail');
-            setTimeout(function() {this.decryptLoop(sID, k);}, 1000);
+            _this = this;
+            setTimeout(function() {_this.decryptLoop(sID, k);}, 1000);
             return;
         }
         while (parsed < avail) {
@@ -548,7 +553,8 @@ function FileAPI() {/*{{{*/
         // Clear avail for next loop, wait half a second before retry
         avail = -1;
 
-        setTimeout(function() {this.decryptLoop(sID, k);}, 500);
+        _this = this;
+        setTimeout(function() {_this.decryptLoop(sID, k);}, 500);
     },/*}}}*/
 
     decrypt: function(sID, num, k, name, data) {/*{{{*/
