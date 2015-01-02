@@ -12,8 +12,14 @@ S_100M = 104857600;
 
 f_avail = {};
 mode = M_GC;
-// TODO Pause button - functioning in workers?
-// TODO Failed check - will it stop workers/trigger a return value?
+/*{{{*/ /* TODO
+    Pause button - functioning in workers?
+    Failed check - will it stop workers/trigger a return value?
+    End of file transfer signaled somehow?
+    Differentiate download/decrypt times
+    Allow three parallel downloads
+*/ /*}}}*/
+
 // If not worker, use asynchronous methods/*{{{*/
 if (notWorker) {
     // Check if File System API supported
@@ -46,7 +52,7 @@ function FileAPI() {/*{{{*/
     return {
         // Attributes/*{{{*/
         events: {},
-        status: 'Requested',
+        status: 'Queued',
         sessionID: undefined,
         progress: 0,
         completed: false,
@@ -243,15 +249,20 @@ function FileAPI() {/*{{{*/
             fAPI = this;
             this.fs.root.getFile(this.sessionID + '-avail', {}, function(fE) {
                 fE.fAPI = fAPI;
-                fE.createReader(function(reader) {
+                fE.file(function(file) {
+                    reader = new FileReader();
                     reader.onloadend = function(e) {
                         args.push(this.result);
                         callback.apply(args);
                     };
                     reader.readAsText(fE);
+                }, function(e) {
+                    args.push(NaN);
+                    callback.apply(args);
                 });
             }, function(e) {
-                callback(NaN);
+                args.push(NaN);
+                callback.apply(args);
             });
         }/*}}}*/
     },/*}}}*/
@@ -340,7 +351,7 @@ function FileAPI() {/*{{{*/
         if (this.paused) {this.updateStatus('Paused'); this.chunkSpeed = '--'; this.avgSpeed = '--'; this.dispatchEvent('onprogressupdate'); return;}
         this.updateStatus('Downloading');
         this.startedChunkAt = new Date().getTime();
-        if (workers) {startWorkers();}
+        if (workers) {this.startWorkers();}
         else {} // TODO download in main thread
     },/*}}}*/
 
@@ -359,7 +370,8 @@ function FileAPI() {/*{{{*/
                 this.fAPI.endedChunkTransferAt = new Date().getTime();
             } else if (msg === 'parse') {
                 this.fAPI.getFile(this.fAPI.sessionID + '-avail', this.fAPI.incrementAvail, [this.fAPI.sessionID, this]);
-                //this.updateProgress(this.chunkLength, this.endedChunkTransferAt - this.startedChunkTransferAt, this.endedChunkAt - this.startedChunkAt);
+                this.endedChunkAt = new Date().getTime();
+                this.updateProgress(this.chunkLength, this.endedChunkTransferAt - this.startedChunkTransferAt, this.endedChunkAt - this.startedChunkAt);
             } else if (msg === 'dlfail') {
                 this.cryptWorker.terminate();
                 this.fAPI.fail('Download failed');
@@ -475,7 +487,7 @@ function FileAPI() {/*{{{*/
         transferred = 0;
         while (true) {
             // This will return 1 on failure or completion
-            if (dl(sID, res, k, transferred)) {self.terminate();}
+            if (this.dl(sID, res, k, transferred)) {self.terminate();}
             transferred++;
             self.postMessage('parse');
         }
@@ -522,7 +534,7 @@ function FileAPI() {/*{{{*/
         // Give it one second to respond then try again
         if (avail == -1) {
             self.postMessage('getAvail');
-            setTimeout(function() {decryptLoop(sID, k);}, 1000);
+            setTimeout(function() {this.decryptLoop(sID, k);}, 1000);
             return;
         }
         while (parsed < avail) {
@@ -534,7 +546,7 @@ function FileAPI() {/*{{{*/
         // Clear avail for next loop, wait half a second before retry
         avail = -1;
 
-        setTimeout(function() {decryptLoop(sID, k);}, 500);
+        setTimeout(function() {this.decryptLoop(sID, k);}, 500);
     },/*}}}*/
 
     decrypt: function(sID, num, k, name, data) {/*{{{*/
