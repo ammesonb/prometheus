@@ -378,10 +378,7 @@ function FileAPI() {/*{{{*/
                 this.fAPI.startedChunkTransferAt = new Date().getTime();
             } else if (msg === 'dlend') {
                 this.fAPI.endedChunkTransferAt = new Date().getTime();
-            } else if (msg === 'parse') {
-                this.fAPI.getFile(this.fAPI.sessionID + '-avail', this.fAPI.incrementAvail, [this.fAPI.sessionID, this]);
-                this.endedChunkAt = new Date().getTime();
-                this.updateProgress(this.chunkLength, this.endedChunkTransferAt - this.startedChunkTransferAt, this.endedChunkAt - this.startedChunkAt);
+            } else if (msg.substr(0, 5) === 'parse') {
             } else if (msg === 'dlfail') {
                 this.cryptWorker.terminate();
                 this.fAPI.fail('Download failed');
@@ -389,7 +386,8 @@ function FileAPI() {/*{{{*/
             } else if (msg.substr(0, 5) == 'data-') {
                 num = msg.split('-')[1];
                 data = msg.split('-')[2];
-                this.fAPI.updateFile(this.fAPI.sessionID + '-' + num, num, data, 'text/plain', true, partVerify, [this.fAPI, this, this.cryptWorker, 0]);
+                this.fAPI.updateFile(this.fAPI.sessionID + '-' + num, num, data, 'text/plain', true,
+                                     this.fAPI.partVerify, [this.fAPI, this, this.cryptWorker, 0]);
             } else if (msg == 'getpartfail') {
                 this.cryptWorker.terminate();
                 this.fAPI.fail('Failed to get file part');
@@ -456,39 +454,11 @@ function FileAPI() {/*{{{*/
         cryptWorker.postMessage('avail:' + avail);
     },/*}}}*/
 
-    incrementAvail: function(sID, name, avail) {/*{{{*/
-        f_avail[sID]++;
+    incrementAvail: function(fAPI, name, avail) {/*{{{*/
+        f_avail[fAPI.sID]++;
         avail = parseInt(avail, 10);
         avail++;
-        updateFile(sID + '-avail', 'avail', avail, 'text/plain', true, availVerify, [sID, 0]);
-//        if (mode == M_IDB) {/*{{{*/
-//            trans = db.transaction([dbName], "readwrite");
-//            trans.fAPI = this;
-//            obj = trans.objectStore(dbName);
-//            req = obj.get(sID);
-//            req.onerror = function(e) {this.fAPI.fail('Failed to get available data quantity for update'); return -1;}
-//            req.onsuccess = function(e) {
-//                data = this.result;
-//                data.avail++;
-//
-//                reqUpdate = obj.put(data);
-//                reqUpdate.fAPI = this.fAPI;
-//                reqUpdate.onerror = function(e) {this.fAPI.fail('Failed to update available data quantity');}
-//            };/*}}}*/
-//        } else {/*{{{*/
-//            fAPI = this;
-//            this.fs.root.getFile(this.sessionID + '-avail', {create: true}, function(fE) {
-//                fE.fAPI = this.fAPI;
-//                fE.createWriter(function(writer) {
-//                    fE.onerror = function(e) {
-//                        this.fAPI.fail('Failed to write to data availability file');
-//                    };
-//
-//                    blob = new Blob([f_avail[this.fAPI.sessionID]], {type: 'text/plain'});
-//                    writer.write(blob);
-//                }, function(e) {this.fAPI.fail('Failed to update data availability file');}
-//            }, function(e) {fAPI.fail('Failed to get data availability file');});
-//        }/*}}}*/
+        fAPI.updateFile(fAPI.sID + '-avail', 'avail', avail, 'text/plain', true, fAPI.availVerify, [fAPI.sID, 0]);
     },/*}}}*/
 
     availVerify: function(sID, repeat, name, avail) {/*{{{*/
@@ -503,7 +473,6 @@ function FileAPI() {/*{{{*/
             // This will return 1 on failure or completion
             if (this.dl(sID, res, k, transferred)) {self.terminate();}
             transferred++;
-            self.postMessage('parse');
         }
     },/*}}}*/
 
@@ -552,6 +521,11 @@ function FileAPI() {/*{{{*/
             ajaxWorker.terminate();
             cryptWorker.terminate();
             fAPI.fail('Failed to store file part');
+        } else {
+            fAPI.getFile(fAPI.sessionID + '-avail', fAPI.incrementAvail, [fAPI]);
+            fAPI.endedChunkAt = new Date().getTime();
+            // Length is divided by 2 because of hex encoding
+            fAPI.updateProgress(part.length / 2, fAPI.endedChunkTransferAt - fAPI.startedChunkTransferAt, fAPI.endedChunkAt - fAPI.startedChunkAt);
         }
     },/*}}}*/
 
