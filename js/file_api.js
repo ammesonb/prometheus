@@ -21,6 +21,8 @@ mode = M_GC;
     IndexedDB downloads WILL NOT WORK - writes to a field but getFile returns the whole object
     IndexedDB won't work in workers for Firefox - need to check access to window.indexedDB to determine that
     Clean up file parts after decryption
+    Store file already chunked on server - use session as numbered directory
+        Hopefully will speed up transfer - avoids constant decryption/re-encryption needed for small chunks
 */ /*}}}*/
 
 // If not worker, use asynchronous methods/*{{{*/
@@ -455,10 +457,10 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
 
     incrementAvail: function(fAPI, name, avail) {/*{{{*/
-        f_avail[fAPI.sID]++;
+        f_avail[fAPI.sessionID]++;
         avail = parseInt(avail, 10);
         avail++;
-        fAPI.updateFile(fAPI.sID + '-avail', 'avail', avail, 'text/plain', true, fAPI.availVerify, [fAPI.sID, 0]);
+        fAPI.updateFile(fAPI.sessionID + '-avail', 'avail', avail, 'text/plain', true, fAPI.availVerify, [fAPI, 0]);
     },/*}}}*/
 
     availVerify: function(sID, repeat, name, avail) {/*{{{*/

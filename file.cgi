@@ -69,7 +69,7 @@ if ($state == 0) { #{{{
     my $new = `openssl enc -a -aes-256-cbc -e -pass pass:"$key" -in /tmp/$sessionID`;
     `shred -u -n 5 /tmp/$sessionID`;
     print $new;
-    $session->param("$sessionID-offset", $session->param("$sessionID-offset") + $res) #}}}
+    $session->param("$sessionID-offset", $session->param("$sessionID-offset") + $res); #}}}
 } elsif ($state == 2) { #{{{
     my $sessionID = $q->param('si');
     `rm /files/$sessionID`;
