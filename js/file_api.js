@@ -20,6 +20,7 @@ mode = M_GC;
     Allow three parallel downloads
     IndexedDB downloads WILL NOT WORK - writes to a field but getFile returns the whole object
     IndexedDB won't work in workers for Firefox - need to check access to window.indexedDB to determine that
+    Clean up file parts after decryption
 */ /*}}}*/
 
 // If not worker, use asynchronous methods/*{{{*/
@@ -217,7 +218,7 @@ function FileAPI() {/*{{{*/
             fileEntry.createWriter(function(writer) {
                 writer.fAPI = fAPI;
                 writer.onwritestart = function() {fAPI.updateStatus("Creating data availability object");};
-                writer.onwriteend = function() {fAPI.updateStatus("Created"); fAPI.next(this.availCreated);};
+                writer.onwriteend = function() {fAPI.updateStatus("Created"); fAPI.next();};
                 blob = new Blob(['0'], {type: 'text/plain'});
                 writer.write(blob);
             }, fAPI.fail);
@@ -227,7 +228,7 @@ function FileAPI() {/*{{{*/
             fileEntry.createWriter(function(writer) {
                 writer.fAPI = fAPI;
                 writer.onwritestart = function() {fAPI.updateStatus("Creating data object");};
-                writer.onwriteend = function() {fAPI.updateStatus("Created"); fAPI.next(this.availCreated);};
+                writer.onwriteend = function() {fAPI.updateStatus("Created"); fAPI.next();};
                 blob = new Blob([''], {type: 'text/plain'});
                 writer.write(blob);
             }, fAPI.fail);
@@ -271,7 +272,7 @@ function FileAPI() {/*{{{*/
         }/*}}}*/
     },/*}}}*/
 
-    updateFile: function(name, field, value, type, overwite, callback, args) {/*{{{*/
+    updateFile: function(name, field, value, type, overwrite, callback, args) {/*{{{*/
         args.push(name);
         fAPI = this;
         if (mode == M_IDB) {/*{{{*/
@@ -298,15 +299,16 @@ function FileAPI() {/*{{{*/
                         args.push(NaN);
                         callback.apply(fAPI, args);
                     };
-                    writer.onsuccess = function(e) {
-                        callback
+                    writer.onwriteend = function(e) {
+                        args.push(value);
+                        callback.apply(fAPI, args);
                     };
 
                     if (!overwrite) {
                         writer.seek(writer.length);
                         writer.write(value);
                     } else {
-                        blob = new Blob([data], {type: type});
+                        blob = new Blob([value], {type: type});
                         writer.write(blob);
                     }
                 }, function(e) {args.push(NaN); callback.apply(fAPI, args);});
@@ -352,9 +354,9 @@ function FileAPI() {/*{{{*/
 //        }
 //    },/*}}}*/
 
-    next: function(set) {/*{{{*/
+    next: function() {/*{{{*/
         this.availCreated++;
-        if (set < 2) {return;}
+        if (this.availCreated < 2) {return;}
         fAPI.startedAt = new Date().getTime();
         if (this.paused) {this.updateStatus('Paused'); this.chunkSpeed = '--'; this.avgSpeed = '--'; this.dispatchEvent('onprogressupdate'); return;}
         this.updateStatus('Downloading');
