@@ -40,8 +40,23 @@ if ($state == 0) { #{{{
 
     # Encrypt source file with master key and read properties
     my $encKey = $session->param('master_key');
-    `openssl enc -a -aes-256-cbc -e -pass pass:"$encKey" -in "/data/$hn/$file" -out /files/$sessionID`;
-    my $size = `stat -c %s "/files/$sessionID"`;
+    `mkdir /files/$sessionID-pln`;
+    `mkdir /files/$sessionID`;
+    `cd /files/$sessionID-pln/; split -b 20480 -a 10 -d "/data/$hn/$file" ""`;
+    my $numFiles = `ls -l /files/$sessionID-pln/* | wc -l`;
+
+    foreach(0..999) {
+        $_ = "0" x (10 - length($_)) . $_;
+        `openssl enc -a -aes-256-cbc -e -pass pass:"$encKey" -i /files/$sessionID-pln/$_ -out /files/$sessionID/$_`;
+        `rm /files/$sessionID-pln/$_`;
+    }
+    `/var/www/prometheus/./encrypt_chunk.pl "$sessionID" "$encKey" 0 &`;
+    `/var/www/prometheus/./encrypt_chunk.pl "$sessionID" "$encKey" 1 &`;
+    `/var/www/prometheus/./encrypt_chunk.pl "$sessionID" "$encKey" 2 &`;
+    #`openssl enc -a -aes-256-cbc -e -pass pass:"$encKey" -in "/data/$hn/$file" -out /files/$sessionID`;
+
+    # Calculate size
+    my $size = `du -b "/files/$sessionID/0000000000" | egrep -o "[0-9]+" | head -1` * $numFiles;
     chomp($size);
     if ($size == 0) {print "nofile"; exit;}
 
@@ -54,24 +69,17 @@ if ($state == 0) { #{{{
 } elsif ($state == 1) { #{{{
     # Read session parameters
     my $sessionID = $q->param('si');
-    my $res = int($q->param('r'));
-    if (not $res or 0 > $res) {print 'badres';}
-    my $encKey = $session->param('master_key');
     my $offset = $session->param("$sessionID-offset");
-    my $key = $session->param("$sessionID-key");
 
-    # Decrypt file and re-encrypt proper chunk for sending
-    my $data = `openssl enc -a -aes-256-cbc -d -pass pass:"$encKey" -in /files/$sessionID`;
-    open(FILE, ">/tmp/$sessionID");
-    print FILE substr($data, $offset, $res);
-    close(FILE);
-    `echo -n "<<#EOF#>>" >> /tmp/$sessionID` if (($offset + $res) > length($data));
-    my $new = `openssl enc -a -aes-256-cbc -e -pass pass:"$key" -in /tmp/$sessionID`;
-    `shred -u -n 5 /tmp/$sessionID`;
-    print $new;
-    $session->param("$sessionID-offset", $session->param("$sessionID-offset") + $res); #}}}
+    if (not -e "/files/$sessionID/$offset") {
+        print "<<#EOF#>>";
+        return;
+    }
+    `cat /files/$sessionID/$offset`;
+    $session->param("$sessionID-offset", $offset + 1);)
+    `shred -u -n 5 /files/$sessionID/$offset && rm /files/$sessionID/$offset`; #}}}
 } elsif ($state == 2) { #{{{
     my $sessionID = $q->param('si');
-    `rm /files/$sessionID`;
+    `rm -r /files/$sessionID`;
 } #}}}
 exit;
