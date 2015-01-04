@@ -384,6 +384,10 @@ function FileAPI() {/*{{{*/
                 this.cryptWorker.terminate();
                 this.fAPI.fail('Download failed');
                 this.terminate();
+            } else if (msg.substr(0, 5) == 'data-') {
+                num = msg.split('-')[1];
+                data = msg.split('-')[2];
+                this.fAPI.updateFile(this.fAPI.sessionID + '-' + num, num, data, 'text/plain', true, partVerify, [this.fAPI, this, this.cryptWorker, 0]);
             } else if (msg == 'getpartfail') {
                 this.cryptWorker.terminate();
                 this.fAPI.fail('Failed to get file part');
@@ -507,39 +511,46 @@ function FileAPI() {/*{{{*/
         chunkReq.send('s=1&si=' + sID + '&r=' + res);
         self.postMessage('dlend');
         if (chunkReq.status != 200) {self.postMessage('dlfail'); return 1;}
-        sent = chunkReq.responseText.length;
-        return this.storePart(sID, chunkReq.responseText, num);
-    },/*}}}*/
-
-    storePart: function(sID, data, num) {/*{{{*/
-        if (data.indexOf('<<#EOF#>>') != -1) {self.postMessage('done');}
-        if (mode == M_IDB) {/*{{{*/
-            trans = db.transaction([dbName], "readwrite");
-            obj = trans.objectStore(dbName);
-            req = obj.get(sID + '-' + num);
-            req.onerror = function(e) {self.postMessage('getpartfail');};
-            req.onsuccess = function(e) {
-                reqUpdate = obj.put(data);
-                reqUpdate.onerror = function(e) {self.postMessage('updpartfail');};
-            };/*}}}*/
-        } else {/*{{{*/
-            this.updateFile(sID + '-' + num, num, data, 'text/plain', true, this.partVerify, []);
-            /*this.fs.getFile(sID + '-' + num, {create: true}, function(fE) {
-                fE.createWriter(function(writer) {
-                    fE.onerror = function(e) {
-                        self.postMessage('wrtpartfail');
-                    };
-
-                    blob = new Blob([data], {type: 'text/plain'});
-                    writer.write(blob);
-                }, function(e) {self.postMessage('cwtpartfail');});
-            }, function(e) {self.postMessage('getpartfail');});*/
-        }/*}}}*/
+        self.postMessage('data-' + num + '-' + chunkReq.responseText);
         return 0;
     },/*}}}*/
 
-    partVerify: function(name, part) {/*{{{*/
-        if (part === NaN) {self.postMessage('wrtpartfail');}
+//    storePart: function(sID, data, num) {/*{{{*/
+//        if (data.indexOf('<<#EOF#>>') != -1) {self.postMessage('done');}
+//        if (mode == M_IDB) {/*{{{*/
+//            trans = db.transaction([dbName], "readwrite");
+//            obj = trans.objectStore(dbName);
+//            req = obj.get(sID + '-' + num);
+//            req.onerror = function(e) {self.postMessage('getpartfail');};
+//            req.onsuccess = function(e) {
+//                reqUpdate = obj.put(data);
+//                reqUpdate.onerror = function(e) {self.postMessage('updpartfail');};
+//            };/*}}}*/
+//        } else {/*{{{*/
+//            this.updateFile(sID + '-' + num, num, data, 'text/plain', true, this.partVerify, []);
+//            /*this.fs.getFile(sID + '-' + num, {create: true}, function(fE) {
+//                fE.createWriter(function(writer) {
+//                    fE.onerror = function(e) {
+//                        self.postMessage('wrtpartfail');
+//                    };
+//
+//                    blob = new Blob([data], {type: 'text/plain'});
+//                    writer.write(blob);
+//                }, function(e) {self.postMessage('cwtpartfail');});
+//            }, function(e) {self.postMessage('getpartfail');});*/
+//        }/*}}}*/
+//        return 0;
+//    },/*}}}*/
+
+    partVerify: function(fAPI, ajaxWorker, cryptWorker, repeat, name, part) {/*{{{*/
+        if (part === NaN && !repeat) {
+            fAPI.updateFile(name, name.split('-')[1], part, 'text/plain', true, fAPI.partVerify,
+                            [fAPI, ajaxWorker, cryptWorker, 1]);
+        } else if (part === NaN && repeat) {
+            ajaxWorker.terminate();
+            cryptWorker.terminate();
+            fAPI.fail('Failed to store file part');
+        }
     },/*}}}*/
 
     decryptLoop: function(sID, k) {/*{{{*/
