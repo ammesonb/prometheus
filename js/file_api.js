@@ -75,7 +75,6 @@ function FileAPI() {/*{{{*/
         received: 0,
         chunkLength: 0,
         currentData: '',
-        res: S_200K * .1,
         avgSpeed: 0,
         startedAt: undefined,
         firstChunk: true,
@@ -473,15 +472,15 @@ function FileAPI() {/*{{{*/
         transferred = 0;
         while (true) {
             // This will return 1 on failure or completion
-            if (this.dl(sID, res, k, transferred)) {self.terminate();}
+            if (this.dl(sID, transferred)) {self.terminate();}
             transferred++;
         }
     },/*}}}*/
 
-    dl: function(sID, res, k, num) {/*{{{*/
+    dl: function(sID, num) {/*{{{*/
         chunkReq = createPostReq('/file.cgi', false);
         self.postMessage('dl');
-        chunkReq.send('s=1&si=' + sID + '&r=' + res);
+        chunkReq.send('s=1&si=' + sID);
         self.postMessage('dlend');
         if (chunkReq.status != 200) {self.postMessage('dlfail'); return 1;}
         self.postMessage('data-' + num + '-' + chunkReq.responseText);

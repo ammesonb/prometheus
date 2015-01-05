@@ -43,11 +43,12 @@ if ($state == 0) { #{{{
     `mkdir /files/$sessionID-pln`;
     `mkdir /files/$sessionID`;
     `cd /files/$sessionID-pln/; split -b 20480 -a 10 -d "/data/$hn/$file" ""`;
-    my $numFiles = `ls -l /files/$sessionID-pln/* | wc -l`;
+    my $numFiles = `count=0; for f in \`ls /files/$sessionID-pln/\`; do count=\$((count+1)); done; echo \$count`;
+    chomp($numFiles);
 
     foreach(0..999) {
         $_ = "0" x (10 - length($_)) . $_;
-        `openssl enc -a -aes-256-cbc -e -pass pass:"$encKey" -i /files/$sessionID-pln/$_ -out /files/$sessionID/$_`;
+        `openssl enc -a -aes-256-cbc -e -pass pass:"$encKey" -in /files/$sessionID-pln/$_ -out /files/$sessionID/$_`;
         `rm /files/$sessionID-pln/$_`;
     }
     `/var/www/prometheus/./encrypt_chunk.pl "$sessionID" "$encKey" 0 &`;
@@ -76,7 +77,7 @@ if ($state == 0) { #{{{
         return;
     }
     `cat /files/$sessionID/$offset`;
-    $session->param("$sessionID-offset", $offset + 1);)
+    $session->param("$sessionID-offset", $offset + 1);
     `shred -u -n 5 /files/$sessionID/$offset && rm /files/$sessionID/$offset`; #}}}
 } elsif ($state == 2) { #{{{
     my $sessionID = $q->param('si');

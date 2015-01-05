@@ -9,7 +9,7 @@ my $num = shift;
 my $files = `ls -l /files/$sID/ | wc -l` + 1002;
 for (my $i = 1000 + $num; $i < $files; $i += 3) {
     $i = "0" x (10 - length($i)) . $i;
-    `openssl enc -a -aes-256-cbc -e -pass pass:"$encKey" -i /files/$sessionID-pln/$i -out /files/$sessionID/$i`;
-    `rm /files/$sessionID-pln/$_`;
+    `openssl enc -a -aes-256-cbc -e -pass pass:"$key" -in /files/$sID-pln/$i -out /files/$sID/$i`;
+    `rm /files/$sID-pln/$i`;
 }
-`rmdir /files/$sessionID-pln`;
+`rmdir /files/$sID-pln`;
