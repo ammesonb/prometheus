@@ -317,44 +317,6 @@ function FileAPI() {/*{{{*/
         }/*}}}*/
     },/*}}}*/
 
-//    next: function() {/*{{{*/
-//        if (this.paused) {this.updateStatus('Paused'); this.chunkSpeed = '--'; this.avgSpeed = '--'; this.dispatchEvent('onprogressupdate'); return;}
-//        this.updateStatus('Downloading');
-//        this.currentData = '';
-//        this.firstChunk = true;
-//        this.startedChunkAt = new Date().getTime();
-//        if (workers) {
-//            w = new Worker('js/file_api.js');
-//            w.postMessage(['getChunk', this.sessionID, this.res, this.encKey].join(':'));
-//            w.fAPI = this;
-//            w.addEventListener('message', function(e) {/*{{{*/
-//                if (typeof(e.data) != "object") {/*{{{*/
-//                    if (e.data == 'parse') {
-//                        this.fAPI.incrementAvail(this.fAPI.sessionID);
-//                    } else if (e.data == 'fail') {
-//                        this.fAPI.fail('Failed to obtain next chunk');
-//                    } else if (e.data == 'load') {
-//                        this.fAPI.startedChunkTransferAt = new Date().getTime();
-//                    } else if (e.data == 'decrypt') {
-//                        this.fAPI.endedChunkTransferAt = new Date().getTime();
-//                        this.fAPI.updateStatus('Decrypting');
-//                    } else if (/^\d+$/.test(e.data)) {
-//                        this.fAPI.chunkLength = parseInt(e.data, 10);
-//                        this.fAPI.received += this.fAPI.chunkLength;
-//                    } else {
-//                        console.log(e.data);
-//                    }/*}}}*/
-//                } else {/*{{{*/
-//                    this.fAPI.storeChunk();
-//                    w.terminate();
-//                    this.fAPI.resume();
-//                }/*}}}*/
-//            });/*}}}*/
-//        } else {
-//            this.getChunk();
-//        }
-//    },/*}}}*/
-
     next: function() {/*{{{*/
         this.availCreated++;
         if (this.availCreated < 2) {return;}
@@ -423,32 +385,6 @@ function FileAPI() {/*{{{*/
         });/*}}}*/
     },/*}}}*/
 
-//    getAvail: function(sID, cryptWorker) {/*{{{*/
-//        if (mode == M_IDB) {/*{{{*/
-//            trans = db.transaction([dbName]);
-//            trans.fAPI = this;
-//            obj = trans.objectStore(dbName);
-//            req = obj.get(sID);
-//            req.onsuccess = function(e) {
-//                f_avail[sID] = this.result.avail;
-//                cryptWorker.postMessage('avail:' + this.result.avail);
-//            };
-//            req.onerror = function(e) {this.fAPI.fail('Failed to get available data quantity'); return -1;}/*}}}*/
-//        } else {/*{{{*/
-//            fAPI = this;
-//            this.fs.root.getFile(this.sessionID + '-avail', {}, function(fE) {
-//                fE.fAPI = fAPI;
-//                fE.createReader(function(reader) {
-//                    reader.onloadend = function(e) {
-//                        f_avail[sID] = this.result;
-//                        cryptWorker.postMessage('avail:' + this.result);
-//                    };
-//                    reader.readAsText(fE);
-//                });
-//            }, function(e) {fAPI.fail(fAPI, e); return -1;});
-//        }/*}}}*/
-//    },/*}}}*/
-
     getAvail: function(sID, cryptWorker, name, avail) {/*{{{*/
         if (avail == NaN) {this.fail("Couldn't get available data quantity");}
         f_avail[sID] = avail;
@@ -474,6 +410,7 @@ function FileAPI() {/*{{{*/
             // This will return 1 on failure or completion
             if (this.dl(sID, transferred)) {self.terminate();}
             transferred++;
+            return;
         }
     },/*}}}*/
 
@@ -533,6 +470,7 @@ function FileAPI() {/*{{{*/
     decryptLoop: function(sID, k) {/*{{{*/
         // Inform parent that we need availability for this sID
         // Give it one second to respond then try again
+        return;
         if (avail == -1) {
             self.postMessage('getAvail');
             _this = this;
@@ -561,6 +499,106 @@ function FileAPI() {/*{{{*/
         if (value == NaN && !repeat) {updateFile(sID, 'data', data, 'text/plain', false, append, [1]);}
         else if (value == NaN && repeat) {self.postMessage('appendFail');}
     },/*}}}*/
+
+    finish: function() {/*{{{*/
+        this.currentXHRReq = createPostReq('/file.cgi', true);
+        this.currentXHRReq.send('s=2&si=' + this.sessionID);
+        this.currentData = undefined;
+        this.currentXHRReq = undefined;
+
+        if (mode == M_GC) {/*{{{*/
+            fAPI = this;
+            this.fs.root.getFile(this.sessionID, {create: false}, function(entry) {
+                entry.fAPI = fAPI;
+                entry.file(function(file) {
+                    fr = new FileReader();
+                    fr.fAPI = this.fAPI;
+                    fr.onloadend = function(e) {
+                        b = new Blob([hex2a(this.result)]);
+                        this.fAPI.dataURI = window.URL.createObjectURL(b);
+                        entry.remove(function() {}, function() {});
+                    };
+                    fr.readAsText(file);
+                }, function(e) {
+                    this.fAPI.fail('Failed to read file');
+                });
+            }, function(e) {
+                this.fAPI.fail('Failed to create URI');
+            });/*}}}*/
+        } else if (mode == M_IDB) {/*{{{*/
+            this.updateStatus("Creating URI for file");
+            r = db.transaction([dbName], 'readwrite').objectStore(dbName).get(this.sessionID);
+
+            r.fAPI = this;
+            r.onsuccess = function(e) {
+                b = new Blob([hex2a(this.result.data)]);
+                this.fAPI.dataURI = window.URL.createObjectURL(b);
+                db.transaction([dbName], 'readonly').objectStore(dbName).delete(this.sessionID);
+            };
+            r.onerror = function(e) {
+                this.fAPI.fail('Failed to create URI');
+            }
+        }/*}}}*/
+
+        this.updateStatus('Complete');
+        this.dispatchEvent('oncomplete');
+    },/*}}}*/
+
+    clean: function() {/*{{{*/
+        window.URL.revokeObjectURL(this.dataURI);
+    }/*}}}*/
+    };
+}/*}}}*/
+
+if (isWorker) {/*{{{*/
+    var paused = 0;
+    var parsed = 0;
+    var avail = -1;
+    self.readyToParse = false;
+    self.addEventListener('message', function(e) {
+        data = e.data.split(':');
+        if (data[0] == 'getChunk') {/*{{{*/
+            fAPI = FileAPI();
+            fAPI.getChunk(data[1], data[2], data[3]);/*}}}*/
+        } else if (data[0] == 'next') {
+            self.readyToParse = true;
+        } else if (data[0] === 'dl') {
+            fAPI = FileAPI();
+            fAPI.dlLoop(data[1], data[2], data[3]);
+        } else if (data[0] === 'decrypt') {
+            fAPI = FileAPI();
+            fAPI.decryptLoop(data[1], data[2]);
+        } else if (data[0] === 'avail') {
+            avail = parseInt(data[0].split(':')[1], 10);
+        }
+    });
+}/*}}}*/
+
+//    getAvail: function(sID, cryptWorker) {/*{{{*/
+//        if (mode == M_IDB) {/*{{{*/
+//            trans = db.transaction([dbName]);
+//            trans.fAPI = this;
+//            obj = trans.objectStore(dbName);
+//            req = obj.get(sID);
+//            req.onsuccess = function(e) {
+//                f_avail[sID] = this.result.avail;
+//                cryptWorker.postMessage('avail:' + this.result.avail);
+//            };
+//            req.onerror = function(e) {this.fAPI.fail('Failed to get available data quantity'); return -1;}/*}}}*/
+//        } else {/*{{{*/
+//            fAPI = this;
+//            this.fs.root.getFile(this.sessionID + '-avail', {}, function(fE) {
+//                fE.fAPI = fAPI;
+//                fE.createReader(function(reader) {
+//                    reader.onloadend = function(e) {
+//                        f_avail[sID] = this.result;
+//                        cryptWorker.postMessage('avail:' + this.result);
+//                    };
+//                    reader.readAsText(fE);
+//                });
+//            }, function(e) {fAPI.fail(fAPI, e); return -1;});
+//        }/*}}}*/
+//    },/*}}}*/
 
     getChunk: function(sID, res, k) {/*{{{*/
         if (isWorker) {/*{{{*/
@@ -696,76 +734,41 @@ function FileAPI() {/*{{{*/
         }
     },/*}}}*/
 
-    finish: function() {/*{{{*/
-        this.currentXHRReq = createPostReq('/file.cgi', true);
-        this.currentXHRReq.send('s=2&si=' + this.sessionID);
-        this.currentData = undefined;
-        this.currentXHRReq = undefined;
+//    next: function() {/*{{{*/
+//        if (this.paused) {this.updateStatus('Paused'); this.chunkSpeed = '--'; this.avgSpeed = '--'; this.dispatchEvent('onprogressupdate'); return;}
+//        this.updateStatus('Downloading');
+//        this.currentData = '';
+//        this.firstChunk = true;
+//        this.startedChunkAt = new Date().getTime();
+//        if (workers) {
+//            w = new Worker('js/file_api.js');
+//            w.postMessage(['getChunk', this.sessionID, this.res, this.encKey].join(':'));
+//            w.fAPI = this;
+//            w.addEventListener('message', function(e) {/*{{{*/
+//                if (typeof(e.data) != "object") {/*{{{*/
+//                    if (e.data == 'parse') {
+//                        this.fAPI.incrementAvail(this.fAPI.sessionID);
+//                    } else if (e.data == 'fail') {
+//                        this.fAPI.fail('Failed to obtain next chunk');
+//                    } else if (e.data == 'load') {
+//                        this.fAPI.startedChunkTransferAt = new Date().getTime();
+//                    } else if (e.data == 'decrypt') {
+//                        this.fAPI.endedChunkTransferAt = new Date().getTime();
+//                        this.fAPI.updateStatus('Decrypting');
+//                    } else if (/^\d+$/.test(e.data)) {
+//                        this.fAPI.chunkLength = parseInt(e.data, 10);
+//                        this.fAPI.received += this.fAPI.chunkLength;
+//                    } else {
+//                        console.log(e.data);
+//                    }/*}}}*/
+//                } else {/*{{{*/
+//                    this.fAPI.storeChunk();
+//                    w.terminate();
+//                    this.fAPI.resume();
+//                }/*}}}*/
+//            });/*}}}*/
+//        } else {
+//            this.getChunk();
+//        }
+//    },/*}}}*/
 
-        if (mode == M_GC) {/*{{{*/
-            fAPI = this;
-            this.fs.root.getFile(this.sessionID, {create: false}, function(entry) {
-                entry.fAPI = fAPI;
-                entry.file(function(file) {
-                    fr = new FileReader();
-                    fr.fAPI = this.fAPI;
-                    fr.onloadend = function(e) {
-                        b = new Blob([hex2a(this.result)]);
-                        this.fAPI.dataURI = window.URL.createObjectURL(b);
-                        entry.remove(function() {}, function() {});
-                    };
-                    fr.readAsText(file);
-                }, function(e) {
-                    this.fAPI.fail('Failed to read file');
-                });
-            }, function(e) {
-                this.fAPI.fail('Failed to create URI');
-            });/*}}}*/
-        } else if (mode == M_IDB) {/*{{{*/
-            this.updateStatus("Creating URI for file");
-            r = db.transaction([dbName], 'readwrite').objectStore(dbName).get(this.sessionID);
-
-            r.fAPI = this;
-            r.onsuccess = function(e) {
-                b = new Blob([hex2a(this.result.data)]);
-                this.fAPI.dataURI = window.URL.createObjectURL(b);
-                db.transaction([dbName], 'readonly').objectStore(dbName).delete(this.sessionID);
-            };
-            r.onerror = function(e) {
-                this.fAPI.fail('Failed to create URI');
-            }
-        }/*}}}*/
-
-        this.updateStatus('Complete');
-        this.dispatchEvent('oncomplete');
-    },/*}}}*/
-
-    clean: function() {/*{{{*/
-        window.URL.revokeObjectURL(this.dataURI);
-    }/*}}}*/
-    };
-}/*}}}*/
-
-if (isWorker) {/*{{{*/
-    var paused = 0;
-    var parsed = 0;
-    var avail = -1;
-    self.readyToParse = false;
-    self.addEventListener('message', function(e) {
-        data = e.data.split(':');
-        if (data[0] == 'getChunk') {/*{{{*/
-            fAPI = FileAPI();
-            fAPI.getChunk(data[1], data[2], data[3]);/*}}}*/
-        } else if (data[0] == 'next') {
-            self.readyToParse = true;
-        } else if (data[0] === 'dl') {
-            fAPI = FileAPI();
-            fAPI.dlLoop(data[1], data[2], data[3]);
-        } else if (data[0] === 'decrypt') {
-            fAPI = FileAPI();
-            fAPI.decryptLoop(data[1], data[2]);
-        } else if (data[0] === 'avail') {
-            avail = parseInt(data[0].split(':')[1], 10);
-        }
-    });
-}/*}}}*/
