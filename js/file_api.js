@@ -122,22 +122,14 @@ function FileAPI() {/*{{{*/
         transferTime /= 1000;
         console.log('Transfer - ' + transferTime);
         console.log('Transferred - ' + bytesTransferred);
-        console.log('Res - ' + this.res);
         console.log('Total - ' + totalTime);
-        // this.received += bytesTransferred;
+        this.received += bytesTransferred;
         this.progress = this.received / this.size;
         this.chunkSpeed = bytesTransferred / totalTime;
         this.avgSpeed = this.received / ((new Date().getTime() - this.startedAt) / 1000);
         if (this.failed) {this.progress = '--';}
         else {this.progress = this.progress.toFixed(4);}
 
-        //if (transferTime < 1 || transferTime > 3) {this.res = 1.5 * (bytesTransferred / transferTime);}
-        /*timeRatio = transferTime / totalTime;
-        if (timeRatio < .1) {this.res *= parseInt(.1 / timeRatio, 10);}
-        else if (timeRatio > .3) {this.res *= parseInt(.3 / timeRatio);}
-        if (!this.res) {this.res = S_1M;}
-        else if (this.res > S_100M) {this.res = S_100M;}
-        console.log('New res - ' + this.res);*/
         this.dispatchEvent('onprogressupdate');
     },/*}}}*/
 
@@ -408,9 +400,8 @@ function FileAPI() {/*{{{*/
         transferred = 0;
         while (true) {
             // This will return 1 on failure or completion
-            if (this.dl(sID, transferred)) {self.terminate();}
+            if (this.dl(sID, transferred)) {return 0;}
             transferred++;
-            return;
         }
     },/*}}}*/
 
@@ -421,6 +412,7 @@ function FileAPI() {/*{{{*/
         self.postMessage('dlend');
         if (chunkReq.status != 200) {self.postMessage('dlfail'); return 1;}
         self.postMessage('data-' + num + '-' + chunkReq.responseText);
+        if (chunkReq.responseText === "<<#EOF#>>") {return 1;}
         return 0;
     },/*}}}*/
 
@@ -463,6 +455,7 @@ function FileAPI() {/*{{{*/
             fAPI.getFile(fAPI.sessionID + '-avail', fAPI.incrementAvail, [fAPI]);
             fAPI.endedChunkAt = new Date().getTime();
             // Length is divided by 2 because of hex encoding
+            console.log(part.length);
             fAPI.updateProgress(part.length / 2, fAPI.endedChunkTransferAt - fAPI.startedChunkTransferAt, fAPI.endedChunkAt - fAPI.startedChunkAt);
         }
     },/*}}}*/
@@ -600,139 +593,139 @@ if (isWorker) {/*{{{*/
 //        }/*}}}*/
 //    },/*}}}*/
 
-    getChunk: function(sID, res, k) {/*{{{*/
-        if (isWorker) {/*{{{*/
-            chunkReq = createPostReq('/file.cgi', true);
-            chunkReq.firstChunk = true;
-            chunkReq.onreadystatechange = function() {
-                if (this.readyState == 3 && this.firstChunk) {this.firstChunk = false; self.postMessage('load');}
-                else if (this.readyState == 4) {
-                    if (this.status != 200) {self.postMessage('fail');}
-                    else {
-                        self.postMessage(this.responseText.length);
-                        self.postMessage('decrypt');
-                        hex = new Blob([CryptoJS.AES.decrypt(this.responseText, k, {mode: CryptoJS.mode.CBC}).toString()], {type: 'Application/octet-stream'});
-                        /*offset = 0;
-                        iterSize = S_200K;
+//    getChunk: function(sID, res, k) {/*{{{*/
+//        if (isWorker) {/*{{{*/
+//            chunkReq = createPostReq('/file.cgi', true);
+//            chunkReq.firstChunk = true;
+//            chunkReq.onreadystatechange = function() {
+//                if (this.readyState == 3 && this.firstChunk) {this.firstChunk = false; self.postMessage('load');}
+//                else if (this.readyState == 4) {
+//                    if (this.status != 200) {self.postMessage('fail');}
+//                    else {
+//                        self.postMessage(this.responseText.length);
+//                        self.postMessage('decrypt');
+//                        hex = new Blob([CryptoJS.AES.decrypt(this.responseText, k, {mode: CryptoJS.mode.CBC}).toString()], {type: 'Application/octet-stream'});
+//                        /*offset = 0;
+//                        iterSize = S_200K;
+//
+//                       while (offset < hex.size) {
+//                            hexChunk = hex.slice(offset, offset + iterSize);
+//                            fr = new FileReader();
+//                            fr.onload = function() {
+//                                self.postMessage(this.result);
+//                                offset += iterSize;
+//                            }
+//                            fr.readAsText(hexChunk);
+//                            while (!self.readyToParse) {}
+//                            self.readyToParse = false;
+//                        }*/
+//                        self.postMessage(hex);
+//                        self.postMessage('____<<<#EOA#>>>____');
+//                        // While reading, pass data as it is read and increment offset?
+//                            // Use abort, but then how to offset string from decryption?
+//                        // Use oncomplete for termination postMessage
+//                        /*iterSize = S_200K;
+//                        while (hex.data.length) {
+//                            if (hex.data.length < iterSize) {iterSize = hex.data.length;}
+//                            self.postMessage(hex.data.substr(0, iterSize));
+//                            hex.data = hex.data.substr(iterSize);
+//                        }*/
+//                    }
+//                }
+//            };
+//            chunkReq.send('s=1&si=' + sID + '&r=' + res);
+//            /*}}}*/
+//        } else {/*{{{*/
+//            this.currentXHRReq = createPostReq('/file.cgi', true);
+//            this.currentXHRReq.fAPI = this;
+//            this.currentXHRReq.onreadystatechange = function() {
+//                if (this.readyState == 3 && this.fAPI.firstChunk) {
+//                    this.fAPI.firstChunk = false;
+//                    this.fAPI.startedChunkTransferAt = new Date().getTime();
+//                } else if (this.readyState == 4 && this.status == 200) {
+//                    this.fAPI.updateStatus('Decrypting');
+//                    this.fAPI.endedChunkTransferAt = new Date().getTime();
+//                    this.fAPI.chunkLength = this.responseText.length;
+//                    this.fAPI.received += this.fAPI.chunkLength;
+//                    this.fAPI.currentData = CryptoJS.AES.decrypt(this.responseText, this.fAPI.encKey, {mode: CryptoJS.mode.CBC}).toString();
+//                    this.fAPI.storeChunk();
+//                } else if (this.readyState == 4 && this.status != 200) {
+//                    this.fAPI.currentData = 'fail';
+//                }
+//            };
+//            this.currentXHRReq.send('s=1&si=' + this.sessionID + '&r=' + this.res);
+//        }/*}}}*/
+//    },/*}}}*/
 
-                       while (offset < hex.size) {
-                            hexChunk = hex.slice(offset, offset + iterSize);
-                            fr = new FileReader();
-                            fr.onload = function() {
-                                self.postMessage(this.result);
-                                offset += iterSize;
-                            }
-                            fr.readAsText(hexChunk);
-                            while (!self.readyToParse) {}
-                            self.readyToParse = false;
-                        }*/
-                        self.postMessage(hex);
-                        self.postMessage('____<<<#EOA#>>>____');
-                        // While reading, pass data as it is read and increment offset?
-                            // Use abort, but then how to offset string from decryption?
-                        // Use oncomplete for termination postMessage
-                        /*iterSize = S_200K;
-                        while (hex.data.length) {
-                            if (hex.data.length < iterSize) {iterSize = hex.data.length;}
-                            self.postMessage(hex.data.substr(0, iterSize));
-                            hex.data = hex.data.substr(iterSize);
-                        }*/
-                    }
-                }
-            };
-            chunkReq.send('s=1&si=' + sID + '&r=' + res);
-            /*}}}*/
-        } else {/*{{{*/
-            this.currentXHRReq = createPostReq('/file.cgi', true);
-            this.currentXHRReq.fAPI = this;
-            this.currentXHRReq.onreadystatechange = function() {
-                if (this.readyState == 3 && this.fAPI.firstChunk) {
-                    this.fAPI.firstChunk = false;
-                    this.fAPI.startedChunkTransferAt = new Date().getTime();
-                } else if (this.readyState == 4 && this.status == 200) {
-                    this.fAPI.updateStatus('Decrypting');
-                    this.fAPI.endedChunkTransferAt = new Date().getTime();
-                    this.fAPI.chunkLength = this.responseText.length;
-                    this.fAPI.received += this.fAPI.chunkLength;
-                    this.fAPI.currentData = CryptoJS.AES.decrypt(this.responseText, this.fAPI.encKey, {mode: CryptoJS.mode.CBC}).toString();
-                    this.fAPI.storeChunk();
-                } else if (this.readyState == 4 && this.status != 200) {
-                    this.fAPI.currentData = 'fail';
-                }
-            };
-            this.currentXHRReq.send('s=1&si=' + this.sessionID + '&r=' + this.res);
-        }/*}}}*/
-    },/*}}}*/
+//    storeChunk: function() {/*{{{*/
+//        if (this.currentData == 'fail') {
+//            this.fail('Couldn\'t obtain next chunk');
+//        } else {
+//            this.updateStatus('Storing chunk');
+//        }
+//
+//        fr = new FileReader();
+//        fr.fAPI = this;
+//        fr.onloadend = function() {
+//            if (this.result.indexOf('<<#EOF#>>') != -1) {
+//                this.fAPI.completed = true;
+//                this.fAPI.currentData = this.fAPI.currentData.slice(0, -18);
+//            }
+//        }
+//        fr.readAsText(new Blob([hex2a(this.currentData)]));
+//
+//        if (mode == M_GC) {/*{{{*/
+//            fAPI = this;
+//            this.fs.root.getFile(this.sessionID, {create: false}, function(fileEntry) {
+//                fileEntry.fAPI = this;
+//                fileEntry.createWriter(function(w) {
+//                    w.seek(w.length);
+//                    w.write(this.fAPI.currentData);
+//                }, function(e) {fAPI.fail('Failed to open file for writing');});
+//            }, function(e) {fAPI.fail('Failed to open cache');});/*}}}*/
+//        } else {/*{{{*/
+//            obj = db.transaction([dbName], "readwrite").objectStore(dbName);
+//            req = obj.get(this.sessionID);
+//            req.fAPI = this;
+//            req.onsuccess = function(e) {
+//                this.fAPI.updateStatus('Appending data');
+//                // Need to do filereader to get data from currentData
+//                fr = new FileReader();
+//                fr.fAPI = this;
+//                fr.req = req;
+//                fr.onloadend = function(e) {
+//                    this.req.result.data += this.fAPI.currentData;
+//                    this.fAPI.updateStatus('Storing data');
+//                    reqUpdate = obj.put(this.req.result);
+//                    reqUpdate.fAPI = this.fAPI;
+//
+//                    reqUpdate.onerror = function(e) {
+//                        this.fAPI.fail('Failed to save data');
+//                    };
+//                }
+//                fr.readAsText(this.fAPI.currentData);
+//
+//            };
+//
+//            req.onerror = function(e) {
+//                this.fAPI.fail('Failed to open cache');
+//            }
+//        }/*}}}*/
+//    },/*}}}*/
 
-    storeChunk: function() {/*{{{*/
-        if (this.currentData == 'fail') {
-            this.fail('Couldn\'t obtain next chunk');
-        } else {
-            this.updateStatus('Storing chunk');
-        }
-
-        fr = new FileReader();
-        fr.fAPI = this;
-        fr.onloadend = function() {
-            if (this.result.indexOf('<<#EOF#>>') != -1) {
-                this.fAPI.completed = true;
-                this.fAPI.currentData = this.fAPI.currentData.slice(0, -18);
-            }
-        }
-        fr.readAsText(new Blob([hex2a(this.currentData)]));
-
-        if (mode == M_GC) {/*{{{*/
-            fAPI = this;
-            this.fs.root.getFile(this.sessionID, {create: false}, function(fileEntry) {
-                fileEntry.fAPI = this;
-                fileEntry.createWriter(function(w) {
-                    w.seek(w.length);
-                    w.write(this.fAPI.currentData);
-                }, function(e) {fAPI.fail('Failed to open file for writing');});
-            }, function(e) {fAPI.fail('Failed to open cache');});/*}}}*/
-        } else {/*{{{*/
-            obj = db.transaction([dbName], "readwrite").objectStore(dbName);
-            req = obj.get(this.sessionID);
-            req.fAPI = this;
-            req.onsuccess = function(e) {
-                this.fAPI.updateStatus('Appending data');
-                // Need to do filereader to get data from currentData
-                fr = new FileReader();
-                fr.fAPI = this;
-                fr.req = req;
-                fr.onloadend = function(e) {
-                    this.req.result.data += this.fAPI.currentData;
-                    this.fAPI.updateStatus('Storing data');
-                    reqUpdate = obj.put(this.req.result);
-                    reqUpdate.fAPI = this.fAPI;
-
-                    reqUpdate.onerror = function(e) {
-                        this.fAPI.fail('Failed to save data');
-                    };
-                }
-                fr.readAsText(this.fAPI.currentData);
-
-            };
-
-            req.onerror = function(e) {
-                this.fAPI.fail('Failed to open cache');
-            }
-        }/*}}}*/
-    },/*}}}*/
-
-    resume: function() {/*{{{*/
-        this.endedChunkAt = new Date().getTime();
-        this.paused = false;
-        this.stored = false;
-        this.updateStatus('Chunk stored');
-        this.updateProgress(this.chunkLength, this.endedChunkTransferAt - this.startedChunkTransferAt, this.endedChunkAt - this.startedChunkAt);
-
-        if (this.completed) {
-            this.finish();
-        } else {
-            this.next();
-        }
-    },/*}}}*/
+//    resume: function() {/*{{{*/
+//        this.endedChunkAt = new Date().getTime();
+//        this.paused = false;
+//        this.stored = false;
+//        this.updateStatus('Chunk stored');
+//        this.updateProgress(this.chunkLength, this.endedChunkTransferAt - this.startedChunkTransferAt, this.endedChunkAt - this.startedChunkAt);
+//
+//        if (this.completed) {
+//            this.finish();
+//        } else {
+//            this.next();
+//        }
+//    },/*}}}*/
 
 //    next: function() {/*{{{*/
 //        if (this.paused) {this.updateStatus('Paused'); this.chunkSpeed = '--'; this.avgSpeed = '--'; this.dispatchEvent('onprogressupdate'); return;}
@@ -771,4 +764,3 @@ if (isWorker) {/*{{{*/
 //            this.getChunk();
 //        }
 //    },/*}}}*/
-

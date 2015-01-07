@@ -43,6 +43,10 @@ if ($state == 0) { #{{{
     `mkdir /files/$sessionID-pln`;
     `mkdir /files/$sessionID`;
     `cd /files/$sessionID-pln/; split -b 20480 -a 10 -d "/data/$hn/$file" ""`;
+
+    # Dismount container
+    `/var/www/prometheus/encfs/./fs.py d $v`;
+
     my $numFiles = `count=0; for f in \`ls /files/$sessionID-pln/\`; do count=\$((count+1)); done; echo \$count`;
     chomp($numFiles);
 
@@ -51,18 +55,14 @@ if ($state == 0) { #{{{
         `openssl enc -a -aes-256-cbc -e -pass pass:"$encKey" -in /files/$sessionID-pln/$_ -out /files/$sessionID/$_`;
         `rm /files/$sessionID-pln/$_`;
     }
-    `/var/www/prometheus/./encrypt_chunk.pl "$sessionID" "$encKey" 0 &`;
-    `/var/www/prometheus/./encrypt_chunk.pl "$sessionID" "$encKey" 1 &`;
-    `/var/www/prometheus/./encrypt_chunk.pl "$sessionID" "$encKey" 2 &`;
-    #`openssl enc -a -aes-256-cbc -e -pass pass:"$encKey" -in "/data/$hn/$file" -out /files/$sessionID`;
+    system("/var/www/prometheus/./encrypt_chunk.pl \"$sessionID\" \"$encKey\" 0 &");
+    system("/var/www/prometheus/./encrypt_chunk.pl \"$sessionID\" \"$encKey\" 1 &");
+    system("/var/www/prometheus/./encrypt_chunk.pl \"$sessionID\" \"$encKey\" 2 &");
 
     # Calculate size
     my $size = `du -b "/files/$sessionID/0000000000" | egrep -o "[0-9]+" | head -1` * $numFiles;
     chomp($size);
     if ($size == 0) {print "nofile"; exit;}
-
-    # Dismount container
-    `/var/www/prometheus/encfs/./fs.py d $v`;
 
     # Send session information and encryption key
     print `echo -n "$key" | openssl enc -a -aes-256-cbc -e -pass pass:"$encKey"`;
@@ -71,14 +71,17 @@ if ($state == 0) { #{{{
     # Read session parameters
     my $sessionID = $q->param('si');
     my $offset = $session->param("$sessionID-offset");
+    my $file = "0" x (10 - length($offset)) . $offset;
 
-    if (not -e "/files/$sessionID/$offset") {
+    if (not -e "/files/$sessionID/$file") {
         print "<<#EOF#>>";
-        return;
+        exit;
     }
-    `cat /files/$sessionID/$offset`;
+    my $data = `cat /files/$sessionID/$file`;
+    chomp($data);
+    print $data;
     $session->param("$sessionID-offset", $offset + 1);
-    `shred -u -n 5 /files/$sessionID/$offset && rm /files/$sessionID/$offset`; #}}}
+    system("shred -u -n 5 /files/$sessionID/$file && rm /files/$sessionID/$file &"); #}}}
 } elsif ($state == 2) { #{{{
     my $sessionID = $q->param('si');
     `rm -r /files/$sessionID`;
