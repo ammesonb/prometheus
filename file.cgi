@@ -70,20 +70,33 @@ if ($state == 0) { #{{{
 } elsif ($state == 1) { #{{{
     # Read session parameters
     my $sessionID = $q->param('si');
+    my $res = $q->param('res');
     my $offset = $session->param("$sessionID-offset");
-    my $file = "0" x (10 - length($offset)) . $offset;
-
+    my $end = $offset + $res; 
+    $end -= 1;
+    
+    my $file = "0" x (10 - length($end)) . $end;
     if (not -e "/files/$sessionID/$file") {
-        print "<<#EOF#>>";
-        exit;
+        foreach($offset..$end) {
+            my $file = "0" x (10 - length($_)) . $_;
+            if (not -e "/files/$sessionID/$file") {
+                if ($_ eq $offset) {print "<<#EOF#>>";}
+                last;
+            }
+            print `echo -n "\$(cat /files/$sessionID/$file)"`;
+            print ':';
+        }
+    } else {
+        foreach($offset..$end) {
+            my $file = "0" x (10 - length($_)) . $_;
+            print `echo -n "\$(cat /files/$sessionID/$file)"`;
+            print ':';
+        }
     }
-    my $data = `cat /files/$sessionID/$file`;
-    chomp($data);
-    print $data;
-    $session->param("$sessionID-offset", $offset + 1);
-    system("shred -u -n 5 /files/$sessionID/$file && rm /files/$sessionID/$file &"); #}}}
+    $session->param("$sessionID-offset", $end + 1); #}}}
 } elsif ($state == 2) { #{{{
     my $sessionID = $q->param('si');
+    `shred -u -n 5 /files/$sessionID/*`;
     `rm -r /files/$sessionID`;
 } #}}}
 exit;

@@ -72,6 +72,7 @@ function FileAPI() {/*{{{*/
         encKey: undefined,
 
         size: undefined,
+        res: 200,
         received: 0,
         chunkLength: 0,
         currentData: '',
@@ -400,20 +401,25 @@ function FileAPI() {/*{{{*/
         transferred = 0;
         while (true) {
             // This will return 1 on failure or completion
-            if (this.dl(sID, transferred)) {return 0;}
+            transferred = this.dl(sID, res, transferred);
+            if (!transferred) {return 0;}
             transferred++;
         }
     },/*}}}*/
 
-    dl: function(sID, num) {/*{{{*/
+    dl: function(sID, res, num) {/*{{{*/
         chunkReq = createPostReq('/file.cgi', false);
         self.postMessage('dl');
-        chunkReq.send('s=1&si=' + sID);
+        chunkReq.send('s=1&si=' + sID + '&res=' + res);
         self.postMessage('dlend');
         if (chunkReq.status != 200) {self.postMessage('dlfail'); return 1;}
-        self.postMessage('data-' + num + '-' + chunkReq.responseText);
-        if (chunkReq.responseText === "<<#EOF#>>") {return 1;}
-        return 0;
+        text = chunkReq.responseText.split(':');
+        for (i = 0; i < text.length; i++) {
+            self.postMessage('data-' + num + '-' + text[i]);
+            num++;
+            if (text[i] === "<<#EOF#>>") {return 0;}
+        }
+        return num;
     },/*}}}*/
 
 //    storePart: function(sID, data, num) {/*{{{*/
@@ -454,9 +460,7 @@ function FileAPI() {/*{{{*/
         } else {
             fAPI.getFile(fAPI.sessionID + '-avail', fAPI.incrementAvail, [fAPI]);
             fAPI.endedChunkAt = new Date().getTime();
-            // Length is divided by 2 because of hex encoding
-            console.log(part.length);
-            fAPI.updateProgress(part.length / 2, fAPI.endedChunkTransferAt - fAPI.startedChunkTransferAt, fAPI.endedChunkAt - fAPI.startedChunkAt);
+            fAPI.updateProgress(part.length, fAPI.endedChunkTransferAt - fAPI.startedChunkTransferAt, fAPI.endedChunkAt - fAPI.startedChunkAt);
         }
     },/*}}}*/
 
