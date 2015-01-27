@@ -332,7 +332,6 @@ function FileAPI() {/*{{{*/
             } else if (msg.substr(0, 5) === 'dlend') {
                 this.fAPI.endedChunkTransferAt = new Date().getTime();
                 fAPI.updateProgress(msg.split('-')[1], fAPI.endedChunkTransferAt - fAPI.startedChunkTransferAt, fAPI.endedChunkAt - fAPI.startedChunkAt);
-            } else if (msg.substr(0, 5) === 'parse') {
             } else if (msg === 'dlfail') {
                 this.cryptWorker.terminate();
                 this.fAPI.fail('Download failed');
@@ -344,21 +343,6 @@ function FileAPI() {/*{{{*/
                                      this.fAPI.partVerify, [this.fAPI, this, this.cryptWorker, 0]);
             } else if (msg === 'done') {
                 this.fAPI.updateStatus('Decrypting');
-            } else if (msg == 'getpartfail') {
-                this.cryptWorker.terminate();
-                this.fAPI.fail('Failed to get file part');
-                this.terminate();
-            } else if (msg == 'updpartfail') {
-                this.cryptWorker.terminate();
-                this.fAPI.fail('Failed to update file part');
-                this.terminate();
-            } else if (msg == 'wrtpartfail') {
-                this.cryptWorker.terminate();
-                this.fAPI.fail('Failed to write to file part');
-                this.terminate();
-            } else if (msg == 'cwtpartfail') {
-                this.cryptWorker.terminate();
-                this.fAPI.fail('Failed to create writer for file part');
                 this.terminate();
             }
         });/*}}}*/
