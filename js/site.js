@@ -147,6 +147,7 @@ function parseTime(tmpT) {/*{{{*/
     fractions = [24, 60, 60];
     u = 0;
     while (tmpT < conversions[u]) {u++;}
+    if (u == conversions.length) {return [tmpT.toFixed(2) + ' s', 's'];}
     tmpT = tmpT / conversions[u];
     tmpI = parseInt(tmpT, 10);
     tmpF = parseInt(tmpT % 1 * fractions[u], 10);
@@ -4350,7 +4351,7 @@ function getFile(file, kind, item) {/*{{{*/
         ctx = bar.getContext('2d');
         updateProgressBar(ctx, w, h, c, s, fAPI.progress);
         updateInfo(document.getElementById(fAPI.ttid + '_info'), fAPI);
-        console.log('Progress: ' + f.progress * 100 + '%, ' + f.chunkSpeed + ' B/s');
+        console.log('Progress: ' + f.progress * 100 + '%, ' + parseSize(f.chunkSpeed)[0]);
     });/*}}}*/
 
     addDownload(f, item);

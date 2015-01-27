@@ -121,10 +121,7 @@ function FileAPI() {/*{{{*/
         // Change time into seconds
         totalTime /= 1000;
         transferTime /= 1000;
-        console.log('Transfer - ' + transferTime);
-        console.log('Transferred - ' + bytesTransferred);
-        console.log('Total - ' + totalTime);
-        this.received += bytesTransferred;
+        this.received += parseInt(bytesTransferred, 10);
         this.progress = this.received / this.size;
         this.chunkSpeed = bytesTransferred / totalTime;
         this.avgSpeed = this.received / ((new Date().getTime() - this.startedAt) / 1000);
@@ -332,8 +329,9 @@ function FileAPI() {/*{{{*/
             msg = m.data;
             if (msg === 'dl') {
                 this.fAPI.startedChunkTransferAt = new Date().getTime();
-            } else if (msg === 'dlend') {
+            } else if (msg.substr(0, 5) === 'dlend') {
                 this.fAPI.endedChunkTransferAt = new Date().getTime();
+                fAPI.updateProgress(msg.split('-')[1], fAPI.endedChunkTransferAt - fAPI.startedChunkTransferAt, fAPI.endedChunkAt - fAPI.startedChunkAt);
             } else if (msg.substr(0, 5) === 'parse') {
             } else if (msg === 'dlfail') {
                 this.cryptWorker.terminate();
@@ -344,6 +342,8 @@ function FileAPI() {/*{{{*/
                 data = msg.split('-')[2];
                 this.fAPI.updateFile(this.fAPI.sessionID + '-' + num, num, data, 'text/plain', true,
                                      this.fAPI.partVerify, [this.fAPI, this, this.cryptWorker, 0]);
+            } else if (msg === 'done') {
+                this.fAPI.updateStatus('Decrypting');
             } else if (msg == 'getpartfail') {
                 this.cryptWorker.terminate();
                 this.fAPI.fail('Failed to get file part');
@@ -400,18 +400,18 @@ function FileAPI() {/*{{{*/
         if (paused) {return;}
         transferred = 0;
         while (true) {
-            // This will return 1 on failure or completion
+            // This will return 0 on failure or completion
             transferred = this.dl(sID, res, transferred);
             if (!transferred) {return 0;}
-            transferred++;
         }
+        return 1;
     },/*}}}*/
 
     dl: function(sID, res, num) {/*{{{*/
         chunkReq = createPostReq('/file.cgi', false);
         self.postMessage('dl');
         chunkReq.send('s=1&si=' + sID + '&res=' + res);
-        self.postMessage('dlend');
+        self.postMessage('dlend-' + chunkReq.responseText.length);
         if (chunkReq.status != 200) {self.postMessage('dlfail'); return 1;}
         text = chunkReq.responseText.split(':');
         for (i = 0; i < text.length; i++) {
@@ -460,7 +460,7 @@ function FileAPI() {/*{{{*/
         } else {
             fAPI.getFile(fAPI.sessionID + '-avail', fAPI.incrementAvail, [fAPI]);
             fAPI.endedChunkAt = new Date().getTime();
-            fAPI.updateProgress(part.length, fAPI.endedChunkTransferAt - fAPI.startedChunkTransferAt, fAPI.endedChunkAt - fAPI.startedChunkAt);
+            //fAPI.updateProgress(part.length, fAPI.endedChunkTransferAt - fAPI.startedChunkTransferAt, fAPI.endedChunkAt - fAPI.startedChunkAt);
         }
     },/*}}}*/
 
@@ -561,7 +561,11 @@ if (isWorker) {/*{{{*/
             self.readyToParse = true;
         } else if (data[0] === 'dl') {
             fAPI = FileAPI();
-            fAPI.dlLoop(data[1], data[2], data[3]);
+            if (fAPI.dlLoop(data[1], data[2], data[3])) {
+                self.postMessage('dlfail');
+            } else {
+                self.postMessage('done');
+            }
         } else if (data[0] === 'decrypt') {
             fAPI = FileAPI();
             fAPI.decryptLoop(data[1], data[2]);
