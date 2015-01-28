@@ -4362,7 +4362,7 @@ function getFile(file, kind, item) {/*{{{*/
 
 }/*}}}*/
 
-function populateDL(dlPanel, firstSize) {/*{{{*/
+function populateDL(dlPanel, firstSize, transferSize) {/*{{{*/
     title = element('p');
     title.id = 'dl_title';
     title.className = 'normal_section_header';
@@ -4375,7 +4375,7 @@ function populateDL(dlPanel, firstSize) {/*{{{*/
     stats.className = 'normal_text';
     stats.style.fontWeight = 'bold';
     stats.style.fontSize = '90%';
-    setText(stats, 'Queued:\u00a01\u00a0\u00a0\u00a0\u00a0File size:\u00a0' + firstSize);
+    setText(stats, 'Queued:\u00a01\u00a0\u00a0\u00a0\u00a0File size:\u00a0' + firstSize + '\u00a0\u00a0\u00a0\u00a0Transfer size:\u00a0' + transferSize);
 
     downloadList = element('div');
     downloadList.id = 'dl_list';
@@ -4405,7 +4405,7 @@ function addDownload(fAPI, item) {/*{{{*/
         downloadTab.onclick = function() {switchTab(this.getAttribute('data-id'));}
         addTab(downloadPanel, downloadTab);
 
-        populateDL(downloadPanel, parseSize(item.size)[0]);
+        populateDL(downloadPanel, parseSize(item.size)[0], parseSize(item.size * 1.3578)[0]);
         downloadPanel.style.height = main.offsetHeight + 'px';
 
         switchTab('dl');

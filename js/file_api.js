@@ -21,8 +21,6 @@ mode = M_GC;
     IndexedDB downloads WILL NOT WORK - writes to a field but getFile returns the whole object
     IndexedDB won't work in workers for Firefox - need to check access to window.indexedDB to determine that
     Clean up file parts after decryption
-    Store file already chunked on server - use session as numbered directory
-        Hopefully will speed up transfer - avoids constant decryption/re-encryption needed for small chunks
 */ /*}}}*/
 
 // If not worker, use asynchronous methods/*{{{*/
@@ -75,10 +73,10 @@ function FileAPI() {/*{{{*/
         res: 200,
         received: 0,
         chunkLength: 0,
-        currentData: '',
+        chunks: 0,
+        chunksDecrypted: 0,
         avgSpeed: 0,
         startedAt: undefined,
-        firstChunk: true,
         chunkSpeed: 0,
         startedChunkAt: 0,
         startedChunkTransferAt: 0,
@@ -118,13 +116,20 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
 
     updateProgress: function(bytesTransferred, transferTime, totalTime) {/*{{{*/
-        // Change time into seconds
-        totalTime /= 1000;
-        transferTime /= 1000;
-        this.received += parseInt(bytesTransferred, 10);
-        this.progress = this.received / this.size;
-        this.chunkSpeed = bytesTransferred / totalTime;
-        this.avgSpeed = this.received / ((new Date().getTime() - this.startedAt) / 1000);
+        if (this.status != 'Decrypting') {
+            // Change time into seconds
+            totalTime /= 1000;
+            transferTime /= 1000;
+            this.received += parseInt(bytesTransferred, 10);
+            this.progress = this.received / this.size;
+            this.chunkSpeed = bytesTransferred / totalTime;
+            this.avgSpeed = this.received / ((new Date().getTime() - this.startedAt) / 1000);
+        } else {
+            this.progress = this.chunksDecrypted / this.chunks;
+            this.chunkSpeed = '--';
+            this.avgSpeed = '--';
+        }
+
         if (this.failed) {this.progress = '--';}
         else {this.progress = this.progress.toFixed(4);}
 
@@ -331,7 +336,8 @@ function FileAPI() {/*{{{*/
                 this.fAPI.startedChunkTransferAt = new Date().getTime();
             } else if (msg.substr(0, 5) === 'dlend') {
                 this.fAPI.endedChunkTransferAt = new Date().getTime();
-                fAPI.updateProgress(msg.split('-')[1], fAPI.endedChunkTransferAt - fAPI.startedChunkTransferAt, fAPI.endedChunkAt - fAPI.startedChunkAt);
+                this.fAPI.chunkLength = parseInt(msg.split('-')[1], 10);
+                fAPI.updateProgress(this.fAPI.chunkLength, fAPI.endedChunkTransferAt - fAPI.startedChunkTransferAt, fAPI.endedChunkAt - fAPI.startedChunkAt);
             } else if (msg === 'dlfail') {
                 this.cryptWorker.terminate();
                 this.fAPI.fail('Download failed');
@@ -339,6 +345,7 @@ function FileAPI() {/*{{{*/
             } else if (msg.substr(0, 5) == 'data-') {
                 num = msg.split('-')[1];
                 data = msg.split('-')[2];
+                this.fAPI.chunks++;
                 this.fAPI.updateFile(this.fAPI.sessionID + '-' + num, num, data, 'text/plain', true,
                                      this.fAPI.partVerify, [this.fAPI, this, this.cryptWorker, 0]);
             } else if (msg === 'done') {
@@ -358,6 +365,8 @@ function FileAPI() {/*{{{*/
             } else if (msg === 'appendFail') {
                 this.ajaxWorker.terminate();
                 this.fAPI.fail('Failed to store decrypted data');
+            } else if (msg.substr(0, 4) == 'data') {
+                this.fAPI.updateFile(this.fAPI.sID, 'data', data, 'text/plain', false, append, [0]);
             }
         });/*}}}*/
     },/*}}}*/
@@ -444,7 +453,20 @@ function FileAPI() {/*{{{*/
         } else {
             fAPI.getFile(fAPI.sessionID + '-avail', fAPI.incrementAvail, [fAPI]);
             fAPI.endedChunkAt = new Date().getTime();
-            //fAPI.updateProgress(part.length, fAPI.endedChunkTransferAt - fAPI.startedChunkTransferAt, fAPI.endedChunkAt - fAPI.startedChunkAt);
+        }
+    },/*}}}*/
+
+    appendVerify: function(fAPI, ajaxWorker, cryptWorker, repeat, name, part) {/*{{{*/
+        if (part === NaN && !repeat) {
+            fAPI.updateFile(name, 'data', part, 'text/plain', false, fAPI.appendVerify,
+                            [fAPI, ajaxWorker, cryptWorker, 1]);
+        } else if (part === NaN && repeat) {
+            ajaxWorker.terminate();
+            cryptWorker.terminate();
+            fAPI.fail('Failed to append file part');
+        } else {
+            fAPI.chunksDecrypted++;
+            fAPI.updateProgress(0, 0, 0);
         }
     },/*}}}*/
 
@@ -473,7 +495,8 @@ function FileAPI() {/*{{{*/
     decrypt: function(sID, num, k, name, data) {/*{{{*/
         if (data == NaN) {return 1;}
         hex = CryptoJS.AES.decrypt(data, k, {mode: CryptoJS.mode.CBC}).toString();
-        updateFile(sID, 'data', data, 'text/plain', false, append, [0]);
+        self.postMessage('data-' + num + '-' + data);
+        //updateFile(sID, 'data', data, 'text/plain', false, append, [0]);
     },/*}}}*/
 
     append: function(repeat, sID, data) {/*{{{*/
@@ -484,7 +507,6 @@ function FileAPI() {/*{{{*/
     finish: function() {/*{{{*/
         this.currentXHRReq = createPostReq('/file.cgi', true);
         this.currentXHRReq.send('s=2&si=' + this.sessionID);
-        this.currentData = undefined;
         this.currentXHRReq = undefined;
 
         if (mode == M_GC) {/*{{{*/
