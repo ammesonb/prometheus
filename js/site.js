@@ -4541,6 +4541,9 @@ function updateInfo(elem, fAPI) {/*{{{*/
     } else {
         d.setTime(fAPI.startedAt);
     }
+
+    if (fAPI.status === 'Decrypting') {received = fAPI.chunksDecrypted; size = fAPI.chunks;}
+
     setText(elem, /*{{{*/
         'Started at:\u00a0\u00a0' + 
             d.toString().split(/ [A-Z]{3}/)[0].
