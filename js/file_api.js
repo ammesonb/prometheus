@@ -52,37 +52,37 @@ if (notWorker) {
 }/*}}}*/
 
 function FileAPI() {/*{{{*/
-    return {
-        // Attributes/*{{{*/
-        events: {},
-        status: 'Queued',
-        sessionID: undefined,
-        progress: 0,
-        completed: false,
-        paused: false,
-        failed: 0,
+  return {
+    // Attributes/*{{{*/
+    events: {},
+    status: 'Queued',
+    sessionID: undefined,
+    progress: 0,
+    completed: false,
+    paused: false,
+    failed: 0,
 
-        fs: undefined,
-        availCreated: 0,
-        kind: '',
-        file: '',
-        dataURI: undefined,
-        encKey: undefined,
+    fs: undefined,
+    availCreated: 0,
+    kind: '',
+    file: '',
+    dataURI: undefined,
+    encKey: undefined,
 
-        size: undefined,
-        res: 200,
-        received: 0,
-        chunkLength: 0,
-        chunks: 0,
-        chunksDecrypted: 0,
-        avgSpeed: 0,
-        startedAt: undefined,
-        chunkSpeed: 0,
-        startedChunkAt: 0,
-        startedChunkTransferAt: 0,
-        endedChunkTransferAt: 0,
-        endedChunkAt: 0,
-        currentXHRReq: undefined,/*}}}*/
+    size: undefined,
+    res: 200,
+    received: 0,
+    chunkLength: 0,
+    chunks: 0,
+    chunksDecrypted: 0,
+    avgSpeed: 0,
+    startedAt: undefined,
+    chunkSpeed: 0,
+    startedChunkAt: 0,
+    startedChunkTransferAt: 0,
+    endedChunkTransferAt: 0,
+    endedChunkAt: 0,
+    currentXHRReq: undefined,/*}}}*/
 
     // Event listeners/*{{{*/
     addEventListener: function(type, f) {/*{{{*/
@@ -248,7 +248,7 @@ function FileAPI() {/*{{{*/
             }/*}}}*/
         } else {/*{{{*/
             fAPI = this;
-            this.fs.root.getFile(this.sessionID + '-avail', {}, function(fE) {
+            this.fs.root.getFile(name, {}, function(fE) {
                 fE.fAPI = fAPI;
                 fE.file(function(file) {
                     reader = new FileReader();
@@ -368,17 +368,22 @@ function FileAPI() {/*{{{*/
                 if (this.fAPI.chunksDecrypted >= this.fAPI.chunks) {
                     this.postMessage('noneAvail');
                 } else {
-                    this.fAPI.getFile(this.fAPI.sessionID + this.fAPI.chunksDecrypted, this.fAPI.sendPart,
+                    this.fAPI.getFile(this.fAPI.sessionID + '-' + this.fAPI.chunksDecrypted, this.fAPI.sendPart,
                          [this.fAPI.sessionID, this.fAPI.chunksDecrypted, this.fAPI.encKey, cryptWorker]);
                 }
             } else if (msg.substr(0, 4) == 'data') {
-                this.fAPI.updateFile(this.fAPI.sID, 'data', data, 'text/plain', false, this.fAPI.appendVerify,
+                num = msg.split('-')[1];
+                data = msg.split('-')[2];
+                this.fAPI.updateFile(this.fAPI.sessionID, 'data', data, 'text/plain', false, this.fAPI.appendVerify,
                      [this.fAPI, this.ajaxWorker, this, 0]);
 
-                if (this.fAPI.chunksDecrypted >= this.fAPI.chunks) {
+                if (this.fAPI.status === 'Decrypting' && this.fAPI.chunksDecrypted === this.fAPI.chunks) {
+                    this.fAPI.updateStatus('Done');
+                    this.fAPI.finish();
+                } else if (this.fAPI.chunksDecrypted >= this.fAPI.chunks) {
                     this.postMessage('noneAvail');
                 } else {
-                    this.fAPI.getFile(this.fAPI.sessionID + this.fAPI.chunksDecrypted, this.fAPI.sendPart,
+                    this.fAPI.getFile(this.fAPI.sessionID + '-' + this.fAPI.chunksDecrypted, this.fAPI.sendPart,
                          [this.fAPI.sessionID, this.fAPI.chunksDecrypted, this.fAPI.encKey, cryptWorker]);
                 }
             }
@@ -405,7 +410,7 @@ function FileAPI() {/*{{{*/
     sendPart: function(sID, num, k, cryptWorker, name, data) {/*{{{*/
         if (!data) {cryptWorker.postMessage('noneAvail');}
         else {
-            cryptWorker.postMessage('avail:' + sID + ':' + num + ':' + k + ':' + data);
+            cryptWorker.postMessage(['avail', sID, num, k, data].join(':'));
         }
     },/*}}}*/
 
@@ -428,9 +433,9 @@ function FileAPI() {/*{{{*/
         if (chunkReq.status != 200) {self.postMessage('dlfail'); return 1;}
         text = chunkReq.responseText.split(':');
         for (i = 0; i < text.length; i++) {
+            if (text[i] === "<<#EOF#>>") {return 0;}
             self.postMessage('data-' + num + '-' + text[i]);
             num++;
-            if (text[i] === "<<#EOF#>>") {return 0;}
         }
         return num;
     },/*}}}*/
@@ -458,7 +463,9 @@ function FileAPI() {/*{{{*/
             cryptWorker.terminate();
             fAPI.fail('Failed to append file part');
         } else {
-            fAPI.chunksDecrypted++;
+            if (fAPI.chunksDecrypted < fAPI.chunks) {
+                fAPI.chunksDecrypted++;
+            }
             if (fAPI.status === 'Decrypting') {fAPI.updateProgress(0, 0, 0);}
         }
     },/*}}}*/
@@ -470,12 +477,7 @@ function FileAPI() {/*{{{*/
     decrypt: function(sID, num, k, data) {/*{{{*/
         if (data == NaN) {return 1;}
         hex = CryptoJS.AES.decrypt(data, k, {mode: CryptoJS.mode.CBC}).toString();
-        self.postMessage('data-' + num + '-' + data);
-    },/*}}}*/
-
-    append: function(repeat, sID, data) {/*{{{*/
-        if (value == NaN && !repeat) {updateFile(sID, 'data', data, 'text/plain', false, append, [1]);}
-        else if (value == NaN && repeat) {self.postMessage('appendFail');}
+        self.postMessage('data-' + num + '-' + hex);
     },/*}}}*/
 
     finish: function() {/*{{{*/
@@ -493,6 +495,8 @@ function FileAPI() {/*{{{*/
                     fr.onloadend = function(e) {
                         b = new Blob([hex2a(this.result)]);
                         this.fAPI.dataURI = window.URL.createObjectURL(b);
+                        this.fAPI.updateStatus('Complete');
+                        this.fAPI.dispatchEvent('oncomplete');
                         entry.remove(function() {}, function() {});
                     };
                     fr.readAsText(file);
@@ -516,15 +520,12 @@ function FileAPI() {/*{{{*/
                 this.fAPI.fail('Failed to create URI');
             }
         }/*}}}*/
-
-        this.updateStatus('Complete');
-        this.dispatchEvent('oncomplete');
     },/*}}}*/
 
     clean: function() {/*{{{*/
         window.URL.revokeObjectURL(this.dataURI);
     }/*}}}*/
-    };
+  };
 }/*}}}*/
 
 if (isWorker) {/*{{{*/

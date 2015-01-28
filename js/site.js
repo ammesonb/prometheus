@@ -3741,7 +3741,7 @@ function openAccount(accountPanel) {/*{{{*/
 }/*}}}*/
 /*}}}*/
 
-/* Media */
+/* Media *//*{{{*/
 function fetchMedia(kind) {/*{{{*/
     getMediaReq = createPostReq('media.cgi', false);
 
@@ -4337,8 +4337,6 @@ function getFile(file, kind, item) {/*{{{*/
             document.getElementById(fAPI.ttid + '_down').style.display = 'none';
         } else {
             setText(document.getElementById(fAPI.ttid + '_status'), fAPI.status);
-            if (fAPI.status == 'Complete') {
-            }
         }
         console.log('Status: ' + e.target.status);
     });/*}}}*/
@@ -4354,6 +4352,12 @@ function getFile(file, kind, item) {/*{{{*/
         updateInfo(document.getElementById(fAPI.ttid + '_info'), fAPI);
         if (f.status !== 'Decrypting') {console.log('Progress: ' + f.progress * 100 + '%, ' + parseSize(f.chunkSpeed)[0]);}
     });/*}}}*/
+    f.addEventListener("oncomplete", function(e) {
+        fAPI = this.target;
+        cl = "normal_text";
+        if (useNightTheme()) {cl += ' night';}
+        setText(document.getElementById(fAPI.ttid + '_status'), '<a href="' + fAPI.dataURI + '" class="' + cl + '" download="' + fAPI.file + '">Download</a>');
+    });
 
     addDownload(f, item);
 
@@ -4712,4 +4716,4 @@ function openTV() {/*{{{*/
 
     openMediaPanel(tvPanel, 'tv');
 }/*}}}*/
-
+/*}}}*/
