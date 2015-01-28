@@ -128,6 +128,7 @@ function hex2a(hexx) {/*{{{*/
 }/*}}}*/
 
 function parseSize(bytes) {/*{{{*/
+    if (bytes === '--') {return ['--', 'B'];}
     units = ['B', 'KB', 'MB', 'GB'];
     base = 1;
     for (u = 0; u < units.length; u++) {/*{{{*/
@@ -4351,7 +4352,7 @@ function getFile(file, kind, item) {/*{{{*/
         ctx = bar.getContext('2d');
         updateProgressBar(ctx, w, h, c, s, fAPI.progress);
         updateInfo(document.getElementById(fAPI.ttid + '_info'), fAPI);
-        console.log('Progress: ' + f.progress * 100 + '%, ' + parseSize(f.chunkSpeed)[0]);
+        if (f.status !== 'Decrypting') {console.log('Progress: ' + f.progress * 100 + '%, ' + parseSize(f.chunkSpeed)[0]);}
     });/*}}}*/
 
     addDownload(f, item);
@@ -4542,17 +4543,24 @@ function updateInfo(elem, fAPI) {/*{{{*/
         d.setTime(fAPI.startedAt);
     }
 
-    if (fAPI.status === 'Decrypting') {received = fAPI.chunksDecrypted; size = fAPI.chunks;}
+    receiveText = 'Received:\u00a0\u00a0';/*{{{*/
+    prefix = '';
+    if (fAPI.status === 'Decrypting') {
+        prefix = '\u00a0';
+        received = fAPI.chunksDecrypted;
+        size = fAPI.chunks;
+        receiveText = 'Decrypted:\u00a0\u00a0';
+    }/*}}}*/
 
     setText(elem, /*{{{*/
-        'Started at:\u00a0\u00a0' + 
+        prefix + 'Started at:\u00a0\u00a0' + 
             d.toString().split(/ [A-Z]{3}/)[0].
                 replace(/ /, ', ').
                 replace(/( [A-Za-z]+) ([0-9]{2})/, ' $2$1').
                 replace(/([0-9]{4})/, '$1,') + '\u00a0<br>' + 
-        'Received:\u00a0\u00a0' + received + '\u00a0/\u00a0' + size + '\u00a0<br>' +
-        stringFill('\u00a0', 5) + 'Speed:\u00a0\u00a0' + rate + '\u000a<br>' +
-        stringFill('\u00a0', 2) + 'Time left:\u00a0\u00a0' + eta
+        receiveText + received + '\u00a0/\u00a0' + size + '\u00a0<br>' +
+        prefix + stringFill('\u00a0', 5) + 'Speed:\u00a0\u00a0' + rate + '\u000a<br>' +
+        prefix + stringFill('\u00a0', 2) + 'Time left:\u00a0\u00a0' + eta
    );/*}}}*/
 }/*}}}*/
 
