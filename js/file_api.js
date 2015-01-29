@@ -171,6 +171,7 @@ function FileAPI() {/*{{{*/
     start: function() {/*{{{*/
         this.updateStatus('Loading session data');
         data = this.currentXHRReq.responseText.split(';;;');
+        data[0] = data[0].replace(/\u000a/g, '');
         this.encKey = hex2a(CryptoJS.AES.decrypt(data[0], master_key).toString());
         fr = new FileReader();
         fr.fAPI = this;
@@ -302,11 +303,10 @@ function FileAPI() {/*{{{*/
 
                     if (!overwrite) {
                         writer.seek(writer.length);
-                        writer.write(value);
-                    } else {
-                        blob = new Blob([value], {type: type});
-                        writer.write(blob);
                     }
+
+                    blob = new Blob([value], {type: type});
+                    writer.write(blob);
                 }, function(e) {args.push(NaN); callback.apply(fAPI, args);});
             }, function(e) {args.push(NaN); callback.apply(fAPI, args);});
         }/*}}}*/
@@ -356,7 +356,7 @@ function FileAPI() {/*{{{*/
 
         cryptWorker.ajaxWorker = ajaxWorker;
         cryptWorker.fAPI = this;
-        cryptWorker.postMessage(['decrypt', this.sessionID, this.encKey].join(':'));
+        cryptWorker.postMessage('decrypt');
         cryptWorker.addEventListener('message', function(m) {/*{{{*/
             msg = m.data;
             if (msg === 'getAvail') {
@@ -474,9 +474,10 @@ function FileAPI() {/*{{{*/
         self.postMessage('nextChunk');
     },/*}}}*/
 
-    decrypt: function(sID, num, k, data) {/*{{{*/
-        if (data == NaN) {return 1;}
-        hex = CryptoJS.AES.decrypt(data, k, {mode: CryptoJS.mode.CBC}).toString();
+    decrypt: function(sID, num, k, etxt) {/*{{{*/
+        if (etxt == NaN) {return 1;}
+        hex = CryptoJS.AES.decrypt(etxt, k, {mode: CryptoJS.mode.CBC}).toString();
+        console.log(hex.substr(0, 50));
         self.postMessage('data-' + num + '-' + hex);
     },/*}}}*/
 
@@ -543,7 +544,7 @@ if (isWorker) {/*{{{*/
             }
         } else if (data[0] === 'decrypt') {
             fAPI = FileAPI();
-            fAPI.decryptLoop(data[1], data[2]);
+            fAPI.decryptLoop();
         } else if (data[0] === 'noneAvail') {
             setTimeout(function() {fAPI = FileAPI(); fAPI.decryptLoop();}, 100);
         } else if (data[0] === 'avail') {

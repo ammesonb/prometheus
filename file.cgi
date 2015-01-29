@@ -52,12 +52,12 @@ if ($state == 0) { #{{{
 
     foreach(0..999) {
         $_ = "0" x (10 - length($_)) . $_;
-        `openssl enc -a -aes-256-cbc -e -pass pass:"$encKey" -in /files/$sessionID-pln/$_ -out /files/$sessionID/$_`;
+        `openssl enc -a -aes-256-cbc -e -pass pass:"$key" -in /files/$sessionID-pln/$_ -out /files/$sessionID/$_`;
         `rm /files/$sessionID-pln/$_`;
     }
-    system("/var/www/prometheus/./encrypt_chunk.pl \"$sessionID\" \"$encKey\" 0 &");
-    system("/var/www/prometheus/./encrypt_chunk.pl \"$sessionID\" \"$encKey\" 1 &");
-    system("/var/www/prometheus/./encrypt_chunk.pl \"$sessionID\" \"$encKey\" 2 &");
+    system("/var/www/prometheus/./encrypt_chunk.pl \"$sessionID\" \"$key\" 0 &");
+    system("/var/www/prometheus/./encrypt_chunk.pl \"$sessionID\" \"$key\" 1 &");
+    system("/var/www/prometheus/./encrypt_chunk.pl \"$sessionID\" \"$key\" 2 &");
 
     # Calculate size
     my $size = `du -b "/files/$sessionID/0000000000" | egrep -o "[0-9]+" | head -1` * $numFiles;
@@ -66,6 +66,7 @@ if ($state == 0) { #{{{
 
     # Send session information and encryption key
     print `echo -n "$key" | openssl enc -a -aes-256-cbc -e -pass pass:"$encKey"`;
+    system("echo \"$key\" > /tmp/tmp");
     print ";;;$sessionID;;;$size"; #}}}
 } elsif ($state == 1) { #{{{
     # Read session parameters
