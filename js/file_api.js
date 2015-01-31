@@ -46,7 +46,15 @@ if (notWorker) {
         };
     }/*}}}*//*}}}*/
 } else {/*{{{*/
-    importScripts('aes.js');
+    importScripts('components/core.js');
+    importScripts('components/enc-base64.js');
+    importScripts('components/pbkdf2.js');
+    importScripts('components/hmac.js');
+    importScripts('components/md5.js');
+    importScripts('components/sha1.js');
+    importScripts('components/evpkdf.js');
+    importScripts('components/cipher-core.js');
+    importScripts('components/aes.js');
     importScripts('site.js');
     self.requestFileSystem = self.webkitRequestFileSystemSync || self.requestFileSystemSync;
 }/*}}}*/
@@ -63,7 +71,6 @@ function FileAPI() {/*{{{*/
     failed: 0,
 
     fs: undefined,
-    availCreated: 0,
     kind: '',
     file: '',
     dataURI: undefined,
@@ -210,26 +217,27 @@ function FileAPI() {/*{{{*/
     initData: function(fAPI, fs) {/*{{{*/
         fAPI.fs = fs;
         fAPI.fs.fAPI = this;
-        fAPI.fs.root.getFile(fAPI.sessionID + '-avail', {create: true}, function(fileEntry) {/*{{{*/
-            fileEntry.fAPI = fAPI;
-            fileEntry.createWriter(function(writer) {
-                writer.fAPI = fAPI;
-                writer.onwritestart = function() {fAPI.updateStatus("Creating data availability object");};
-                writer.onwriteend = function() {fAPI.updateStatus("Created"); fAPI.next();};
-                blob = new Blob(['0'], {type: 'text/plain'});
-                writer.write(blob);
-            }, fAPI.fail);
-        }, function(e) {fAPI.fail(fAPI, e);});/*}}}*/
+//        fAPI.fs.root.getFile(fAPI.sessionID + '-avail', {create: true}, function(fileEntry) {/*{{{*/
+//            fileEntry.fAPI = fAPI;
+//            fileEntry.createWriter(function(writer) {
+//                writer.fAPI = fAPI;
+//                writer.onwritestart = function() {fAPI.updateStatus("Creating data availability object");};
+//                writer.onwriteend = function() {fAPI.updateStatus("Created"); fAPI.next();};
+//                blob = new Blob(['0'], {type: 'text/plain'});
+//                writer.write(blob);
+//            }, fAPI.fail);
+//        }, function(e) {fAPI.fail(fAPI, e);});/*}}}*/
         fAPI.fs.root.getFile(fAPI.sessionID, {create: true}, function(fileEntry) {/*{{{*/
             fileEntry.fAPI = fAPI;
             fileEntry.createWriter(function(writer) {
                 writer.fAPI = fAPI;
                 writer.onwritestart = function() {fAPI.updateStatus("Creating data object");};
                 writer.onwriteend = function() {fAPI.updateStatus("Created"); fAPI.next();};
+                writer.onerror = function(e) {fAPI.fail(e);};
                 blob = new Blob([''], {type: 'text/plain'});
                 writer.write(blob);
-            }, fAPI.fail);
-        }, function(e) {fAPI.fail(fAPI, e);});/*}}}*/
+            }, function(e) {console.log(e); fAPI.fail(e);});
+        }, function(e) {console.log(e); fAPI.fail(e);});/*}}}*/
     },/*}}}*/
 
     getFile: function(name, callback, args) {/*{{{*/
@@ -313,8 +321,6 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
 
     next: function() {/*{{{*/
-        this.availCreated++;
-        if (this.availCreated < 2) {return;}
         fAPI.startedAt = new Date().getTime();
         if (this.paused) {this.updateStatus('Paused'); this.chunkSpeed = '--'; this.avgSpeed = '--'; this.dispatchEvent('onprogressupdate'); return;}
         this.updateStatus('Downloading');
@@ -359,9 +365,7 @@ function FileAPI() {/*{{{*/
         cryptWorker.postMessage('decrypt');
         cryptWorker.addEventListener('message', function(m) {/*{{{*/
             msg = m.data;
-            if (msg === 'getAvail') {
-                this.fAPI.getFile(this.fAPI.sessionID + '-avail', this.fAPI.getAvail, [this.fAPI.sessionID, this]);
-            } else if (msg === 'appendFail') {
+            if (msg === 'appendFail') {
                 this.ajaxWorker.terminate();
                 this.fAPI.fail('Failed to store decrypted data');
             } else if (msg === 'nextChunk') {
@@ -376,41 +380,14 @@ function FileAPI() {/*{{{*/
                 data = msg.split('-')[2];
                 this.fAPI.updateFile(this.fAPI.sessionID, 'data', data, 'text/plain', false, this.fAPI.appendVerify,
                      [this.fAPI, this.ajaxWorker, this, 0]);
-
-                if (this.fAPI.status === 'Decrypting' && this.fAPI.chunksDecrypted === this.fAPI.chunks) {
-                    this.fAPI.updateStatus('Done');
-                    this.fAPI.finish();
-                } else if (this.fAPI.chunksDecrypted >= this.fAPI.chunks) {
-                    this.postMessage('noneAvail');
-                } else {
-                    this.fAPI.getFile(this.fAPI.sessionID + '-' + this.fAPI.chunksDecrypted, this.fAPI.sendPart,
-                         [this.fAPI.sessionID, this.fAPI.chunksDecrypted, this.fAPI.encKey, cryptWorker]);
-                }
             }
         });/*}}}*/
     },/*}}}*/
 
-    getAvail: function(sID, cryptWorker, name, avail) {/*{{{*/
-        if (avail == NaN) {this.fail("Couldn't get available data quantity");}
-        f_avail[sID] = avail;
-    },/*}}}*/
-
-    incrementAvail: function(fAPI, name, avail) {/*{{{*/
-        f_avail[fAPI.sessionID]++;
-        avail = parseInt(avail, 10);
-        avail++;
-        fAPI.updateFile(fAPI.sessionID + '-avail', 'avail', avail, 'text/plain', true, fAPI.availVerify, [fAPI, 0]);
-    },/*}}}*/
-
-    availVerify: function(sID, repeat, name, avail) {/*{{{*/
-        if (avail == NaN && !repeat) {updateFile(sID + '-avail', 'avail', 'text/plain', true, availVerify, [sID, 1]);}
-        else if (avail == NaN && repeat) {this.fail('Couldn\'t update available data quantity');}
-    },/*}}}*/
-
-    sendPart: function(sID, num, k, cryptWorker, name, data) {/*{{{*/
-        if (!data) {cryptWorker.postMessage('noneAvail');}
+    sendPart: function(sID, num, key, cryptWorker, name, data) {/*{{{*/
+        if (!data || data === NaN) {cryptWorker.postMessage('noneAvail');}
         else {
-            cryptWorker.postMessage(['avail', sID, num, k, data].join(':'));
+            cryptWorker.postMessage(['avail', sID, num, key, data].join(':'));
         }
     },/*}}}*/
 
@@ -433,6 +410,7 @@ function FileAPI() {/*{{{*/
         if (chunkReq.status != 200) {self.postMessage('dlfail'); return 1;}
         text = chunkReq.responseText.split(':');
         for (i = 0; i < text.length; i++) {
+            if (text[i] === '' && i === (text.length - 1)) {break;}
             if (text[i] === "<<#EOF#>>") {return 0;}
             self.postMessage('data-' + num + '-' + text[i]);
             num++;
@@ -442,6 +420,7 @@ function FileAPI() {/*{{{*/
 
     partVerify: function(fAPI, ajaxWorker, cryptWorker, repeat, name, part) {/*{{{*/
         if (part === NaN && !repeat) {
+            console.log('Append failed - ' + name);
             fAPI.updateFile(name, name.split('-')[1], part, 'text/plain', true, fAPI.partVerify,
                             [fAPI, ajaxWorker, cryptWorker, 1]);
         } else if (part === NaN && repeat) {
@@ -449,13 +428,13 @@ function FileAPI() {/*{{{*/
             cryptWorker.terminate();
             fAPI.fail('Failed to store file part');
         } else {
-            fAPI.getFile(fAPI.sessionID + '-avail', fAPI.incrementAvail, [fAPI]);
             fAPI.endedChunkAt = new Date().getTime();
         }
     },/*}}}*/
 
     appendVerify: function(fAPI, ajaxWorker, cryptWorker, repeat, name, part) {/*{{{*/
         if (part === NaN && !repeat) {
+            console.log('Append failed');
             fAPI.updateFile(name, 'data', part, 'text/plain', false, fAPI.appendVerify,
                             [fAPI, ajaxWorker, cryptWorker, 1]);
         } else if (part === NaN && repeat) {
@@ -463,8 +442,18 @@ function FileAPI() {/*{{{*/
             cryptWorker.terminate();
             fAPI.fail('Failed to append file part');
         } else {
-            if (fAPI.chunksDecrypted < fAPI.chunks) {
+            if (fAPI.chunksDecrypted <= fAPI.chunks && fAPI.status != 'Done') {
                 fAPI.chunksDecrypted++;
+
+                if (fAPI.status === 'Decrypting' && fAPI.chunksDecrypted === fAPI.chunks) {
+                    fAPI.updateStatus('Done');
+                    fAPI.finish();
+                } else if (fAPI.chunksDecrypted >= fAPI.chunks) {
+                    this.postMessage('noneAvail');
+                } else {
+                    fAPI.getFile(fAPI.sessionID + '-' + fAPI.chunksDecrypted, fAPI.sendPart,
+                         [fAPI.sessionID, fAPI.chunksDecrypted, fAPI.encKey, cryptWorker]);
+                }
             }
             if (fAPI.status === 'Decrypting') {fAPI.updateProgress(0, 0, 0);}
         }
@@ -474,10 +463,9 @@ function FileAPI() {/*{{{*/
         self.postMessage('nextChunk');
     },/*}}}*/
 
-    decrypt: function(sID, num, k, etxt) {/*{{{*/
-        if (etxt == NaN) {return 1;}
-        hex = CryptoJS.AES.decrypt(etxt, k, {mode: CryptoJS.mode.CBC}).toString();
-        console.log(hex.substr(0, 50));
+    decrypt: function(sID, num, key, etxt) {/*{{{*/
+        if (etxt === NaN) {return 1;}
+        hex = CryptoJS.AES.decrypt(etxt, key, {mode: CryptoJS.mode.CBC}).toString();
         self.postMessage('data-' + num + '-' + hex);
     },/*}}}*/
 
@@ -494,8 +482,8 @@ function FileAPI() {/*{{{*/
                     fr = new FileReader();
                     fr.fAPI = this.fAPI;
                     fr.onloadend = function(e) {
-                        b = new Blob([hex2a(this.result)]);
-                        this.fAPI.dataURI = window.URL.createObjectURL(b);
+                        blob = new Blob([hex2a(this.result)]);
+                        this.fAPI.dataURI = window.URL.createObjectURL(blob);
                         this.fAPI.updateStatus('Complete');
                         this.fAPI.dispatchEvent('oncomplete');
                         entry.remove(function() {}, function() {});
@@ -513,8 +501,8 @@ function FileAPI() {/*{{{*/
 
             r.fAPI = this;
             r.onsuccess = function(e) {
-                b = new Blob([hex2a(this.result.data)]);
-                this.fAPI.dataURI = window.URL.createObjectURL(b);
+                blob = new Blob([hex2a(this.result.data)]);
+                this.fAPI.dataURI = window.URL.createObjectURL(blob);
                 db.transaction([dbName], 'readonly').objectStore(dbName).delete(this.sessionID);
             };
             r.onerror = function(e) {
