@@ -52,7 +52,7 @@ if ($state == 0) { #{{{
 
     foreach(0..999) {
         $_ = "0" x (10 - length($_)) . $_;
-        `openssl enc -a -aes-256-cbc -e -pass pass:"$key" -in /files/$sessionID-pln/$_ -out /files/$sessionID/$_`;
+        `openssl enc -a -A -e -aes-256-cbc -pass pass:"$key" -in /files/$sessionID-pln/$_ -out /files/$sessionID/$_`;
         `rm /files/$sessionID-pln/$_`;
     }
     system("/var/www/prometheus/./encrypt_chunk.pl \"$sessionID\" \"$key\" 0 &");
@@ -65,7 +65,7 @@ if ($state == 0) { #{{{
     if ($size == 0) {print "nofile"; exit;}
 
     # Send session information and encryption key
-    print `echo -n "$key" | openssl enc -a -aes-256-cbc -e -pass pass:"$encKey"`;
+    print `echo -n "$key" | openssl enc -a -A -e -aes-256-cbc -pass pass:"$encKey"`;
     system("echo \"$key\" > /tmp/tmp");
     print ";;;$sessionID;;;$size"; #}}}
 } elsif ($state == 1) { #{{{
