@@ -14,13 +14,11 @@ f_avail = {};
 mode = M_GC;
 /*{{{*/ /* TODO
     Pause button - functioning in workers?
-    Failed check - will it stop workers/trigger a return value?
-    End of file transfer signaled somehow?
-    Differentiate download/decrypt times
+    Add decrypt time using setTimeout
+    Call clean when 'X' is clicked - entry already removed in 'finish' but blob still present
     Allow three parallel downloads
     IndexedDB downloads WILL NOT WORK - writes to a field but getFile returns the whole object
     IndexedDB won't work in workers for Firefox - need to check access to window.indexedDB to determine that
-    Clean up file parts after decryption
 */ /*}}}*/
 
 // If not worker, use asynchronous methods/*{{{*/
@@ -104,7 +102,7 @@ function FileAPI() {/*{{{*/
     removeEventListener: function(type, f) {/*{{{*/
         if (this.events[type]) {
             for (e = 0; e < this.events[type].length; e++) {
-                if (this.events[type][e].action == f) {this.events[type].splice(e, 1);}
+                if (this.events[type][e].action === f) {this.events[type].splice(e, 1);}
             }
         }
     },/*}}}*/
@@ -168,9 +166,9 @@ function FileAPI() {/*{{{*/
         this.currentXHRReq = createPostReq('/file.cgi', true);
         this.currentXHRReq.fAPI = this;
         this.currentXHRReq.onreadystatechange = function() {/*{{{*/
-            if (this.readyState == 4 && this.status == 200 && this.responseText.indexOf('nofile') == -1) {this.fAPI.start();}
+            if (this.readyState === 4 && this.status == 200 && this.responseText.indexOf('nofile') == -1) {this.fAPI.start();}
             else if (this.responseText.indexOf('nofile') != -1) {this.fAPI.fail('File does not exist');}
-            else if (this.readyState == 4) {this.fAPI.fail('Internal error - contact me');}
+            else if (this.readyState === 4) {this.fAPI.fail('Internal error - contact me');}
         };/*}}}*/
         this.currentXHRReq.send('s=0&f=' + file + '&k=' + kind);
     },/*}}}*/
@@ -193,7 +191,7 @@ function FileAPI() {/*{{{*/
         this.updateStatus('Creating local data store');
         size = this.size + (1024*1024*1024*1024) * Math.ceil(this.size / (1024 * 1024 * 1024 *1024));
 
-        if (mode == M_IDB) {/*{{{*/
+        if (mode === M_IDB) {/*{{{*/
             trans = db.transaction([dbName], "readwrite");
             trans.fAPI = this;
             trans.oncomplete = function(e) {this.fAPI.startedAt = new Date().getTime(); this.fAPI.next(2);}
@@ -217,16 +215,6 @@ function FileAPI() {/*{{{*/
     initData: function(fAPI, fs) {/*{{{*/
         fAPI.fs = fs;
         fAPI.fs.fAPI = this;
-//        fAPI.fs.root.getFile(fAPI.sessionID + '-avail', {create: true}, function(fileEntry) {/*{{{*/
-//            fileEntry.fAPI = fAPI;
-//            fileEntry.createWriter(function(writer) {
-//                writer.fAPI = fAPI;
-//                writer.onwritestart = function() {fAPI.updateStatus("Creating data availability object");};
-//                writer.onwriteend = function() {fAPI.updateStatus("Created"); fAPI.next();};
-//                blob = new Blob(['0'], {type: 'text/plain'});
-//                writer.write(blob);
-//            }, fAPI.fail);
-//        }, function(e) {fAPI.fail(fAPI, e);});/*}}}*/
         fAPI.fs.root.getFile(fAPI.sessionID, {create: true}, function(fileEntry) {/*{{{*/
             fileEntry.fAPI = fAPI;
             fileEntry.createWriter(function(writer) {
@@ -243,7 +231,7 @@ function FileAPI() {/*{{{*/
     getFile: function(name, callback, args) {/*{{{*/
         args.push(name);
         fAPI = this;
-        if (mode == M_IDB) {/*{{{*/
+        if (mode === M_IDB) {/*{{{*/
             trans = db.transaction([dbName]);
             trans.fAPI = this;
             obj = trans.objectStore(dbName);
@@ -280,7 +268,7 @@ function FileAPI() {/*{{{*/
     updateFile: function(name, field, value, type, overwrite, callback, args) {/*{{{*/
         args.push(name);
         fAPI = this;
-        if (mode == M_IDB) {/*{{{*/
+        if (mode === M_IDB) {/*{{{*/
             trans = db.transaction([dbName], "readwrite");
             obj = trans.objectStore(dbName);
             req = obj.get(name);
@@ -320,6 +308,29 @@ function FileAPI() {/*{{{*/
         }/*}}}*/
     },/*}}}*/
 
+    removeFile: function(name, callback, args) {/*{{{*/
+        fAPI = this;
+        args.push(name);
+        if (mode === M_IDB) {
+        } else {
+            this.fs.root.getFile(name, {create: false}, function(fE) {
+                fE.remove(function() {
+                    args.push(1);
+                    callback.apply(fAPI, args);
+                }, function(e) {console.log(e); args.push(0); callback.apply(fAPI, args);});
+            }, function(e) {
+                if (e.name !== 'NotFoundError') {
+                    console.log(e);
+                    args.push(0);
+                    callback.apply(fAPI, args);
+                } else {
+                    args.push(1);
+                    callback.apply(fAPI, args);
+                }
+            });
+        }
+    },/*}}}*/
+
     next: function() {/*{{{*/
         fAPI.startedAt = new Date().getTime();
         if (this.paused) {this.updateStatus('Paused'); this.chunkSpeed = '--'; this.avgSpeed = '--'; this.dispatchEvent('onprogressupdate'); return;}
@@ -348,7 +359,7 @@ function FileAPI() {/*{{{*/
                 this.cryptWorker.terminate();
                 this.fAPI.fail('Download failed');
                 this.terminate();
-            } else if (msg.substr(0, 5) == 'data-') {
+            } else if (msg.substr(0, 5) === 'data-') {
                 num = msg.split('-')[1];
                 data = msg.split('-')[2];
                 this.fAPI.chunks++;
@@ -375,7 +386,7 @@ function FileAPI() {/*{{{*/
                     this.fAPI.getFile(this.fAPI.sessionID + '-' + this.fAPI.chunksDecrypted, this.fAPI.sendPart,
                          [this.fAPI.sessionID, this.fAPI.chunksDecrypted, this.fAPI.encKey, cryptWorker]);
                 }
-            } else if (msg.substr(0, 4) == 'data') {
+            } else if (msg.substr(0, 4) === 'data') {
                 num = msg.split('-')[1];
                 data = msg.split('-')[2];
                 this.fAPI.updateFile(this.fAPI.sessionID, 'data', data, 'text/plain', false, this.fAPI.appendVerify,
@@ -444,6 +455,7 @@ function FileAPI() {/*{{{*/
         } else {
             if (fAPI.chunksDecrypted <= fAPI.chunks && fAPI.status != 'Done') {
                 fAPI.chunksDecrypted++;
+                fAPI.removeFile(fAPI.sessionID + '-' + (fAPI.chunksDecrypted - 1), fAPI.removeVerify, [fAPI, 0]);
 
                 if (fAPI.status === 'Decrypting' && fAPI.chunksDecrypted === fAPI.chunks) {
                     fAPI.updateStatus('Done');
@@ -457,6 +469,11 @@ function FileAPI() {/*{{{*/
             }
             if (fAPI.status === 'Decrypting') {fAPI.updateProgress(0, 0, 0);}
         }
+    },/*}}}*/
+
+    removeVerify: function(fAPI, repeat, name, success) {/*{{{*/
+        if (!success && !repeat) {fAPI.removeFile(name, fAPI.removeVerify, [fAPI, 1]);}
+        else if (!success && repeat) {fAPI.fail('Failed to remove file ' + name);}
     },/*}}}*/
 
     decryptLoop: function() {/*{{{*/
@@ -474,7 +491,7 @@ function FileAPI() {/*{{{*/
         this.currentXHRReq.send('s=2&si=' + this.sessionID);
         this.currentXHRReq = undefined;
 
-        if (mode == M_GC) {/*{{{*/
+        if (mode === M_GC) {/*{{{*/
             fAPI = this;
             this.fs.root.getFile(this.sessionID, {create: false}, function(entry) {
                 entry.fAPI = fAPI;
@@ -495,7 +512,7 @@ function FileAPI() {/*{{{*/
             }, function(e) {
                 this.fAPI.fail('Failed to create URI');
             });/*}}}*/
-        } else if (mode == M_IDB) {/*{{{*/
+        } else if (mode === M_IDB) {/*{{{*/
             this.updateStatus("Creating URI for file");
             r = db.transaction([dbName], 'readwrite').objectStore(dbName).get(this.sessionID);
 

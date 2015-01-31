@@ -97,7 +97,7 @@ if ($state == 0) { #{{{
     $session->param("$sessionID-offset", $end + 1); #}}}
 } elsif ($state == 2) { #{{{
     my $sessionID = $q->param('si');
-    `shred -u -n 5 /files/$sessionID/*`;
+    `shred -u -n 3 /files/$sessionID/*`;
     `rm -r /files/$sessionID`;
 } #}}}
 exit;

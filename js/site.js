@@ -4356,7 +4356,14 @@ function getFile(file, kind, item) {/*{{{*/
         fAPI = this.target;
         cl = "normal_text";
         if (useNightTheme()) {cl += ' night';}
-        setText(document.getElementById(fAPI.ttid + '_status'), '<a href="' + fAPI.dataURI + '" class="' + cl + '" download="' + fAPI.file + '">Download</a>');
+        setText(document.getElementById(fAPI.ttid + '_status'), '');
+        dl = element('a');
+        dl.href = fAPI.dataURI;
+        dl.className = cl;
+        dl.download = fAPI.file;
+        dl.fAPI = fAPI;
+        setText(dl, 'Download');
+        document.getElementById(fAPI.ttid + '_status').appendChild(dl);
     });
 
     addDownload(f, item);
