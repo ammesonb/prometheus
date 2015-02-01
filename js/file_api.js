@@ -75,11 +75,16 @@ function FileAPI() {/*{{{*/
     encKey: undefined,
 
     size: undefined,
-    res: 200,
+    res: 300,
     received: 0,
     chunkLength: 0,
     chunks: 0,
     chunksDecrypted: 0,
+    decrypt1: 0,
+    decrypt1Time: 0,
+    decrypt2: 0,
+    decrypt2Time: 0,
+    decryptETA: '-- minutes',
     avgSpeed: 0,
     startedAt: undefined,
     chunkSpeed: 0,
@@ -125,6 +130,8 @@ function FileAPI() {/*{{{*/
             // Change time into seconds
             totalTime /= 1000;
             transferTime /= 1000;
+            if (transferTime < 1.5) {this.res += 50;}
+            else if (transferTime > 3) {this.res -= 50;}
             this.received += parseInt(bytesTransferred, 10);
             this.progress = this.received / this.size;
             this.chunkSpeed = bytesTransferred / totalTime;
@@ -209,7 +216,7 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
     
     createBlob: function(fAPI, grantedBytes) {/*{{{*/
-        requestFileSystem(TEMPORARY, grantedBytes, function(fs) {fAPI.initData(fAPI, fs);}, function(e) {fAPI.fail(fAPI, e);});
+        requestFileSystem(TEMPORARY, grantedBytes, function(fs) {fAPI.initData(fAPI, fs);}, function(e) {console.log(e); fAPI.fail(fAPI, e);});
     },/*}}}*/
    
     initData: function(fAPI, fs) {/*{{{*/
@@ -396,7 +403,7 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
 
     sendPart: function(sID, num, key, cryptWorker, name, data) {/*{{{*/
-        if (!data || data === NaN) {cryptWorker.postMessage('noneAvail');}
+        if (!data || data === NaN) {console.log('data blank - ' + name); cryptWorker.postMessage('noneAvail');}
         else {
             cryptWorker.postMessage(['avail', sID, num, key, data].join(':'));
         }
@@ -430,11 +437,11 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
 
     partVerify: function(fAPI, ajaxWorker, cryptWorker, repeat, name, part) {/*{{{*/
-        if (part === NaN && !repeat) {
+        if ((part.length === 0 || part === NaN) && !repeat) {
             console.log('Append failed - ' + name);
             fAPI.updateFile(name, name.split('-')[1], part, 'text/plain', true, fAPI.partVerify,
                             [fAPI, ajaxWorker, cryptWorker, 1]);
-        } else if (part === NaN && repeat) {
+        } else if ((part.length === 0 || part === NaN) && repeat) {
             ajaxWorker.terminate();
             cryptWorker.terminate();
             fAPI.fail('Failed to store file part');
@@ -444,21 +451,21 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
 
     appendVerify: function(fAPI, ajaxWorker, cryptWorker, repeat, name, part) {/*{{{*/
-        if (part === NaN && !repeat) {
+        if ((part.length === 0 || part === NaN) && !repeat) {
             console.log('Append failed');
             fAPI.updateFile(name, 'data', part, 'text/plain', false, fAPI.appendVerify,
                             [fAPI, ajaxWorker, cryptWorker, 1]);
-        } else if (part === NaN && repeat) {
+        } else if ((part.length === 0 || part === NaN) && repeat) {
             ajaxWorker.terminate();
             cryptWorker.terminate();
             fAPI.fail('Failed to append file part');
         } else {
-            if (fAPI.chunksDecrypted <= fAPI.chunks && fAPI.status != 'Done') {
+            if (fAPI.chunksDecrypted <= fAPI.chunks && fAPI.status != 'Creating download link') {
                 fAPI.chunksDecrypted++;
-                fAPI.removeFile(fAPI.sessionID + '-' + (fAPI.chunksDecrypted - 1), fAPI.removeVerify, [fAPI, 0]);
+                fAPI.removeFile(fAPI.sessionID + '-' + (fAPI.chunksDecrypted - 1), fAPI.removeVerify, [this.fAPI, 0]);
 
                 if (fAPI.status === 'Decrypting' && fAPI.chunksDecrypted === fAPI.chunks) {
-                    fAPI.updateStatus('Done');
+                    fAPI.updateStatus('Creating download link');
                     fAPI.finish();
                 } else if (fAPI.chunksDecrypted >= fAPI.chunks) {
                     this.postMessage('noneAvail');
@@ -484,6 +491,21 @@ function FileAPI() {/*{{{*/
         if (etxt === NaN) {return 1;}
         hex = CryptoJS.AES.decrypt(etxt, key, {mode: CryptoJS.mode.CBC}).toString();
         self.postMessage('data-' + num + '-' + hex);
+    },/*}}}*/
+
+    decryptStatus: function(fAPI, which) {/*{{{*/
+        if (which) {
+            fAPI.decrypt2 = fAPI.chunksDecrypted;
+            fAPI.decrypt2Time = new Date().getTime();
+            chunks = fAPI.decrypt2 - fAPI.decrypt1;
+            timeDiff = (fAPI.decrypt2Time - fAPI.decrypt1Time) / 1000;
+            fAPI.decryptETA = parseTime((fAPI.chunks - fAPI.chunksDecrypted) / (chunks / timeDiff))[0];
+            setTimeout(function() {fAPI.decryptStatus(fAPI, 0)}, 750);
+        } else {
+            fAPI.decrypt1 = fAPI.chunksDecrypted;
+            fAPI.decrypt1Time = new Date().getTime();
+            setTimeout(function() {fAPI.decryptStatus(fAPI, 1)}, 750);
+        }
     },/*}}}*/
 
     finish: function() {/*{{{*/

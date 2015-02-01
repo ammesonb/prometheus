@@ -4338,6 +4338,8 @@ function getFile(file, kind, item) {/*{{{*/
         } else {
             setText(document.getElementById(fAPI.ttid + '_status'), fAPI.status);
         }
+
+        if (fAPI.status === 'Decrypting') {fAPI.decryptStatus(fAPI, 0);}
         console.log('Status: ' + e.target.status);
     });/*}}}*/
     f.addEventListener("onprogressupdate", function(e) {/*{{{*/
@@ -4561,6 +4563,9 @@ function updateInfo(elem, fAPI) {/*{{{*/
         received = fAPI.chunksDecrypted;
         size = fAPI.chunks;
         receiveText = 'Decrypted:\u00a0\u00a0';
+        chunks = Math.abs(fAPI.decrypt1 - fAPI.decrypt2);
+        timeDiff = Math.abs(fAPI.decrypt1Time - fAPI.decrypt2Time) / 1000;
+        eta = parseTime((fAPI.chunks - fAPI.chunksDecrypted) / (chunks / timeDiff))[0];
     }/*}}}*/
 
     setText(elem, /*{{{*/
