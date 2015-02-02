@@ -14,9 +14,8 @@ f_avail = {};
 mode = M_GC;
 /*{{{*/ /* TODO
     Pause button - functioning in workers?
-    Add decrypt time using setTimeout
-    Call clean when 'X' is clicked - entry already removed in 'finish' but blob still present
     Allow three parallel downloads
+    Add function to add additional downloads past the first one
     IndexedDB downloads WILL NOT WORK - writes to a field but getFile returns the whole object
     IndexedDB won't work in workers for Firefox - need to check access to window.indexedDB to determine that
 */ /*}}}*/
