@@ -420,7 +420,7 @@ function FileAPI() {/*{{{*/
         return 1;
     },/*}}}*/
 
-    dl: function(sID, res, num) {/*{{{*/
+    dl: function(sID, res, chunk) {/*{{{*/
         chunkReq = createPostReq('/file.cgi', false);
         self.postMessage('dl');
         chunkReq.send('s=1&si=' + sID + '&res=' + res);
@@ -430,10 +430,10 @@ function FileAPI() {/*{{{*/
         for (i = 0; i < text.length; i++) {
             if (text[i] === '' && i === (text.length - 1)) {break;}
             if (text[i] === "<<#EOF#>>") {return 0;}
-            self.postMessage('data-' + num + '-' + text[i]);
-            num++;
+            self.postMessage('data-' + chunk + '-' + text[i]);
+            chunk++;
         }
-        return num;
+        return chunk;
     },/*}}}*/
 
     partVerify: function(fAPI, ajaxWorker, cryptWorker, repeat, name, part) {/*{{{*/
@@ -551,7 +551,16 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
 
     clean: function() {/*{{{*/
+        this.ajaxWorker.terminate();
+        this.cryptWorker.terminate();
+        this.currentXHRReq = createPostReq('/file.cgi', true);
+        this.currentXHRReq.send('s=2&si=' + this.sessionID);
+        this.currentXHRReq = undefined;
         window.URL.revokeObjectURL(this.dataURI);
+        for (i = 0; i < this.chunks; i++) {
+            this.removeFile(this.sessionID + '-' + i, this.removeVerify, [this, 0]);
+        }
+        this.removeFile(this.sessionID, this.removeVerify, [this, 0]);
     }/*}}}*/
   };
 }/*}}}*/

@@ -4484,6 +4484,12 @@ function addDownload(fAPI, item) {/*{{{*/
     pause.id = item.ttid + '_pause';
     remove = createActionButton('remove', 0);
     remove.id = item.ttid + '_remove';
+    remove.fAPI = fAPI;
+    remove.onclick = function() {
+        this.fAPI.clean();
+        this.parentElement.remove();
+        // Still need to account for change in queue - probably should write a function for that
+    }
     down = createActionButton('down', 0);
     down.id = item.ttid + '_down';
     up = createActionButton('up', 0);
