@@ -1,3 +1,7 @@
+/*{{{*/ /* TODO
+  X button on movie search is broken
+*/ /*}}}*/
+
 /* Global variables *//*{{{*/
 var colors = ['#FF1300', '#FF6A00', '#FFA540', '#FFD240', '#9BED00', '#37DB79', '#63ADD0', '#7872D8', '#4B5BD8', '#9A3ED5', '#7F4BA0', '#ED3B83', '#999'];
 
@@ -36,6 +40,7 @@ media = {/*{{{*/
 var queuedDL = 0;
 var queuedSize = 0;
 var queuedTSize = 0;
+var MAX_DL = 3;
 /*}}}*/
 
 /* General functions *//*{{{*/
@@ -4358,7 +4363,7 @@ function getFile(file, kind, item) {/*{{{*/
         updateInfo(document.getElementById(fAPI.ttid + '_info'), fAPI);
         if (f.status !== 'Decrypting') {console.log('Progress: ' + f.progress * 100 + '%, ' + parseSize(f.chunkSpeed)[0]);}
     });/*}}}*/
-    f.addEventListener("oncomplete", function(e) {
+    f.addEventListener("oncomplete", function(e) {/*{{{*/
         fAPI = this.target;
         cl = "normal_text";
         if (useNightTheme()) {cl += ' night';}
@@ -4370,11 +4375,11 @@ function getFile(file, kind, item) {/*{{{*/
         dl.fAPI = fAPI;
         setText(dl, 'Download');
         document.getElementById(fAPI.ttid + '_status').appendChild(dl);
-    });
+    });/*}}}*/
 
     addDownload(f, item);
 
-    if (document.getElementById('dl_list').childElementCount < 2) {
+    if (document.getElementById('dl_list').childElementCount <= MAX_DL) {
         f.initialize(file, kind);
     }
 
@@ -4430,7 +4435,12 @@ function addDownload(fAPI, item) {/*{{{*/
         populateDL(downloadPanel, item.size, item.size * 1.3578);
         downloadPanel.style.height = main.offsetHeight + 'px';
 
-        switchTab('dl');
+        switchTab('dl');/*}}}*/
+    } else {/*{{{*/
+        queuedDL++;
+        queuedSize += item.size;
+        queuedTSize += (1.3578 * item.size);
+        updateDLStats();
     }/*}}}*/
 
     list = document.getElementById('dl_list');

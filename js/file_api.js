@@ -14,8 +14,11 @@ f_avail = {};
 mode = M_GC;
 /*{{{*/ /* TODO
     Pause button - functioning in workers?
-    Allow three parallel downloads
-    Add function to add additional downloads past the first one
+    Allow three parallel downloads - should work, check variable collisions
+    Need to enforce maximum simultaneous download on server-side - client variable can be overwritten
+        Track via session IDs per remote IP?
+    Weird issue with high transfer count - interrupt somehow blocks storing of chunk in ajaxWorker?
+        Data shows length, but chunk in file system is empty
     IndexedDB downloads WILL NOT WORK - writes to a field but getFile returns the whole object
     IndexedDB won't work in workers for Firefox - need to check access to window.indexedDB to determine that
 */ /*}}}*/
@@ -195,7 +198,7 @@ function FileAPI() {/*{{{*/
 
     initializeStorage: function() {/*{{{*/
         this.updateStatus('Creating local data store');
-        size = this.size + (1024*1024*1024*1024) * Math.ceil(this.size / (1024 * 1024 * 1024 *1024));
+        size = queuedTSize + (1024*1024*1024*1024) * Math.ceil(queuedTSize / (1024 * 1024 * 1024 *1024));
 
         if (mode === M_IDB) {/*{{{*/
             trans = db.transaction([dbName], "readwrite");
