@@ -551,16 +551,18 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
 
     clean: function() {/*{{{*/
-        this.ajaxWorker.terminate();
-        this.cryptWorker.terminate();
+        if (this.ajaxWorker) {this.ajaxWorker.terminate();}
+        if (this.cryptWorker) {this.cryptWorker.terminate();}
         this.currentXHRReq = createPostReq('/file.cgi', true);
         this.currentXHRReq.send('s=2&si=' + this.sessionID);
         this.currentXHRReq = undefined;
-        window.URL.revokeObjectURL(this.dataURI);
-        for (i = 0; i < this.chunks; i++) {
-            this.removeFile(this.sessionID + '-' + i, this.removeVerify, [this, 0]);
+        if (this.dataURI) {window.URL.revokeObjectURL(this.dataURI);}
+        if (this.fs) {
+            for (i = 0; i < this.chunks; i++) {
+                this.removeFile(this.sessionID + '-' + i, this.removeVerify, [this, 0]);
+            }
+            this.removeFile(this.sessionID, this.removeVerify, [this, 0]);
         }
-        this.removeFile(this.sessionID, this.removeVerify, [this, 0]);
     }/*}}}*/
   };
 }/*}}}*/

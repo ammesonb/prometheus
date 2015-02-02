@@ -32,6 +32,10 @@ media = {/*{{{*/
     "tGenres": [],
     "tvGenres": []
 };/*}}}*/
+
+var queuedDL = 0;
+var queuedSize = 0;
+var queuedTSize = 0;
 /*}}}*/
 
 /* General functions *//*{{{*/
@@ -4389,7 +4393,11 @@ function populateDL(dlPanel, firstSize, transferSize) {/*{{{*/
     stats.className = 'normal_text';
     stats.style.fontWeight = 'bold';
     stats.style.fontSize = '90%';
-    setText(stats, 'Queued:\u00a01\u00a0\u00a0\u00a0\u00a0File size:\u00a0' + firstSize + '\u00a0\u00a0\u00a0\u00a0Transfer size:\u00a0' + transferSize);
+
+    queuedDL = 1;
+    queuedSize = firstSize;
+    queuedTSize = transferSize;
+    updateDLStats(stats);
 
     downloadList = element('div');
     downloadList.id = 'dl_list';
@@ -4419,7 +4427,7 @@ function addDownload(fAPI, item) {/*{{{*/
         downloadTab.onclick = function() {switchTab(this.getAttribute('data-id'));}
         addTab(downloadPanel, downloadTab);
 
-        populateDL(downloadPanel, parseSize(item.size)[0], parseSize(item.size * 1.3578)[0]);
+        populateDL(downloadPanel, item.size, item.size * 1.3578);
         downloadPanel.style.height = main.offsetHeight + 'px';
 
         switchTab('dl');
@@ -4485,11 +4493,15 @@ function addDownload(fAPI, item) {/*{{{*/
     remove = createActionButton('remove', 0);
     remove.id = item.ttid + '_remove';
     remove.fAPI = fAPI;
-    remove.onclick = function() {
+    remove.size = item.size;
+    remove.onclick = function() {/*{{{*/
         this.fAPI.clean();
         this.parentElement.remove();
-        // Still need to account for change in queue - probably should write a function for that
-    }
+        queuedDL--;
+        queuedSize -= this.size;
+        queuedTSize -= (this.size * 1.3578);
+        updateDLStats();
+    }/*}}}*/
     down = createActionButton('down', 0);
     down.id = item.ttid + '_down';
     up = createActionButton('up', 0);
@@ -4519,6 +4531,13 @@ function addDownload(fAPI, item) {/*{{{*/
     dl.appendChild(element('br'));
     dl.appendChild(info);
     list.appendChild(dl);/*}}}*/
+}/*}}}*/
+
+function updateDLStats(stats) {/*{{{*/
+    if (!stats) {stats = document.getElementById('dl_stats');}
+    setText(stats, 'Queued:\u00a0' + queuedDL + stringFill('\u00a0', 4) +
+                   'File size:\u00a0' + parseSize(queuedSize)[0] + stringFill('\u00a0', 4) +
+                   'Transfer size:\u00a0' + parseSize(queuedTSize)[0]);
 }/*}}}*/
 
 function updateProgressBar(ctx, width, height, curve, stroke, percent) {/*{{{*/
