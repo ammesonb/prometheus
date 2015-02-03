@@ -15,8 +15,10 @@ mode = M_GC;
 /*{{{*/ /* TODO
     Pause button - functioning in workers?
     Allow three parallel downloads - should work, check variable collisions
-    Need to enforce maximum simultaneous download on server-side - client variable can be overwritten
-        Track via session IDs per remote IP?
+        In order for this to work also need to implement the pause function and deal with resume
+        across reboots, since a half-complete download will never finish
+            Store sIDs inside session data and can clear anything not in it
+                Tells what is there, not what isn't
     Weird issue with high transfer count - interrupt somehow blocks storing of chunk in ajaxWorker?
         Data shows length, but chunk in file system is empty
     IndexedDB downloads WILL NOT WORK - writes to a field but getFile returns the whole object
@@ -175,8 +177,11 @@ function FileAPI() {/*{{{*/
         this.currentXHRReq = createPostReq('/file.cgi', true);
         this.currentXHRReq.fAPI = this;
         this.currentXHRReq.onreadystatechange = function() {/*{{{*/
-            if (this.readyState === 4 && this.status == 200 && this.responseText.indexOf('nofile') == -1) {this.fAPI.start();}
+            if (this.readyState === 4 && this.status === 200 &&
+                this.responseText.indexOf('nofile') === -1 &&
+                this.responseText.indexOf('quota') === -1) {this.fAPI.start();}
             else if (this.responseText.indexOf('nofile') != -1) {this.fAPI.fail('File does not exist');}
+            else if (this.responseText.indexOf('quota') != -1) {this.updateStatus('Waiting for download slot (max 3 simultaneous)');}
             else if (this.readyState === 4) {this.fAPI.fail('Internal error - contact me');}
         };/*}}}*/
         this.currentXHRReq.send('s=0&f=' + file + '&k=' + kind);

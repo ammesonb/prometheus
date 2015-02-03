@@ -34,6 +34,9 @@ if ($state == 0) { #{{{
     my $sessionID = `echo -n "$key" | sha512sum | tr ' ' '\n' | head -1 | perl -pe 'chomp'`;
     $session->param("$sessionID-key", $key);
     $session->param("$sessionID-offset", 0);
+    my $logFile = "/files/$ENV{REMOTE_ADDR}";
+    if (`cat $logFile | wc -l` > 2) {print 'quota'; exit 1;}
+    else {open FILE, ">>$logFile"; print FILE "$sessionID"; close FILE;}
 
     # Mount source file container
     `/var/www/prometheus/encfs/./fs.py m $v /data/$hn`;
@@ -97,6 +100,7 @@ if ($state == 0) { #{{{
     $session->param("$sessionID-offset", $end + 1); #}}}
 } elsif ($state == 2) { #{{{
     my $sessionID = $q->param('si');
+    `sed -i /files/$ENV{REMOTE_ADDR} '/$sessionID/d'`;
     `shred -u -n 3 /files/$sessionID/*`;
     `rm -r /files/$sessionID`;
 } #}}}
