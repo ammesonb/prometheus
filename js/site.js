@@ -1,5 +1,4 @@
 /*{{{*/ /* TODO
-  X button on movie search is broken
 */ /*}}}*/
 
 /* Global variables *//*{{{*/
@@ -4022,15 +4021,20 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
         found = 0;
         if (filters.filter(function(e) {return e[0] == 'title'})) {found = 1;}
         if ((this.value == '' || this.value == 'Search titles....') && !found) {return};
-        addFilter('title', this.value, this.parentElement.parentElement, this.getAttribute('data-kind'));
+        if (this.value != 'Search titles....') {
+            addFilter('title', this.value, this.parentElement.parentElement, this.getAttribute('data-kind'));
+        } else {
+            removeFilter('title', this.parentElement.parentElement, this.getAttribute('data-kind'));
+        }
     };/*}}}*/
     clearTitle = element('img');
     clearTitle.src = 'images/x.png';
     clearTitle.onclick = function() {/*{{{*/
-       titleFilter = this.previousElementSibling;
-       titleFilter.value = 'Search titles....';
-       titleFilter.onchange();
-       titleFilter.onblur();
+        titleFilter = this.previousElementSibling;
+        if (titleFilter.value === 'Search titles....') {return;}
+        titleFilter.value = '';
+        titleFilter.onblur();
+        titleFilter.onchange();
     };/*}}}*/
 
     titlePanel.appendChild(titleFilter);
