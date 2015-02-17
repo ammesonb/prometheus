@@ -14,6 +14,7 @@ f_avail = {};
 mode = M_GC;
 /*{{{*/ /* TODO
     Pause button - functioning in workers?
+    Use a cookie to store a client ID in order to keep session data
     Allow three parallel downloads - should work, check variable collisions
         In order for this to work also need to implement the pause function and deal with resume
         across reboots, since a half-complete download will never finish
@@ -79,7 +80,7 @@ function FileAPI() {/*{{{*/
     encKey: undefined,
 
     size: undefined,
-    res: 300,
+    res: 800,
     received: 0,
     chunkLength: 0,
     chunks: 0,
@@ -361,6 +362,7 @@ function FileAPI() {/*{{{*/
         ajaxWorker.cryptWorker = cryptWorker;
         ajaxWorker.fAPI = this;
         ajaxWorker.postMessage(['dl', this.sessionID, this.res, this.encKey].join(':'));
+        setTimeout(function() {ajaxWorker.postMessage('getdlchunk');}, 200);
         ajaxWorker.addEventListener('message', function(m) {/*{{{*/
             msg = m.data;
             if (msg === 'dl') {
@@ -373,6 +375,11 @@ function FileAPI() {/*{{{*/
                 this.cryptWorker.terminate();
                 this.fAPI.fail('Download failed');
                 this.terminate();
+            } else if (msg === 'noneAvail') {
+                setTimeout(function() {ajaxWorker.postMessage('getdlchunk');}, 100);
+            } else if (msg.split('-')[0] === 'dlcomplete' &&
+                       this.fAPI.status !== 'Decrypting' && this.fAPI.status !== 'Storing transferred data') {
+                this.fAPI.updateStatus('Storing transferred data');
             } else if (msg.substr(0, 5) === 'data-') {
                 num = msg.split('-')[1];
                 data = msg.split('-')[2];
@@ -410,17 +417,18 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
 
     sendPart: function(sID, num, key, cryptWorker, name, data) {/*{{{*/
-        if (!data || data === NaN) {console.log('data blank - ' + name); cryptWorker.postMessage('noneAvail');}
+        if (!data || data === NaN) {console.log('data blank - ' + num); cryptWorker.postMessage('noneAvail');}
         else {
             cryptWorker.postMessage(['avail', sID, num, key, data].join(':'));
         }
     },/*}}}*/
 
     dlLoop: function(sID, res, k) {/*{{{*/
-        if (paused) {return;}
+        if (self.paused) {return;}
         transferred = 0;
         while (true) {
             // This will return 0 on failure or completion
+            console.log('New DL set');
             transferred = this.dl(sID, res, transferred);
             if (!transferred) {return 0;}
         }
@@ -437,7 +445,7 @@ function FileAPI() {/*{{{*/
         for (i = 0; i < text.length; i++) {
             if (text[i] === '' && i === (text.length - 1)) {break;}
             if (text[i] === "<<#EOF#>>") {return 0;}
-            self.postMessage('data-' + chunk + '-' + text[i]);
+            self.transferData.push(text[i]);
             chunk++;
         }
         return chunk;
@@ -454,6 +462,7 @@ function FileAPI() {/*{{{*/
             fAPI.fail('Failed to store file part');
         } else {
             fAPI.endedChunkAt = new Date().getTime();
+            ajaxWorker.postMessage('getdlchunk');
         }
     },/*}}}*/
 
@@ -475,7 +484,7 @@ function FileAPI() {/*{{{*/
                     fAPI.updateStatus('Creating download link');
                     fAPI.finish();
                 } else if (fAPI.chunksDecrypted >= fAPI.chunks) {
-                    this.postMessage('noneAvail');
+                    cryptWorker.postMessage('noneAvail');
                 } else {
                     fAPI.getFile(fAPI.sessionID + '-' + fAPI.chunksDecrypted, fAPI.sendPart,
                          [fAPI.sessionID, fAPI.chunksDecrypted, fAPI.encKey, cryptWorker]);
@@ -574,10 +583,11 @@ function FileAPI() {/*{{{*/
   };
 }/*}}}*/
 
+self.paused = 0;
+self.transferCompleted = 0;
+self.numTransferred = 0;
+self.transferData = [];
 if (isWorker) {/*{{{*/
-    var paused = 0;
-    var parsed = 0;
-    var avail = -1;
     self.addEventListener('message', function(e) {
         data = e.data.split(':');
         if (data[0] === 'dl') {
@@ -585,7 +595,20 @@ if (isWorker) {/*{{{*/
             if (fAPI.dlLoop(data[1], data[2], data[3])) {
                 self.postMessage('dlfail');
             } else {
-                self.postMessage('done');
+                self.transferCompleted = 1;
+            }
+        } else if (data[0] === 'getdlchunk') {
+            if (!self.transferData.length) {
+                if (self.transferCompleted) {
+                    self.postMessage('done');
+                } else {
+                    self.postMessage('noneAvail');
+                }
+            } else {
+                if (self.transferCompleted) {self.postMessage('dlcomplete');}
+                c = self.transferData.shift();
+                self.postMessage('data-' + self.numTransferred + '-' + c);
+                self.numTransferred++;
             }
         } else if (data[0] === 'decrypt') {
             fAPI = FileAPI();

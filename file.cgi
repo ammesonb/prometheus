@@ -8,6 +8,7 @@ use Crypt::OpenSSL::Random qw(random_seed random_bytes);
 use Time::HiRes qw(gettimeofday);
 use MIME::Base64;
 use JSON;
+use Proc::ProcessTable;
 use COMMON;
 use strict;
 
@@ -80,6 +81,15 @@ if ($state == 0) { #{{{
     $end -= 1;
     
     my $file = "0" x (10 - length($end)) . $end;
+    my $ptable = Proc::ProcessTable->new;
+    my $ec_run = grep {$_->{cmndline} =~ /encrypt_chunk\.pl "?$sessionID"?/} @{$ptable->table};
+    if ($ec_run and not -e "/files/$sessionID/$file") {
+        while ($ec_run and not -e "/files/$sessionID/$file") {
+            `sleep 5`;
+            $ec_run = grep {$_->{cmndline} =~ /encrypt_chunk\.pl "?$sessionID"?/} @{$ptable->table};
+        }
+    }
+
     if (not -e "/files/$sessionID/$file") {
         foreach($offset..$end) {
             my $file = "0" x (10 - length($_)) . $_;
