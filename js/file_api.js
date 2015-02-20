@@ -20,8 +20,6 @@ mode = M_GC;
         across reboots, since a half-complete download will never finish
             Store sIDs inside session data and can clear anything not in it
                 Tells what is there, not what isn't
-    Weird issue with high transfer count - interrupt somehow blocks storing of chunk in ajaxWorker?
-        Data shows length, but chunk in file system is empty
     IndexedDB downloads WILL NOT WORK - writes to a field but getFile returns the whole object
     IndexedDB won't work in workers for Firefox - need to check access to window.indexedDB to determine that
 */ /*}}}*/
@@ -71,6 +69,7 @@ function FileAPI() {/*{{{*/
     progress: 0,
     completed: false,
     paused: false,
+    state: '',
     failed: 0,
 
     fs: undefined,
@@ -199,7 +198,60 @@ function FileAPI() {/*{{{*/
         fr.readAsText(new Blob([this.encKey]));
         this.sessionID = data[1];
         this.size = parseInt(data[2], 10);
-        this.initializeStorage();
+        if (this.paused) {
+            this.state = 'initstr';
+            this.setPaused();
+        } else {
+            this.initializeStorage();
+        }
+    },/*}}}*/
+
+    pause: function() {/*{{{*/
+        if (this.paused) {
+            this.paused = 0;
+            if (this.status.indexOf('Pausing - ') > -1) {
+                this.updateStatus(this.status.replace('Pausing - ', ''));
+            }
+            switch(this.state) {
+                case 'initstr':
+                    this.initializeStorage();
+                    break;
+                case 'next':
+                    this.next();
+                    break;
+                case 'workers':
+                    this.startWorkers();
+                    break;
+                case 'workerloop':
+                    this.ajaxWorker.postMessage('resume');
+                    this.cryptWorker.postMessage('resume');
+
+                    this.cryptWorker.postMessage('decrypt');
+                    this.ajaxWorker.postMessage('getdlchunk');
+                    this.ajaxWorker.postMessage('dl');
+                    break;
+                case 'finishing':
+                    this.finish();
+                    break;
+            }
+
+            if (this.status === 'Decrypting') {
+                this.decryptStatus(this, 0);
+            }
+        } else {
+            this.updateStatus('Pausing - ' + this.status);
+            this.paused = 1;
+            if (this.cryptWorker) {
+                this.cryptWorker.postMessage('pause');
+                this.ajaxWorker.postMessage('pause');
+            }
+        // Save state here somehow?
+            // Ask user to wait while storing transferred chunks?
+       }
+    },/*}}}*/
+
+    setPaused: function() {/*{{{*/
+        this.updateStatus('Paused');
     },/*}}}*/
 
     initializeStorage: function() {/*{{{*/
@@ -347,8 +399,8 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
 
     next: function() {/*{{{*/
+        if (this.paused) {this.setPaused(); this.state = 'next'; this.chunkSpeed = '--'; this.avgSpeed = '--'; this.dispatchEvent('onprogressupdate'); return;}
         fAPI.startedAt = new Date().getTime();
-        if (this.paused) {this.updateStatus('Paused'); this.chunkSpeed = '--'; this.avgSpeed = '--'; this.dispatchEvent('onprogressupdate'); return;}
         this.updateStatus('Downloading');
         this.startedChunkAt = new Date().getTime();
         if (workers) {this.startWorkers();}
@@ -356,14 +408,17 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
 
     startWorkers: function() {/*{{{*/
-        ajaxWorker = new Worker('js/file_api.js');
-        cryptWorker = new Worker('js/file_api.js');
+        if (this.paused) {this.setPaused(); this.state = 'workers'; return;}
+        this.ajaxWorker = new Worker('js/file_api.js');
+        ajaxWorker = this.ajaxWorker;
+        this.cryptWorker = new Worker('js/file_api.js');
+        cryptWorker = this.cryptWorker;
 
-        ajaxWorker.cryptWorker = cryptWorker;
-        ajaxWorker.fAPI = this;
-        ajaxWorker.postMessage(['dl', this.sessionID, this.res, this.encKey].join(':'));
+        this.ajaxWorker.cryptWorker = cryptWorker;
+        this.ajaxWorker.fAPI = this;
+        this.ajaxWorker.postMessage(['dl', this.sessionID, this.res, this.encKey].join(':'));
         setTimeout(function() {ajaxWorker.postMessage('getdlchunk');}, 200);
-        ajaxWorker.addEventListener('message', function(m) {/*{{{*/
+        this.ajaxWorker.addEventListener('message', function(m) {/*{{{*/
             msg = m.data;
             if (msg === 'dl') {
                 this.fAPI.startedChunkTransferAt = new Date().getTime();
@@ -376,7 +431,12 @@ function FileAPI() {/*{{{*/
                 this.fAPI.fail('Download failed');
                 this.terminate();
             } else if (msg === 'noneAvail') {
-                setTimeout(function() {ajaxWorker.postMessage('getdlchunk');}, 100);
+                if (this.fAPI.paused) {
+                    this.fAPI.state = 'workerloop';
+                    this.fAPI.setPaused();
+                } else {
+                    setTimeout(function() {this.fAPI.ajaxWorker.postMessage('getdlchunk');}, 100);
+                }
             } else if (msg.split('-')[0] === 'dlcomplete' &&
                        this.fAPI.status !== 'Decrypting' && this.fAPI.status !== 'Storing transferred data') {
                 this.fAPI.updateStatus('Storing transferred data');
@@ -392,10 +452,10 @@ function FileAPI() {/*{{{*/
             }
         });/*}}}*/
 
-        cryptWorker.ajaxWorker = ajaxWorker;
-        cryptWorker.fAPI = this;
-        cryptWorker.postMessage('decrypt');
-        cryptWorker.addEventListener('message', function(m) {/*{{{*/
+        this.cryptWorker.ajaxWorker = ajaxWorker;
+        this.cryptWorker.fAPI = this;
+        this.cryptWorker.postMessage('decrypt');
+        this.cryptWorker.addEventListener('message', function(m) {/*{{{*/
             msg = m.data;
             if (msg === 'appendFail') {
                 this.ajaxWorker.terminate();
@@ -405,7 +465,7 @@ function FileAPI() {/*{{{*/
                     this.postMessage('noneAvail');
                 } else {
                     this.fAPI.getFile(this.fAPI.sessionID + '-' + this.fAPI.chunksDecrypted, this.fAPI.sendPart,
-                         [this.fAPI.sessionID, this.fAPI.chunksDecrypted, this.fAPI.encKey, cryptWorker]);
+                         [this.fAPI.sessionID, this.fAPI.chunksDecrypted, this.fAPI.encKey, this.fAPI.cryptWorker]);
                 }
             } else if (msg.substr(0, 4) === 'data') {
                 num = msg.split('-')[1];
@@ -417,28 +477,28 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
 
     sendPart: function(sID, num, key, cryptWorker, name, data) {/*{{{*/
+        if (this.paused) {return;}
         if (!data || data === NaN) {console.log('data blank - ' + num); cryptWorker.postMessage('noneAvail');}
         else {
             cryptWorker.postMessage(['avail', sID, num, key, data].join(':'));
         }
     },/*}}}*/
 
-    dlLoop: function(sID, res, k) {/*{{{*/
+    dlLoop: function() {/*{{{*/
         if (self.paused) {return;}
-        transferred = 0;
         while (true) {
             // This will return 0 on failure or completion
-            console.log('New DL set');
-            transferred = this.dl(sID, res, transferred);
-            if (!transferred) {return 0;}
+            if (self.paused || self.transferCompleted) {return 0;}
+            self.transferred = this.dl();
+            if (!self.transferred) {return 0;}
         }
         return 1;
     },/*}}}*/
 
-    dl: function(sID, res, chunk) {/*{{{*/
+    dl: function() {/*{{{*/
         chunkReq = createPostReq('/file.cgi', false);
         self.postMessage('dl');
-        chunkReq.send('s=1&si=' + sID + '&res=' + res);
+        chunkReq.send('s=1&si=' + self.sID + '&res=' + self.res);
         self.postMessage('dlend-' + chunkReq.responseText.length);
         if (chunkReq.status != 200) {self.postMessage('dlfail'); return 1;}
         text = chunkReq.responseText.split(':');
@@ -446,23 +506,28 @@ function FileAPI() {/*{{{*/
             if (text[i] === '' && i === (text.length - 1)) {break;}
             if (text[i] === "<<#EOF#>>") {return 0;}
             self.transferData.push(text[i]);
-            chunk++;
+            self.transferred++;
         }
-        return chunk;
+        return self.transferred;
     },/*}}}*/
 
     partVerify: function(fAPI, ajaxWorker, cryptWorker, repeat, name, part) {/*{{{*/
         if ((part.length === 0 || part === NaN) && !repeat) {
             console.log('Append failed - ' + name);
             fAPI.updateFile(name, name.split('-')[1], part, 'text/plain', true, fAPI.partVerify,
-                            [fAPI, ajaxWorker, cryptWorker, 1]);
+                            [fAPI, fAPI.ajaxWorker, fAPI.cryptWorker, 1]);
         } else if ((part.length === 0 || part === NaN) && repeat) {
-            ajaxWorker.terminate();
-            cryptWorker.terminate();
+            fAPI.ajaxWorker.terminate();
+            fAPI.cryptWorker.terminate();
             fAPI.fail('Failed to store file part');
         } else {
             fAPI.endedChunkAt = new Date().getTime();
-            ajaxWorker.postMessage('getdlchunk');
+            if (fAPI.paused) {
+                fAPI.state = 'workerloop';
+                fAPI.setPaused();
+            } else {
+                fAPI.ajaxWorker.postMessage('getdlchunk');
+            }
         }
     },/*}}}*/
 
@@ -470,10 +535,10 @@ function FileAPI() {/*{{{*/
         if ((part.length === 0 || part === NaN) && !repeat) {
             console.log('Append failed');
             fAPI.updateFile(name, 'data', part, 'text/plain', false, fAPI.appendVerify,
-                            [fAPI, ajaxWorker, cryptWorker, 1]);
+                            [fAPI, fAPI.ajaxWorker, fAPI.cryptWorker, 1]);
         } else if ((part.length === 0 || part === NaN) && repeat) {
-            ajaxWorker.terminate();
-            cryptWorker.terminate();
+            fAPI.ajaxWorker.terminate();
+            fAPI.cryptWorker.terminate();
             fAPI.fail('Failed to append file part');
         } else {
             if (fAPI.chunksDecrypted <= fAPI.chunks && fAPI.status != 'Creating download link') {
@@ -482,12 +547,18 @@ function FileAPI() {/*{{{*/
 
                 if (fAPI.status === 'Decrypting' && fAPI.chunksDecrypted === fAPI.chunks) {
                     fAPI.updateStatus('Creating download link');
+                    if (fAPI.paused) {fAPI.state = 'finishing'; return;}
                     fAPI.finish();
                 } else if (fAPI.chunksDecrypted >= fAPI.chunks) {
-                    cryptWorker.postMessage('noneAvail');
+                    fAPI.cryptWorker.postMessage('noneAvail');
                 } else {
-                    fAPI.getFile(fAPI.sessionID + '-' + fAPI.chunksDecrypted, fAPI.sendPart,
-                         [fAPI.sessionID, fAPI.chunksDecrypted, fAPI.encKey, cryptWorker]);
+                    if (fAPI.paused) {
+                        fAPI.state = 'workerloop';
+                        return;
+                    } else {
+                        fAPI.getFile(fAPI.sessionID + '-' + fAPI.chunksDecrypted, fAPI.sendPart,
+                            [fAPI.sessionID, fAPI.chunksDecrypted, fAPI.encKey, fAPI.cryptWorker]);
+                    }
                 }
             }
             if (fAPI.status === 'Decrypting') {fAPI.updateProgress(0, 0, 0);}
@@ -500,7 +571,9 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
 
     decryptLoop: function() {/*{{{*/
-        self.postMessage('nextChunk');
+        if (!self.paused) {
+            self.postMessage('nextChunk');
+        }
     },/*}}}*/
 
     decrypt: function(sID, num, key, etxt) {/*{{{*/
@@ -516,11 +589,15 @@ function FileAPI() {/*{{{*/
             chunks = fAPI.decrypt2 - fAPI.decrypt1;
             timeDiff = (fAPI.decrypt2Time - fAPI.decrypt1Time) / 1000;
             fAPI.decryptETA = parseTime((fAPI.chunks - fAPI.chunksDecrypted) / (chunks / timeDiff))[0];
-            setTimeout(function() {fAPI.decryptStatus(fAPI, 0)}, 750);
+            if (!self.paused) {
+                setTimeout(function() {fAPI.decryptStatus(fAPI, 0)}, 750);
+            }
         } else {
             fAPI.decrypt1 = fAPI.chunksDecrypted;
             fAPI.decrypt1Time = new Date().getTime();
-            setTimeout(function() {fAPI.decryptStatus(fAPI, 1)}, 750);
+            if (!self.paused) {
+                setTimeout(function() {fAPI.decryptStatus(fAPI, 1)}, 750);
+            }
         }
     },/*}}}*/
 
@@ -586,16 +663,27 @@ function FileAPI() {/*{{{*/
 self.paused = 0;
 self.transferCompleted = 0;
 self.numTransferred = 0;
+self.transferred = 0;
 self.transferData = [];
+self.sID = '';
+self.res = '';
+self.k = '';
 if (isWorker) {/*{{{*/
     self.addEventListener('message', function(e) {
         data = e.data.split(':');
         if (data[0] === 'dl') {
             fAPI = FileAPI();
-            if (fAPI.dlLoop(data[1], data[2], data[3])) {
+            if (self.sID === '') {
+                self.sID = data[1];
+                self.res = data[2]
+                self.k = data[3];
+            }
+            if (fAPI.dlLoop()) {
                 self.postMessage('dlfail');
             } else {
-                self.transferCompleted = 1;
+                if (!self.paused) {
+                    self.transferCompleted = 1;
+                }
             }
         } else if (data[0] === 'getdlchunk') {
             if (!self.transferData.length) {
@@ -614,10 +702,16 @@ if (isWorker) {/*{{{*/
             fAPI = FileAPI();
             fAPI.decryptLoop();
         } else if (data[0] === 'noneAvail') {
-            setTimeout(function() {fAPI = FileAPI(); fAPI.decryptLoop();}, 100);
+            if (!self.paused) {
+                setTimeout(function() {fAPI = FileAPI(); fAPI.decryptLoop();}, 100);
+            }
         } else if (data[0] === 'avail') {
             fAPI = FileAPI();
             fAPI.decrypt(data[1], data[2], data[3], data[4]);
+        } else if (data[0] === 'pause') {
+            self.paused = 1;
+        } else if (data[1] === 'resume') {
+            self.paused = 0;
         }
     });
 }/*}}}*/

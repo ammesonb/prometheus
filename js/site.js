@@ -4504,6 +4504,13 @@ function addDownload(fAPI, item) {/*{{{*/
     // Action buttons/*{{{*/
     pause = createActionButton('pause', 0);
     pause.id = item.ttid + '_pause';
+    pause.fAPI = fAPI;
+    pause.onclick = function() {this.fAPI.pause(); document.getElementById(this.id.replace('_pause', '_play')).style.display = 'block'; this.style.display = 'none'};
+    play = createActionButton('play', 0);
+    play.id = item.ttid + '_play';
+    play.fAPI = fAPI;
+    play.style.display = 'none';
+    play.onclick = function() {this.fAPI.pause(); document.getElementById(this.id.replace('_play', '_pause')).style.display = 'block'; this.style.display = 'none'};
     remove = createActionButton('remove', 0);
     remove.id = item.ttid + '_remove';
     remove.fAPI = fAPI;
@@ -4542,6 +4549,7 @@ function addDownload(fAPI, item) {/*{{{*/
     dl.appendChild(down);
     dl.appendChild(remove);
     dl.appendChild(pause);
+    dl.appendChild(play);
     dl.appendChild(element('br'));
     dl.appendChild(info);
     list.appendChild(dl);/*}}}*/
@@ -4653,6 +4661,10 @@ function drawActionButton(btn, symbol, hover) {/*{{{*/
         ctx.moveTo(20, 7.5);
         ctx.lineTo(20, 22.5);/*}}}*/
     } else if (symbol == 'play') {
+        ctx.moveTo(10, 7.5);
+        ctx.lineTo(20, 14.5);
+        ctx.lineTo(10, 22.5);
+        ctx.closePath();
     } else if (symbol == 'remove') {/*{{{*/
         ctx.moveTo(7.5, 7.5);
         ctx.lineTo(22.5, 22.5);
