@@ -14,7 +14,6 @@ f_avail = {};
 mode = M_GC;
 /*{{{*/ /* TODO
     Pause button - functioning in workers?
-    Use a cookie to store a client ID in order to keep session data
     Allow three parallel downloads - should work, check variable collisions
         In order for this to work also need to implement the pause function and deal with resume
         across reboots, since a half-complete download will never finish
@@ -58,6 +57,42 @@ if (notWorker) {
     importScripts('components/aes.js');
     importScripts('site.js');
     self.requestFileSystem = self.webkitRequestFileSystemSync || self.requestFileSystemSync;
+}/*}}}*/
+
+function FileAPIStub() {/*{{{*/
+  return {
+    populate(sID, file, type, state, sKey, startedAt, chunks, chunksDecrypted, res) {/*{{{*/
+        this.sID = sID,
+        this.file = file,
+        this.type = type,
+        this.state = state,
+        this.sKey = sKey,
+        this.startedAt = startedAt,
+        this.chunks = chunks,
+        this.chunksDecrypted = chunksDecrypted,
+        this.res = res,
+    },/*}}}*/
+
+    fromFAPI: function(fAPI) {/*{{{*/
+        this.sID = fAPI.sessionID;
+        this.file = fAPI.file;
+        this.type = fAPI.kind;
+        this.state = fAPI.state;
+        this.sKey = fAPI.encKey;
+        this.startedAt = fAPI.startedAt;
+        this.chunks = fAPI.chunks;
+        this.chunksDecrypted = fAPI.chunksDecrypted;
+        this.res = fAPI.res;
+    },/*}}}*/
+
+    toString: function() {/*{{{*/
+        return JSON.stringify(this);
+    },/*}}}*/
+
+    fromString: function(str) {/*{{{*/
+        return JSON.parse(str);
+    }/*}}}*/
+  };
 }/*}}}*/
 
 function FileAPI() {/*{{{*/
@@ -170,6 +205,25 @@ function FileAPI() {/*{{{*/
     },/*}}}*//*}}}*/
 
     // Functions
+    takeSnapshot: function() {/*{{{*/
+        fAPIS = FileAPIStub();
+        fAPIS.fromFAPI(this);
+        return fAPIS;
+    },/*}}}*/
+
+    restoreSnapshot: function(fAPIS) {/*{{{*/
+        this.sessionID = fAPIS.sID;
+        this.file = fAPIS.file;
+        this.kind = fAPIS.type;
+        this.state = fAPIS.state;
+        this.startedAt = fAPIS.startedAt;
+        this.encKey = fAPIS.sKey;
+        this.chunks = fAPIS.chunks;
+        this.chunksDecrypted = fAPIS.chunksDecrypted;
+        this.res = fAPIS.res;
+        this.paused = 1;
+    },/*}}}*/
+
     initialize: function(file, kind) {/*{{{*/
         this.updateStatus('Preparing download');
         this.file = file;
