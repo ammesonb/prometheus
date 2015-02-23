@@ -61,7 +61,7 @@ if (notWorker) {
 
 function FileAPIStub() {/*{{{*/
   return {
-    populate(sID, file, type, state, sKey, startedAt, chunks, chunksDecrypted, res) {/*{{{*/
+    populate: function(sID, file, type, state, sKey, startedAt, chunks, chunksDecrypted, res) {/*{{{*/
         this.sID = sID,
         this.file = file,
         this.type = type,
@@ -70,7 +70,7 @@ function FileAPIStub() {/*{{{*/
         this.startedAt = startedAt,
         this.chunks = chunks,
         this.chunksDecrypted = chunksDecrypted,
-        this.res = res,
+        this.res = res
     },/*}}}*/
 
     fromFAPI: function(fAPI) {/*{{{*/
@@ -105,6 +105,8 @@ function FileAPI() {/*{{{*/
     completed: false,
     paused: false,
     state: '',
+    transferCompleted: 0,
+    storingCompleted: 0,
     failed: 0,
 
     fs: undefined,
@@ -277,12 +279,19 @@ function FileAPI() {/*{{{*/
                     this.startWorkers();
                     break;
                 case 'workerloop':
+                    if (this.transferCompleted && this.storingCompleted) {
+                        this.updateStatus('Decrypting');
+                    } else if (!this.transferCompleted) {
+                        this.updateStatus('Storing transferred data');
+                    } else {
+                        this.updateStatus('Downloading');
+                    }
                     this.ajaxWorker.postMessage('resume');
                     this.cryptWorker.postMessage('resume');
 
                     this.cryptWorker.postMessage('decrypt');
                     this.ajaxWorker.postMessage('getdlchunk');
-                    this.ajaxWorker.postMessage('dl');
+                    setTimeout(function() {this.ajaxWorker.postMessage('dl')}, 100);
                     break;
                 case 'finishing':
                     this.finish();
@@ -297,6 +306,8 @@ function FileAPI() {/*{{{*/
             this.paused = 1;
             if (this.cryptWorker) {
                 this.cryptWorker.postMessage('pause');
+            }
+            if (this.ajaxWorker) {
                 this.ajaxWorker.postMessage('pause');
             }
         // Save state here somehow?
@@ -500,7 +511,10 @@ function FileAPI() {/*{{{*/
                 this.fAPI.chunks++;
                 this.fAPI.updateFile(this.fAPI.sessionID + '-' + num, num, data, 'text/plain', true,
                                      this.fAPI.partVerify, [this.fAPI, this, this.cryptWorker, 0]);
+            } else if (msg === 'transferDone') {
+                this.fAPI.transferCompleted = 1;
             } else if (msg === 'done') {
+                this.fAPI.storingCompleted = 1;
                 this.fAPI.updateStatus('Decrypting');
                 this.terminate();
             }
@@ -540,13 +554,11 @@ function FileAPI() {/*{{{*/
 
     dlLoop: function() {/*{{{*/
         if (self.paused) {return;}
-        while (true) {
-            // This will return 0 on failure or completion
-            if (self.paused || self.transferCompleted) {return 0;}
-            self.transferred = this.dl();
-            if (!self.transferred) {return 0;}
-        }
-        return 1;
+        // This will return 0 on failure or completion
+        if (self.paused || self.transferCompleted) {return 0;}
+        self.transferred = self.fAPI.dl();
+        if (!self.transferred || self.paused) {return 0;}
+        setTimeout(self.fAPI.dlLoop, 1);
     },/*}}}*/
 
     dl: function() {/*{{{*/
@@ -558,7 +570,7 @@ function FileAPI() {/*{{{*/
         text = chunkReq.responseText.split(':');
         for (i = 0; i < text.length; i++) {
             if (text[i] === '' && i === (text.length - 1)) {break;}
-            if (text[i] === "<<#EOF#>>") {return 0;}
+            if (text[i] === "<<#EOF#>>") {self.fAPI.transferCompleted = 1; self.transferCompleted = 1; self.postMessage('transferDone');}
             self.transferData.push(text[i]);
             self.transferred++;
         }
@@ -608,6 +620,7 @@ function FileAPI() {/*{{{*/
                 } else {
                     if (fAPI.paused) {
                         fAPI.state = 'workerloop';
+                        fAPI.setPaused();
                         return;
                     } else {
                         fAPI.getFile(fAPI.sessionID + '-' + fAPI.chunksDecrypted, fAPI.sendPart,
@@ -726,22 +739,19 @@ if (isWorker) {/*{{{*/
     self.addEventListener('message', function(e) {
         data = e.data.split(':');
         if (data[0] === 'dl') {
-            fAPI = FileAPI();
-            if (self.sID === '') {
+            if (data.length > 1) {
+                self.fAPI = FileAPI();
+                self.fAPI.transferCompleted = 0;
+                self.fAPI.storingCompleted = 0;
                 self.sID = data[1];
                 self.res = data[2]
                 self.k = data[3];
             }
-            if (fAPI.dlLoop()) {
-                self.postMessage('dlfail');
-            } else {
-                if (!self.paused) {
-                    self.transferCompleted = 1;
-                }
-            }
+            self.fAPI.dlLoop();
         } else if (data[0] === 'getdlchunk') {
             if (!self.transferData.length) {
                 if (self.transferCompleted) {
+                    self.fAPI.storingCompleted = 1;
                     self.postMessage('done');
                 } else {
                     self.postMessage('noneAvail');
@@ -753,18 +763,17 @@ if (isWorker) {/*{{{*/
                 self.numTransferred++;
             }
         } else if (data[0] === 'decrypt') {
-            fAPI = FileAPI();
-            fAPI.decryptLoop();
+            self.fAPI = FileAPI();
+            self.fAPI.decryptLoop();
         } else if (data[0] === 'noneAvail') {
             if (!self.paused) {
-                setTimeout(function() {fAPI = FileAPI(); fAPI.decryptLoop();}, 100);
+                setTimeout(function() {self.fAPI.decryptLoop();}, 100);
             }
         } else if (data[0] === 'avail') {
-            fAPI = FileAPI();
-            fAPI.decrypt(data[1], data[2], data[3], data[4]);
+            self.fAPI.decrypt(data[1], data[2], data[3], data[4]);
         } else if (data[0] === 'pause') {
             self.paused = 1;
-        } else if (data[1] === 'resume') {
+        } else if (data[0] === 'resume') {
             self.paused = 0;
         }
     });
