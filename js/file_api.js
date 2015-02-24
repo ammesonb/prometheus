@@ -13,7 +13,7 @@ S_100M = 104857600;
 f_avail = {};
 mode = M_GC;
 /*{{{*/ /* TODO
-    Pause button - functioning in workers?
+    Pause - fix the file append error - possibly caused somewhere by pausing during the store process?
     Allow three parallel downloads - should work, check variable collisions
         In order for this to work also need to implement the pause function and deal with resume
         across reboots, since a half-complete download will never finish
@@ -61,15 +61,18 @@ if (notWorker) {
 
 function FileAPIStub() {/*{{{*/
   return {
-    populate: function(sID, file, type, state, sKey, startedAt, chunks, chunksDecrypted, res) {/*{{{*/
+    populate: function(sID, file, type, size, state, sKey, startedAt, chunks, chunksDecrypted, transferCompleted, storingCompleted, res) {/*{{{*/
         this.sID = sID,
         this.file = file,
         this.type = type,
+        this.size = size,
         this.state = state,
         this.sKey = sKey,
         this.startedAt = startedAt,
         this.chunks = chunks,
         this.chunksDecrypted = chunksDecrypted,
+        this.transferCompleted = transferCompleted;
+        this.storingCompleted = storingCompleted;
         this.res = res
     },/*}}}*/
 
@@ -77,11 +80,14 @@ function FileAPIStub() {/*{{{*/
         this.sID = fAPI.sessionID;
         this.file = fAPI.file;
         this.type = fAPI.kind;
+        this.size = fAPI.size;
         this.state = fAPI.state;
         this.sKey = fAPI.encKey;
         this.startedAt = fAPI.startedAt;
         this.chunks = fAPI.chunks;
         this.chunksDecrypted = fAPI.chunksDecrypted;
+        this.transferCompleted = fAPI.transferCompleted;
+        this.storingCompleted = fAPI.storingCompleted;
         this.res = fAPI.res;
     },/*}}}*/
 
@@ -104,6 +110,7 @@ function FileAPI() {/*{{{*/
     progress: 0,
     completed: false,
     paused: false,
+    lastStub: '',
     state: '',
     transferCompleted: 0,
     storingCompleted: 0,
@@ -264,11 +271,11 @@ function FileAPI() {/*{{{*/
 
     pause: function() {/*{{{*/
         if (this.paused) {
-            this.paused = 0;
+            this.paused = 0;/*{{{*/
             if (this.status.indexOf('Pausing - ') > -1) {
                 this.updateStatus(this.status.replace('Pausing - ', ''));
             }
-            switch(this.state) {
+            switch(this.state) {/*{{{*/
                 case 'initstr':
                     this.initializeStorage();
                     break;
@@ -296,12 +303,12 @@ function FileAPI() {/*{{{*/
                 case 'finishing':
                     this.finish();
                     break;
-            }
+            }/*}}}*/
 
             if (this.status === 'Decrypting') {
                 this.decryptStatus(this, 0);
-            }
-        } else {
+            }/*}}}*/
+        } else {/*{{{*/
             this.updateStatus('Pausing - ' + this.status);
             this.paused = 1;
             if (this.cryptWorker) {
@@ -310,9 +317,17 @@ function FileAPI() {/*{{{*/
             if (this.ajaxWorker) {
                 this.ajaxWorker.postMessage('pause');
             }
-        // Save state here somehow?
+
+            fAPIS = this.takeSnapshot();
+            if (this.lastStub !== fAPIS.toString()) {
+                this.lastStub = fAPIS.toString();
+                this.currentXHRReq = createPostReq('/file.cgi', true);
+                this.currentXHRReq.send('s=3&si=' + this.sessionID + '&fapis=' + this.lastStub);
+                this.currentXHRReq = undefined;
+            }
+            // Save state here somehow?
             // Ask user to wait while storing transferred chunks?
-       }
+       }/*}}}*/
     },/*}}}*/
 
     setPaused: function() {/*{{{*/

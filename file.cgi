@@ -110,8 +110,17 @@ if ($state == 0) { #{{{
     $session->param("$sessionID-offset", $end + 1); #}}}
 } elsif ($state == 2) { #{{{
     my $sessionID = $q->param('si');
+    my $stubRef = $session->param('stubs');
+    my @stubs = @$stubRef;
+    @stubs = grep {$_ !~ $sessionID} @stubs;
+    $session->pparam('stubs', \@stubs);
     `sed -i /files/$ENV{REMOTE_ADDR} '/$sessionID/d'`;
     `shred -u -n 3 /files/$sessionID/*`;
-    `rm -r /files/$sessionID`;
-} #}}}
+    `rm -r /files/$sessionID`; #}}}
+} elsif ($state == 3) { #{{{
+    my $fapis = $q->param('fapis');
+    my $stubRef = $session->param('stubs');
+    push(@{$stubRef}, $fapis);
+    $session->param('stubs', $stubRef); #}}}
+}
 exit;
