@@ -11,6 +11,8 @@ if [ -d "/data" ]; then
     exit 1
 fi
 mkdir /data
+mkdir /files
+mkdir /prom_cli
 touch /data/la77cD30f7D31F40
 chmod 660 /data/la77cD30f7D31F40
 echo "#!/bin/bash
@@ -28,3 +30,5 @@ chown -R root:prometheus /data
 chmod 770 /data
 chown -R root:prometheus /files
 chmod 770 /files
+chown -R root:prometheus /prom_cli
+chmod 770 /prom_cli

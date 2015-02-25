@@ -1,4 +1,4 @@
-import sys, os, socket, select
+import sys, os, socket, select, commands
 from textwrap import wrap
 from prom_ac import *
 from time import sleep
@@ -17,7 +17,18 @@ width = 70
 space = 3
 port = 35792
 destPort = 35793
+outDir = '/home/brett/rsync'
 contents = []
+f = open('rp', 'w')
+f.write('ClI#pass')
+f.close()
+os.chmod('rp', 0400)
+
+# Get default CLI #{{{
+#cli = commands.getoutput('update-alternatives --display x-terminal-emulator')
+#cli = cli.split('\n')[-1]
+#cli = cli.split('\'')
+#cli = cli[-2] #}}}
 
 # Get address of server using network broadcast #{{{
 bSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -52,23 +63,20 @@ while not int(auth):
     print 'Invalid username or password'
     user, pw = getAuth()
     authStr = 'auth' + sep + user + sep + pw
-    print 'send'
     pSock.send(authStr)
-    print 'recv'
     auth = pSock.recv(999)
-    print 'r'
     auth = auth.strip() #}}}
 
 def print_help(): #{{{
     print "\nPrometheus CLI\n\
     help      Display this message\n\
     ls        List files\n\
+    cd        Change directory\n\
     search    Return any matches for a given string\n\
     info      Prints details of file\n\
     get       Transfer a file\n\
-    gets      Transfer a series\n\
-    getse     Transfer a season\n\
-    getsh     Transfer a TV show\n\
+    gets      Transfer a series - e.g. Star Wars or Doctor Who\n\
+    getse     Transfer a season - e.g. Doctor Who 2\n\
     exit      Quit program\
 " #}}}
 
@@ -94,8 +102,44 @@ def get_contents(): #{{{
     contents.sort()
     contents.insert(0, '..') #}}}
 
+def single_select(data, pSock): #{{{
+    if data == 'nf':
+        print 'No match'
+        return
+    elif data[:6] == 'choice':
+        opts = data.replace('choice' + sep, '').split(';')
+        opts.sort()
+        num = 0
+        print 'Please select intended media:'
+        for i in opts:
+            print str(num) + '. ' + i
+            num += 1
+        n = raw_input('# ')
+        while True:
+            try:
+                i = int(n)
+                if i < 0 or i > num - 1:
+                    print 'Value must be one of above choices'
+                    n = raw_input('# ')
+                else:
+                    break
+            except ValueError:
+                print 'Value must be numeric'
+                n = raw_input('# ')
+        pSock.send(opts[int(n)])
+        data = pSock.recv(999999999)
+    return data #}}}
+
 def parse_cmd(cmd): #{{{
+    if cmd in ['quit', 'exit']:
+        os.remove('rp')
+        exit(1)
+
     cmd = cmd.split(' ', 1)
+    if cmd[0] != 'ls' and len(cmd) < 2:
+        print 'Need argument'
+        return
+
     if cmd[0] == 'ls': #{{{
         print_long_text(contents) #}}}
     elif cmd[0] == 'cd' or (cmd not in COMMANDS and cmd in contents): #{{{
@@ -117,28 +161,38 @@ def parse_cmd(cmd): #{{{
     elif cmd[0] == 'info': #{{{
         pSock.send('info' + sep + cmd[1])
         data = pSock.recv(999999999)
+        data = single_select(data, pSock)
+        if not data:
+            return
+        print '\n'.join(data.split(';;;')) #}}}
+    elif cmd[0] == 'get': #{{{
+        pSock.send('get' + sep + cmd[1])
+        data = pSock.recv(999)
+        data = single_select(data, pSock)
+        if not data:
+            return
+        os.system('./rsync.sh ' + ip + ' ' + outDir + ' "' + data + '"')
+        pSock.send('rm' + sep + data);
+        pSock.recv(999) #}}}
+    elif cmd[0] == 'gets': #{{{
+        pSock.send('gets' + sep + cmd[1])
+        data = pSock.recv(999)
+        data = single_select(data, pSock)
         if data == 'nf':
             print 'No match'
             return
-        elif data[:6] == 'choice': #{{{
-            opts = data.replace('choice' + sep, '').split(';')
-            opts.sort()
-            num = 0
-            print 'Please select intended media:'
-            for i in opts:
-                print str(num) + '. ' + i
-                num += 1
-            n = raw_input('# ')
-            while True:
-                try:
-                    int(n)
-                    break
-                except ValueError:
-                    print 'Value must be numeric'
-                    n = raw_input('# ')
-            pSock.send(n)
-            data = pSock.recv(999999999) #}}}
-        print '\n'.join(data.split(';;;')) #}}}
+        if data == 'prep':
+            print 'Server is preparing files. Please wait.'
+        data = pSock.recv(999)
+        data = data.split(';')
+        data = '" "'.join(data)
+        os.system('./rsync.sh ' + ip + ' ' + outDir + ' "' + data + '"')
+        for f in data.split('" "'):
+            pSock.send('rm' + sep + f)
+            pSock.recv(999) #}}}
+    else:
+        print 'Unrecognized command'
+        return
     #}}}
 
 def get_cmd(): #{{{
@@ -149,3 +203,4 @@ get_contents()
 print_help()
 while (1):
     get_cmd()
+os.remove('rp')

@@ -106,12 +106,59 @@ sub search_media { #{{{
     return \@results;
 } #}}}
 
+sub single_select { #{{{
+    my $sock = shift;
+    my $results = shift;
+    my @results = @$results;
+
+    if ($#results == -1) {
+        $sock->send('nf');
+        return undef;
+    } elsif ($#results != 0) {
+        my @names = @results;
+        if (ref($results[0]) eq 'HASH') {
+            @names =
+                map { my %tmp = %$_;
+                      defined $tmp{'series'} ?
+                      "$series{$tmp{series}}{name} - $tmp{title}" :
+                      $tmp{title}
+                    } @results;
+        }
+        $sock->send("choice$sep" . join(';', @names));
+        my $choice = '';
+        $sock->recv($choice, 999);
+        @results = ($choice);
+    }
+    return $results[0];
+} #}}}
+
+sub prepare_file { #{{{
+    my $result = shift;
+    my %result = %$result;
+    my $kind = 'm';
+    if (any {$_ eq 'episode'} keys(%result)) {$kind = 't';}
+    my $v = $kind . substr($result{title}, 0, 1);
+    my $m = $v . '_m';
+    my $hn = `echo -n "$m" | sha256sum | awk -F ' ' '{printf \$1}'`;
+    my $cs = '-1';
+    if (-e "/prom_cli/$result{file}") {
+        $cs = `sha512sum "/prom_cli/$result{file}" | awk -F ' ' '{print \$1}'`;
+        chomp $cs;
+    }
+    if (defined $result{checksum} and $cs ne $result{checksum}) {
+        `../encfs/./fs.py m $v /data/$hn`;
+        `rsync -achvtr "/data/$hn/$result{file}" /prom_cli/`;
+        `../encfs/./fs.py d $v`;
+    }
+} #}}}
+
 sub handle_commands { #{{{
     my $sock = shift;
     my $folder = '';
     while (1) {
         my $cmd = '';
         $sock->recv($cmd, 999);
+        $cmd = lc $cmd;
         if ($cmd =~ /^cd/) { #{{{
             $cmd =~ s/^cd$sep//;
             if ($cmd =~ /\.\.\/?/) {
@@ -145,43 +192,76 @@ sub handle_commands { #{{{
             } else {
                 $sock->send('No results');
             } #}}}
-        } elsif ($cmd =~ /^info/) {
+        } elsif ($cmd =~ /^info/) { #{{{
             $cmd =~ s/^info$sep//;
             my @results = @{search_media($cmd, 0)};
-            if ($#results == -1) {
-                $sock->send('nf');
-            } elsif ($#results != 0) {
-                my @names =
-                    map { my %tmp = %$_;
-                          defined $tmp{'series'} ?
-                            "$series{$tmp{series}}{name} - $tmp{title}" :
-                            $tmp{title}
-                        } @results;
-                $sock->send("choice$sep" . join(';', @names));
-                my $choice = '';
-                $sock->recv($choice, 999);
-                @results = ($results[$choice]);
-            }
+            my $result = single_select($sock, \@results);
+            if (not defined $result) {next;}
 
-            if ($#results != -1) {
-                my %data = %{$results[0]};
-                my $fs = 0;
-                if (defined $data{size}) {
-                    $fs = $data{size} / 1024 / 1024;
-                }
-                my @parts = 
-                    ("Title: $data{title}", "IMDb link: https://imdb.com/title/tt$data{ttid}/",
-                    "Year: $data{year}", "Released on: $data{released}", "Duration: $data{duration} minutes",
-                    "File size: $fs MB"
-                    );
-                if ($data{director}) {push(@parts, "Directed by $data{director}");}
-    
-                if (any {$_ eq 'episode'} keys(%data)) {
-                    splice(@parts, 2, 0, "Season $data{season}, episode $data{episode}");
-                }
-                my $text = join(';;;', @parts);
-                $sock->send($text);
+            my %data = %$result;
+            my $fs = 0;
+            if (defined $data{size}) {
+                $fs = $data{size} / 1024 / 1024;
             }
+            my @parts = 
+                ("Title: $data{title}", "IMDb link: https://imdb.com/title/tt$data{ttid}/",
+                "Year: $data{year}", "Released on: $data{released}", "Duration: $data{duration} minutes",
+                "File size: $fs MB"
+                );
+            if ($data{director}) {push(@parts, "Directed by $data{director}");}
+
+            if (any {$_ eq 'episode'} keys(%data)) {
+                splice(@parts, 2, 0, "Season $data{season}, episode $data{episode}");
+            }
+            my $text = join(';;;', @parts);
+            $sock->send($text); #}}}
+        } elsif ($cmd =~ /^get$sep/) { #{{{
+            $cmd =~ s/^get$sep//;
+            my @results = @{search_media($cmd, 0)};
+            my $result = single_select($sock, \@results);
+            if (not defined $result) {next;}
+            prepare_file($result);
+            my %result = %$result;
+            $sock->send($result{file}); #}}}
+        } elsif ($cmd =~ /^gets$sep/) { #{{{
+            $cmd =~ s/gets$sep//;
+            my $stmt = $dbh->prepare("SELECT * FROM series WHERE LOWER(name) LIKE '%$cmd%'");
+            $stmt->execute();
+            my %retSeries = %{$stmt->fetchall_hashref(['name'])};
+            my @retNames = keys %retSeries;
+            my $serID = undef;
+            if ($#retNames == 0) {
+                $serID = $series{$retNames[0]};
+            } else {
+                my $choice = single_select($sock, \@retNames);
+                $serID = $retSeries{$choice}{id};
+            }
+            if (not defined $serID) {$sock->send('nf'); next;}
+            $stmt = $dbh->prepare("SELECT * FROM movies WHERE series=$serID");
+            $stmt->execute();
+            my %data = %{$stmt->fetchall_hashref(['id'])};
+            my @ids = keys %data;
+            if ($#ids == -1) {$sock->send('nf'); next;}
+            my @files;
+            $sock->send('prep');
+            foreach(@ids) {
+                my %data = %{$data{$_}};
+                prepare_file(\%data);
+                push(@files, $data{file});
+            }
+            $sock->send(join(';', @files)); #}}}
+        } elsif ($cmd =~ /^getse$sep/) {
+            $cmd =~ s/^getse$sep//;
+            my @parts = split(/ /, $cmd);
+            my $sN = $parts[$#parts];
+            @parts = map {$_ ne $sN} @parts;
+            my $show = join(' ', @parts);
+        } elsif ($cmd =~ /^rm$sep/) { #{{{
+            $cmd =~ s/^rm$sep//;
+            if (not `ps aux | grep "$cmd" | grep -v grep` and -e "/prom_cli/$cmd") {
+                `rm "/prom_cli/$cmd"`;
+            }
+            $sock->send('done'); #}}}
         }
         sleep $sleep_delay;
     }
