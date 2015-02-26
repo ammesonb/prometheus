@@ -13,7 +13,6 @@ S_100M = 104857600;
 f_avail = {};
 mode = M_GC;
 /*{{{*/ /* TODO
-    Pause - fix the file append error - possibly caused somewhere by pausing during the store process?
     Allow three parallel downloads - should work, check variable collisions
         In order for this to work also need to implement the pause function and deal with resume
         across reboots, since a half-complete download will never finish
@@ -270,8 +269,8 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
 
     pause: function() {/*{{{*/
-        if (this.paused) {
-            this.paused = 0;/*{{{*/
+        if (this.paused) {/*{{{*/
+            this.paused = 0;
             if (this.status.indexOf('Pausing - ') > -1) {
                 this.updateStatus(this.status.replace('Pausing - ', ''));
             }
@@ -288,7 +287,7 @@ function FileAPI() {/*{{{*/
                 case 'workerloop':
                     if (this.transferCompleted && this.storingCompleted) {
                         this.updateStatus('Decrypting');
-                    } else if (!this.transferCompleted) {
+                    } else if (this.transferCompleted && !this.storingCompleted) {
                         this.updateStatus('Storing transferred data');
                     } else {
                         this.updateStatus('Downloading');
@@ -297,8 +296,12 @@ function FileAPI() {/*{{{*/
                     this.cryptWorker.postMessage('resume');
 
                     this.cryptWorker.postMessage('decrypt');
-                    this.ajaxWorker.postMessage('getdlchunk');
-                    setTimeout(function() {this.ajaxWorker.postMessage('dl')}, 100);
+                    if (!this.storingCompleted) {
+                        this.ajaxWorker.postMessage('getdlchunk');
+                    }
+                    if (!this.transferCompleted) {
+                        setTimeout(function() {this.ajaxWorker.postMessage('dl')}, 100);
+                    }
                     break;
                 case 'finishing':
                     this.finish();
@@ -541,8 +544,11 @@ function FileAPI() {/*{{{*/
         this.cryptWorker.addEventListener('message', function(m) {/*{{{*/
             msg = m.data;
             if (msg === 'appendFail') {
-                this.ajaxWorker.terminate();
+                this.fAPI.ajaxWorker.terminate();
                 this.fAPI.fail('Failed to store decrypted data');
+            } else if (msg === 'pausing') {
+                this.fAPI.state = 'workerloop';
+                this.fAPI.setPaused();
             } else if (msg === 'nextChunk') {
                 if (this.fAPI.chunksDecrypted >= this.fAPI.chunks) {
                     this.postMessage('noneAvail');
@@ -560,7 +566,7 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
 
     sendPart: function(sID, num, key, cryptWorker, name, data) {/*{{{*/
-        if (this.paused) {return;}
+        if (this.paused) {this.state = 'workerloop'; this.setPaused(); return;}
         if (!data || data === NaN) {console.log('data blank - ' + num); cryptWorker.postMessage('noneAvail');}
         else {
             cryptWorker.postMessage(['avail', sID, num, key, data].join(':'));
@@ -585,7 +591,7 @@ function FileAPI() {/*{{{*/
         text = chunkReq.responseText.split(':');
         for (i = 0; i < text.length; i++) {
             if (text[i] === '' && i === (text.length - 1)) {break;}
-            if (text[i] === "<<#EOF#>>") {self.fAPI.transferCompleted = 1; self.transferCompleted = 1; self.postMessage('transferDone');}
+            if (text[i] === "<<#EOF#>>") {self.fAPI.transferCompleted = 1; self.transferCompleted = 1; self.postMessage('transferDone'); return;}
             self.transferData.push(text[i]);
             self.transferred++;
         }
@@ -655,6 +661,8 @@ function FileAPI() {/*{{{*/
     decryptLoop: function() {/*{{{*/
         if (!self.paused) {
             self.postMessage('nextChunk');
+        } else {
+            self.postMessage('pausing');
         }
     },/*}}}*/
 
@@ -753,7 +761,7 @@ self.k = '';
 if (isWorker) {/*{{{*/
     self.addEventListener('message', function(e) {
         data = e.data.split(':');
-        if (data[0] === 'dl') {
+        if (data[0] === 'dl') {/*{{{*/
             if (data.length > 1) {
                 self.fAPI = FileAPI();
                 self.fAPI.transferCompleted = 0;
@@ -762,8 +770,8 @@ if (isWorker) {/*{{{*/
                 self.res = data[2]
                 self.k = data[3];
             }
-            self.fAPI.dlLoop();
-        } else if (data[0] === 'getdlchunk') {
+            self.fAPI.dlLoop();/*}}}*/
+        } else if (data[0] === 'getdlchunk') {/*{{{*/
             if (!self.transferData.length) {
                 if (self.transferCompleted) {
                     self.fAPI.storingCompleted = 1;
@@ -776,20 +784,20 @@ if (isWorker) {/*{{{*/
                 c = self.transferData.shift();
                 self.postMessage('data-' + self.numTransferred + '-' + c);
                 self.numTransferred++;
-            }
-        } else if (data[0] === 'decrypt') {
+            }/*}}}*/
+        } else if (data[0] === 'decrypt') {/*{{{*/
             self.fAPI = FileAPI();
-            self.fAPI.decryptLoop();
-        } else if (data[0] === 'noneAvail') {
+            self.fAPI.decryptLoop();/*}}}*/
+        } else if (data[0] === 'noneAvail') {/*{{{*/
             if (!self.paused) {
                 setTimeout(function() {self.fAPI.decryptLoop();}, 100);
-            }
-        } else if (data[0] === 'avail') {
+            }/*}}}*/
+        } else if (data[0] === 'avail') {/*{{{*/
             self.fAPI.decrypt(data[1], data[2], data[3], data[4]);
-        } else if (data[0] === 'pause') {
-            self.paused = 1;
-        } else if (data[0] === 'resume') {
-            self.paused = 0;
+        } else if (data[0] === 'pause') {/*{{{*/
+            self.paused = 1;/*}}}*/
+        } else if (data[0] === 'resume') {/*{{{*/
+            self.paused = 0;/*}}}*/
         }
     });
 }/*}}}*/

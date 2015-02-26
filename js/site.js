@@ -4610,9 +4610,7 @@ function updateInfo(elem, fAPI) {/*{{{*/
         received = fAPI.chunksDecrypted;
         size = fAPI.chunks;
         receiveText = 'Decrypted:\u00a0\u00a0';
-        chunks = Math.abs(fAPI.decrypt1 - fAPI.decrypt2);
-        timeDiff = Math.abs(fAPI.decrypt1Time - fAPI.decrypt2Time) / 1000;
-        eta = parseTime((fAPI.chunks - fAPI.chunksDecrypted) / (chunks / timeDiff))[0];
+        eta = fAPI.decryptETA;
     }/*}}}*/
 
     setText(elem, /*{{{*/
