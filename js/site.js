@@ -264,6 +264,10 @@ function switchToNight() { /*{{{*/
     for (a = 0; a < arguments.length; a++) {arguments[a].className += ' night';}
 } /*}}}*/
 
+function trim(s){ /*{{{*/
+  return ( s || '' ).replace( /^\s+|\s+$/g, '' ); 
+}/*}}}*/
+
 function stringFill(x, n) { /*{{{*/
     var s = '';
     for (;;) {
@@ -4331,16 +4335,7 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     /*}}}*/
 }/*}}}*/
 
-function getFile(file, kind, item) {/*{{{*/
-    if (document.getElementById(item.ttid)) {
-        switchTab('dl');
-        return;
-    }
-    
-    f = FileAPI();
-    f.ttid = item.ttid;
-    f.title = item.title;
-
+function addFAPIEventListeners(f) {/*{{{*/
     f.addEventListener('onstatusupdate', function(e) {/*{{{*/
         fAPI = this.target;
         if (fAPI.failed) {
@@ -4378,8 +4373,21 @@ function getFile(file, kind, item) {/*{{{*/
         dl.download = fAPI.file;
         dl.fAPI = fAPI;
         setText(dl, 'Download');
+        dl.onclick = function() {setTimeout(this.fAPI.clean, 1000);}
         document.getElementById(fAPI.ttid + '_status').appendChild(dl);
     });/*}}}*/
+}/*}}}*/
+
+function getFile(file, kind, item) {/*{{{*/
+    if (document.getElementById(item.ttid)) {
+        switchTab('dl');
+        return;
+    }
+    
+    f = FileAPI();
+    f.ttid = item.ttid;
+    f.title = item.title;
+    addFAPIEventListeners(f);
 
     addDownload(f, item);
 
@@ -4387,6 +4395,24 @@ function getFile(file, kind, item) {/*{{{*/
         f.initialize(file, kind);
     }
 
+}/*}}}*/
+
+function getStubs() {/*{{{*/
+    req = createPostReq('/file.cgi', false);
+    req.send('s=4');
+    data = trim(req.responseText)
+    data = data.split('#;#');
+    if (!data.length || data[0] === '') {return;}
+    for (i = 0; i < data.length; i++) {
+        stub = FileAPIStub();
+        stub.populate(JSON.parse(data[i]));
+        fAPI = stub.toFAPI();
+        r = createPostReq('/file.cgi', false);
+        r.send('s=5&si=' + fAPI.sessionID + '&o=' + fAPI.chunks);
+
+        addDownload(fAPI, {'title': fAPI.title, 'ttid': fAPI.ttid, 'size': fAPI.size});
+        addFAPIEventListeners(fAPI);
+    }
 }/*}}}*/
 
 function populateDL(dlPanel, firstSize, transferSize) {/*{{{*/

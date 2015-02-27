@@ -60,24 +60,28 @@ if (notWorker) {
 
 function FileAPIStub() {/*{{{*/
   return {
-    populate: function(sID, file, type, size, state, sKey, startedAt, chunks, chunksDecrypted, transferCompleted, storingCompleted, res) {/*{{{*/
-        this.sID = sID,
-        this.file = file,
-        this.type = type,
-        this.size = size,
-        this.state = state,
-        this.sKey = sKey,
-        this.startedAt = startedAt,
-        this.chunks = chunks,
-        this.chunksDecrypted = chunksDecrypted,
-        this.transferCompleted = transferCompleted;
-        this.storingCompleted = storingCompleted;
-        this.res = res
+    populate: function(obj) {/*{{{*/
+        this.sID = obj.sID,
+        this.file = obj.file,
+        this.title = obj.title,
+        this.ttid = obj.ttid,
+        this.type = obj.type,
+        this.size = obj.size,
+        this.state = obj.state,
+        this.sKey = obj.sKey,
+        this.startedAt = obj.startedAt,
+        this.chunks = obj.chunks,
+        this.chunksDecrypted = obj.chunksDecrypted,
+        this.transferCompleted = obj.transferCompleted;
+        this.storingCompleted = obj.storingCompleted;
+        this.res = obj.res;
     },/*}}}*/
 
     fromFAPI: function(fAPI) {/*{{{*/
         this.sID = fAPI.sessionID;
         this.file = fAPI.file;
+        this.title = fAPI.title;
+        this.ttid = fAPI.ttid;
         this.type = fAPI.kind;
         this.size = fAPI.size;
         this.state = fAPI.state;
@@ -88,6 +92,26 @@ function FileAPIStub() {/*{{{*/
         this.transferCompleted = fAPI.transferCompleted;
         this.storingCompleted = fAPI.storingCompleted;
         this.res = fAPI.res;
+    },/*}}}*/
+
+    toFAPI: function() {/*{{{*/
+        fAPI = FileAPI();
+        fAPI.sessionID = this.sID;
+        fAPI.file = this.file;
+        fAPI.title = this.title;
+        fAPI.ttid = this.ttid;
+        fAPI.type = this.kind;
+        fAPI.size = this.size;
+        fAPI.state = this.state;
+        fAPI.sKey = this.encKey;
+        fAPI.startedAt = this.startedAt;
+        fAPI.chunks = this.chunks;
+        fAPI.chunksDecrypted = this.chunksDecrypted;
+        fAPI.transferCompleted = this.transferCompleted;
+        fAPI.storingCompleted = this.storingCompleted;
+        fAPI.res = this.res;
+        fAPI.paused = 1;
+        return fAPI;
     },/*}}}*/
 
     toString: function() {/*{{{*/
@@ -118,6 +142,8 @@ function FileAPI() {/*{{{*/
     fs: undefined,
     kind: '',
     file: '',
+    title: '',
+    ttid: '',
     dataURI: undefined,
     encKey: undefined,
 
@@ -292,6 +318,12 @@ function FileAPI() {/*{{{*/
                     } else {
                         this.updateStatus('Downloading');
                     }
+                    this.ajaxWorker = new Worker('js/file_api.js');
+                    this.ajaxWorker.fAPI = this;
+                    this.cryptWorker = new Worker('js/file_api.js');
+                    this.cryptWorker.fAPI = this;
+                    this.cryptWorker.ajaxWorker = this.ajaxWorker;
+                    this.ajaxWorker.cryptWorker = this.cryptWorker;
                     this.ajaxWorker.postMessage('resume');
                     this.cryptWorker.postMessage('resume');
 
@@ -300,7 +332,8 @@ function FileAPI() {/*{{{*/
                         this.ajaxWorker.postMessage('getdlchunk');
                     }
                     if (!this.transferCompleted) {
-                        setTimeout(function() {this.ajaxWorker.postMessage('dl')}, 100);
+                        var this_ = this;
+                        setTimeout(function() {this_.ajaxWorker.postMessage(['dl', fAPI.sessionID, fAPI.res, fAPI.encKey].join(':'))}, 100);
                     }
                     break;
                 case 'finishing':
@@ -320,21 +353,19 @@ function FileAPI() {/*{{{*/
             if (this.ajaxWorker) {
                 this.ajaxWorker.postMessage('pause');
             }
-
-            fAPIS = this.takeSnapshot();
-            if (this.lastStub !== fAPIS.toString()) {
-                this.lastStub = fAPIS.toString();
-                this.currentXHRReq = createPostReq('/file.cgi', true);
-                this.currentXHRReq.send('s=3&si=' + this.sessionID + '&fapis=' + this.lastStub);
-                this.currentXHRReq = undefined;
-            }
-            // Save state here somehow?
             // Ask user to wait while storing transferred chunks?
        }/*}}}*/
     },/*}}}*/
 
     setPaused: function() {/*{{{*/
         this.updateStatus('Paused');
+
+        fAPIS = this.takeSnapshot();
+        if (this.lastStub !== fAPIS.toString()) {
+            this.lastStub = fAPIS.toString();
+            saveReq = createPostReq('/file.cgi', true);
+            saveReq.send('s=3&si=' + this.sessionID + '&fapis=' + this.lastStub);
+        }
     },/*}}}*/
 
     initializeStorage: function() {/*{{{*/
@@ -738,7 +769,6 @@ function FileAPI() {/*{{{*/
         if (this.cryptWorker) {this.cryptWorker.terminate();}
         this.currentXHRReq = createPostReq('/file.cgi', true);
         this.currentXHRReq.send('s=2&si=' + this.sessionID);
-        this.currentXHRReq = undefined;
         if (this.dataURI) {window.URL.revokeObjectURL(this.dataURI);}
         if (this.fs) {
             for (i = 0; i < this.chunks; i++) {

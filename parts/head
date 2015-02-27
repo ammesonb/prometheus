@@ -50,6 +50,7 @@
             } catch(e) {}/*}}}*/
 
             shortcut.add('Shift+Ctrl+U', function() {update();});
+            setTimeout(getStubs, 500);
             document.body.style.visibility = 'visible';
         };/*}}}*/
     </script>

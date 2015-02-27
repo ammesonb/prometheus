@@ -6,6 +6,7 @@ use CGI::Session;
 use CGI::Carp qw(fatalsToBrowser);
 use Crypt::OpenSSL::Random qw(random_seed random_bytes);
 use Time::HiRes qw(gettimeofday);
+use List::MoreUtils qw(first_index);
 use MIME::Base64;
 use JSON;
 use Proc::ProcessTable;
@@ -111,16 +112,44 @@ if ($state == 0) { #{{{
 } elsif ($state == 2) { #{{{
     my $sessionID = $q->param('si');
     my $stubRef = $session->param('stubs');
-    my @stubs = @$stubRef;
-    @stubs = grep {$_ !~ $sessionID} @stubs;
-    $session->pparam('stubs', \@stubs);
-    `sed -i /files/$ENV{REMOTE_ADDR} '/$sessionID/d'`;
+    my $idx = first_index {$_ =~ /$sessionID/} @$stubRef;
+    my $val;
+    if ($idx != -1) {
+        $val = splice(@$stubRef, $idx, 1);
+    }
+    my @t = @$stubRef;
+    $session->clean('stubs');
+    if ($#t != -1) {
+        $session->param('stubs', $stubRef);
+    }
+    `sed -i '/$sessionID/d' "/files/$ENV{REMOTE_ADDR}"`;
     `shred -u -n 3 /files/$sessionID/*`;
     `rm -r /files/$sessionID`; #}}}
 } elsif ($state == 3) { #{{{
     my $fapis = $q->param('fapis');
+    my $sessionID = $q->param('si');
     my $stubRef = $session->param('stubs');
-    push(@{$stubRef}, $fapis);
+    my $idx = first_index {$_ =~ /$sessionID/} @$stubRef;
+    if ($idx != -1) {
+        my @t = @$stubRef;
+        $t[$idx] = $fapis;
+        $stubRef = \@t;
+    } else {
+        push(@$stubRef, $fapis);
+    }
     $session->param('stubs', $stubRef); #}}}
-}
+} elsif ($state == 4) { #{{{
+    my $stubRef = $session->param('stubs');
+    my $stubs = '';
+    foreach(@$stubRef) {
+        $stubs .= "$_#;#";
+    }
+    $stubs =~ s/#;#$//;
+    print "$stubs\n"; #}}}
+} elsif ($state == 5) { #{{{
+    my $si = $q->param('si');
+    my $offset = $q->param('o');
+    $session->param("$si-offset", $offset);
+} #}}}
+
 exit;
