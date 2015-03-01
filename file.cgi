@@ -118,13 +118,13 @@ if ($state == 0) { #{{{
         $val = splice(@$stubRef, $idx, 1);
     }
     my @t = @$stubRef;
-    $session->clean('stubs');
+    $session->clear('stubs');
     if ($#t != -1) {
         $session->param('stubs', $stubRef);
     }
     `sed -i '/$sessionID/d' "/files/$ENV{REMOTE_ADDR}"`;
-    `shred -u -n 3 /files/$sessionID/*`;
-    `rm -r /files/$sessionID`; #}}}
+    `shred -u -n 3 /files/$sessionID/* > /dev/null 2>&1`;
+    `rm -r /files/$sessionID > /dev/null 2>&1`; #}}}
 } elsif ($state == 3) { #{{{
     my $fapis = $q->param('fapis');
     my $sessionID = $q->param('si');
@@ -137,7 +137,8 @@ if ($state == 0) { #{{{
     } else {
         push(@$stubRef, $fapis);
     }
-    $session->param('stubs', $stubRef); #}}}
+    $session->param('stubs', $stubRef);
+    print 'saved'; #}}}
 } elsif ($state == 4) { #{{{
     my $stubRef = $session->param('stubs');
     my $stubs = '';

@@ -4348,7 +4348,7 @@ function addFAPIEventListeners(f) {/*{{{*/
         }
 
         if (fAPI.status === 'Decrypting') {fAPI.decryptStatus(fAPI, 0);}
-        console.log('Status: ' + e.target.status);
+        console.log(CryptoJS.MD5(fAPI.sessionID).toString() + ' - Status: ' + e.target.status);
     });/*}}}*/
     f.addEventListener("onprogressupdate", function(e) {/*{{{*/
         fAPI = this.target;
@@ -4360,7 +4360,7 @@ function addFAPIEventListeners(f) {/*{{{*/
         ctx = bar.getContext('2d');
         updateProgressBar(ctx, w, h, c, s, fAPI.progress);
         updateInfo(document.getElementById(fAPI.ttid + '_info'), fAPI);
-        if (f.status !== 'Decrypting') {console.log('Progress: ' + f.progress * 100 + '%, ' + parseSize(f.chunkSpeed)[0]);}
+        if (fAPI.status !== 'Decrypting') {console.log(CryptoJS.MD5(fAPI.sessionID).toString() + ' - Progress: ' + fAPI.progress * 100 + '%, ' + parseSize(fAPI.chunkSpeed)[0]);}
     });/*}}}*/
     f.addEventListener("oncomplete", function(e) {/*{{{*/
         fAPI = this.target;
@@ -4531,11 +4531,20 @@ function addDownload(fAPI, item) {/*{{{*/
     pause = createActionButton('pause', 0);
     pause.id = item.ttid + '_pause';
     pause.fAPI = fAPI;
+    if (fAPI.paused) {
+        pause.style.display = 'none';
+    } else {
+        pause.style.display = 'block';
+    }
     pause.onclick = function() {this.fAPI.pause(); document.getElementById(this.id.replace('_pause', '_play')).style.display = 'block'; this.style.display = 'none'};
     play = createActionButton('play', 0);
     play.id = item.ttid + '_play';
     play.fAPI = fAPI;
-    play.style.display = 'none';
+    if (fAPI.paused) {
+        play.style.display = 'block';
+    } else {
+        play.style.display = 'none';
+    }
     play.onclick = function() {this.fAPI.pause(); document.getElementById(this.id.replace('_play', '_pause')).style.display = 'block'; this.style.display = 'none'};
     remove = createActionButton('remove', 0);
     remove.id = item.ttid + '_remove';
