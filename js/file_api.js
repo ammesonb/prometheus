@@ -14,6 +14,7 @@ f_avail = {};
 mode = M_GC;
 /*{{{*/ /* TODO
     Allow three parallel downloads - should work, check variable collisions
+    If download is killed in 'preparing' stage, files aren't removed because encryption still running
     IndexedDB downloads WILL NOT WORK - writes to a field but getFile returns the whole object
     IndexedDB won't work in workers for Firefox - need to check access to window.indexedDB to determine that
 */ /*}}}*/

@@ -254,14 +254,28 @@ div.outline.night {/*{{{*/
 /*}}}*/
 
 /* span */ /*{{{*/
-span.media_item {
+span.media_item {/*{{{*/
     float: left;
     text-align: center;
     width: 150px;
     margin-right: 15px;
     margin-top: 10px;
     margin-bottom: 10px;
-}
+}/*}}}*/
+
+span.dl_popup {/*{{{*/
+    position: absolute;
+    z-index: 99999;
+    background-color: rgba(75, 75, 75, .7);
+    border-radius: 10px;
+    padding-left: 10px;
+    padding-top: 5px;
+    padding-right: 10px;
+    padding-bottom: 5px;
+    color: white;
+    font-size: 18pt;
+    opacity: 0;
+}/*}}}*/
 
 span.normal { /*{{{*/
     color: black;

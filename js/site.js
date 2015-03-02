@@ -4302,7 +4302,12 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     downloadButton.setAttribute('data-item', JSON.stringify(item));
     downloadButton.onclick = function() {/*{{{*/
         i = JSON.parse(this.getAttribute('data-item'));
+        first_dl = 0;
+        if (!document.getElementById('dl_list')) {first_dl = 1;}
         getFile(i.file, this.getAttribute('data-kind'), i);
+        if (!first_dl) {
+            addDownloadPopup(this.parentElement);
+        }
     };/*}}}*/
 
     subButton = element('button');
@@ -4588,6 +4593,35 @@ function addDownload(fAPI, item) {/*{{{*/
     dl.appendChild(element('br'));
     dl.appendChild(info);
     list.appendChild(dl);/*}}}*/
+}/*}}}*/
+
+function addDownloadPopup(mgrid) {/*{{{*/
+    bubble = document.createElement('span');
+    bubble.className = 'dl_popup';
+    bubble.style.opacity = '0';
+    setText(bubble, 'Download added');
+    mgrid.appendChild(bubble);
+    bubble.style.left = (mgrid.offsetWidth - 200 - bubble.offsetWidth) / 2 + 'px';
+    bubble.style.top = (mgrid.offsetHeight - bubble.offsetHeight) / 2 + 'px';
+    fade(bubble, 1);
+}/*}}}*/
+
+function fade(bubble, dir) {/*{{{*/
+    o = parseFloat(bubble.style.opacity, 10);
+    if (dir) {
+        o += .05;
+    } else {
+        o -= .05;
+    }
+    bubble.style.opacity = o;
+
+    if (o == 1) {
+        setTimeout(function() {fade(bubble, 0);}, 1500);
+    } else if (o == 0) {
+        bubble.parentElement.removeChild(bubble);
+    } else {
+        setTimeout(function() {fade(bubble, dir);}, 60);
+    }
 }/*}}}*/
 
 function updateDLStats(stats) {/*{{{*/
