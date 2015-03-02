@@ -315,7 +315,9 @@ CREATE TABLE movies (
     checksum character varying,
     resolution character varying,
     v_rate character varying,
-    a_rate character varying
+    a_rate character varying,
+    v_codec character varying,
+    a_codec character varying
 );
 
 
@@ -609,7 +611,9 @@ CREATE TABLE tv (
     checksum character varying,
     resolution character varying,
     v_rate character varying,
-    a_rate character varying
+    a_rate character varying,
+    v_codec character varying,
+    a_codec character varying
 );
 
 
