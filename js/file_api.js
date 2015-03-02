@@ -14,9 +14,6 @@ f_avail = {};
 mode = M_GC;
 /*{{{*/ /* TODO
     Allow three parallel downloads - should work, check variable collisions
-    Saving seems to be broken, but only on first call via setPaused()
-    so calculate size transferred based off of chunks received
-    Pause is broken with tab close - freezes towards end of download - total_chunks - #_chunks_at_pause
     IndexedDB downloads WILL NOT WORK - writes to a field but getFile returns the whole object
     IndexedDB won't work in workers for Firefox - need to check access to window.indexedDB to determine that
 */ /*}}}*/
