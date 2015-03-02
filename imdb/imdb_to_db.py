@@ -18,7 +18,7 @@ columns = { #{{{
             'movies': ['ttid', 'title', 'series', 'year', 'released', 'duration', 'director', 'description'],
             'tv': ['ttid', 'title', 'series', 'year', 'released', 'season', 'episode', 'duration', 'director', 'description']
           } #}}}
-types = {'ttid': 's', 'title': 's', 'year': 'i', 'released': 's', 'season': 'i', 'episode': 'i', 'duration': 'i', 'director': 's', 'description': 's', 'series': 'r'}
+types = {'ttid': 's', 'title': 's', 'year': 'i', 'released': 's', 'season': 'i', 'episode': 'i', 'duration': 'i', 'director': 's', 'description': 's', 'series': 'r', 'checksum': 's', 'resolution': 's', 'v_rate': 's', 'a_rate': 's'}
 genreName = {'movies': 'movie', 'tv': ' episode'}
 references = { #{{{
                 'movies': ['series'],

@@ -15,7 +15,6 @@ mode = M_GC;
 /*{{{*/ /* TODO
     Allow three parallel downloads - should work, check variable collisions
     Saving seems to be broken, but only on first call via setPaused()
-    Received size is over 100% because it says it receieved some MB but only stored a portion,
     so calculate size transferred based off of chunks received
     Pause is broken with tab close - freezes towards end of download - total_chunks - #_chunks_at_pause
     IndexedDB downloads WILL NOT WORK - writes to a field but getFile returns the whole object
@@ -66,12 +65,12 @@ function FileAPIStub() {/*{{{*/
         this.title = obj.title,
         this.ttid = obj.ttid,
         this.type = obj.type,
-        this.received = obj.received;
         this.size = obj.size,
         this.state = obj.state,
         this.sKey = obj.sKey,
         this.startedAt = obj.startedAt,
         this.chunks = obj.chunks,
+        this.received = this.chunks * 20480;
         this.chunksDecrypted = obj.chunksDecrypted,
         this.transferCompleted = obj.transferCompleted;
         this.storingCompleted = obj.storingCompleted;
@@ -84,12 +83,12 @@ function FileAPIStub() {/*{{{*/
         this.title = fAPI.title;
         this.ttid = fAPI.ttid;
         this.type = fAPI.kind;
-        this.received = fAPI.received;
         this.size = fAPI.size;
         this.state = fAPI.state;
         this.sKey = fAPI.encKey;
         this.startedAt = fAPI.startedAt;
         this.chunks = fAPI.chunks;
+        this.received = fAPI.chunks * 20480;
         this.chunksDecrypted = fAPI.chunksDecrypted;
         this.transferCompleted = fAPI.transferCompleted;
         this.storingCompleted = fAPI.storingCompleted;
@@ -103,12 +102,12 @@ function FileAPIStub() {/*{{{*/
         fAPI.title = this.title;
         fAPI.ttid = this.ttid;
         fAPI.type = this.kind;
-        fAPI.received = this.received;
         fAPI.size = this.size;
         fAPI.state = this.state;
         fAPI.sKey = this.encKey;
         fAPI.startedAt = this.startedAt;
         fAPI.chunks = this.chunks;
+        fAPI.received = this.chunks * 20480;
         fAPI.chunksDecrypted = this.chunksDecrypted;
         fAPI.transferCompleted = this.transferCompleted;
         fAPI.storingCompleted = this.storingCompleted;

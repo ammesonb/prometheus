@@ -53,7 +53,7 @@ class IMDBParser(HTMLParser): #{{{
                     ext = '.' + ext
 
             ext = ext.split('.')[-1]
-            imagePath = 'images/' + self.media['ttid'] + '.' + ext
+            imagePath = 'images/' + kind + '/' + self.media['ttid'] + '.' + ext
             system('curl ' + url + '.' + ext + ' -o ' + imagePath + ' > /dev/null 2>&1')
             checksum = sha512(open(imagePath, 'rb').read()).digest()
             if imageChecksums.has_key(checksum):
@@ -123,11 +123,10 @@ ttids = ttids.split('\n')
 ttids = filter(lambda e: e != '', ttids)
 
 series = {-1: ''}
+num = 0
 for ttid in ttids:
-    if ttid[0] == 's':
-        s = ttid[1:].split(',')
-        series[s[0]] = s[1]
-        ttids.remove(ttid)
+    ttids[num] = ttids[num].split('#')[0]
+    num += 1
 
 media = open(kind)
 media = media.read()
@@ -158,7 +157,7 @@ for ttid in ttids: #{{{
     html = filter(lambda x: x in printable, html)
     
     imdbParser.media = {'ttid': ttid}
-    imdbParser.media['series'] = series[s]
+    imdbParser.media['series'] = s
     imdbParser.kind = kind[0]
     imdbParser.mode = ''
     imdbParser.feed(html)
