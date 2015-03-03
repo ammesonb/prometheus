@@ -36,6 +36,7 @@ media = {/*{{{*/
     "tvGenres": []
 };/*}}}*/
 
+var requestingFS = 0;
 var queuedDL = 0;
 var queuedSize = 0;
 var queuedTSize = 0;

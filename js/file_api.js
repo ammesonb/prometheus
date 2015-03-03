@@ -193,6 +193,9 @@ function FileAPI() {/*{{{*/
     
     // Internal status functions/*{{{*/
     updateStatus: function(status) {/*{{{*/
+        if (this.sessionID && this.status !== 'Paused'; && this.status.indexOf('Pausing') === -1) {
+            this.save();
+        }
         this.status = status;
         this.dispatchEvent('onstatusupdate');
     },/*}}}*/
@@ -289,7 +292,7 @@ function FileAPI() {/*{{{*/
             this.state = 'initstr';
             this.setPaused();
         } else {
-            this.initializeStorage();
+            this.getFSSize();
         }
     },/*}}}*/
 
@@ -301,7 +304,7 @@ function FileAPI() {/*{{{*/
             }
             switch(this.state) {/*{{{*/
                 case 'initstr':/*{{{*/
-                    this.initializeStorage();
+                    this.getFSSize();
                     break;/*}}}*/
                 case 'next':/*{{{*/
                     this.next();
@@ -311,7 +314,7 @@ function FileAPI() {/*{{{*/
                     break;/*}}}*/
                 case 'workerloop':/*{{{*/
                     if (!this.fs) {
-                        this.reinitFS();
+                        this.regetFSSize();
                     }
                     if (!this.ajaxWorker || !this.cryptWorker) {/*{{{*/
                         this.ajaxWorker = new Worker('js/file_api.js');
@@ -343,7 +346,7 @@ function FileAPI() {/*{{{*/
                     }
                     break;/*}}}*/
                 case 'finishing':/*{{{*/
-                    this.reinitFS();
+                    this.regetFSSize();
                     this.finish();
                     break;/*}}}*/
             }/*}}}*/
@@ -399,8 +402,38 @@ function FileAPI() {/*{{{*/
         saveReq.send('s=3&si=' + this.sessionID + '&fapis=' + fAPIS.toString());
     },/*}}}*/
 
+    getFSSize: function() {/*{{{*/
+        if (requestingFS) {setTimeout(getFSSize, 200); return;}
+        size = queuedTSize + (1024*1024*1024) * Math.ceil(queuedTSize / (1024 * 1024 *1024));
+        requestingFS = 1;
+        var _this = this;
+        storageInfo.queryUsageAndQuota(function(u, r) {
+            if (r < size) {
+                _this.initializeStorage();
+            } else {
+                _this.createBlob(_this, size);
+            }
+        }, function(e) {
+            console.log(e); fAPI.fail(fAPI, e);
+        });
+    },/*}}}*/
+
+    regetFSSize: function() {/*{{{*/
+        if (requestingFS) {setTimeout(getFSSize, 200); return;}
+        size = queuedTSize + (1024*1024*1024) * Math.ceil(queuedTSize / (1024 * 1024 *1024));
+        requestingFS = 1;
+        var _this = this;
+        storageInfo.queryUsageAndQuota(function(u, r) {
+            if (r * size) {
+                _this.reinitFS();
+            }
+        }, function(e) {
+            console.log(e); fAPI.fail(fAPI, e);
+        });
+    },/*}}}*/
+
     reinitFS: function() {/*{{{*/
-        size = queuedTSize + (1024*1024*1024*1024) * Math.ceil(queuedTSize / (1024 * 1024 * 1024 *1024));
+        size = queuedTSize + (1024*1024*1024) * Math.ceil(queuedTSize / (1024 * 1024 *1024));
         if (navigator.webkitPersistentStorage) {
             fAPI = this;
             storageInfo.requestQuota(size, function(bytes) {fAPI.reinitBlob(fAPI, bytes)}, function(e) {fAPI.fail(fAPI, e);});
@@ -424,12 +457,13 @@ function FileAPI() {/*{{{*/
                 var this_ = fAPI;
                 setTimeout(function() {this_.ajaxWorker.postMessage(['dl', this_.sessionID, this_.res, this_.encKey].join(':'))}, 100);
             }
+            requestingFS = 0;
         }, function(e) {console.log(e); fAPI.fail(fAPI, e);});
     },/*}}}*/
 
     initializeStorage: function() {/*{{{*/
         this.updateStatus('Creating local data store');
-        size = queuedTSize + (1024*1024*1024*1024) * Math.ceil(queuedTSize / (1024 * 1024 * 1024 *1024));
+        size = queuedTSize + (1024*1024*1024) * Math.ceil(queuedTSize / (1024 * 1024 *1024));
 
         if (mode === M_IDB) {/*{{{*/
             trans = db.transaction([dbName], "readwrite");
@@ -449,7 +483,7 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
     
     createBlob: function(fAPI, grantedBytes) {/*{{{*/
-        requestFileSystem(PERSISTENT, grantedBytes, function(fs) {fAPI.initData(fAPI, fs);}, function(e) {console.log(e); fAPI.fail(fAPI, e);});
+        requestFileSystem(PERSISTENT, grantedBytes, function(fs) {requestingFS = 0; fAPI.initData(fAPI, fs);}, function(e) {console.log(e); fAPI.fail(fAPI, e);});
     },/*}}}*/
    
     initData: function(fAPI, fs) {/*{{{*/
