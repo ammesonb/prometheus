@@ -123,8 +123,8 @@ if ($state == 0) { #{{{
         $session->param('stubs', $stubRef);
     }
     `sed -i '/$sessionID/d' "/files/$ENV{REMOTE_ADDR}"`;
-    `shred -u -n 3 /files/$sessionID/* > /dev/null 2>&1 &`;
-    `rm -r /files/$sessionID > /dev/null 2>&1 &`; #}}}
+    `find /files/$sessionID/ -type f -print0 | xargs -0 -P 8 -I {} shred -uz -n 3 "{}" 2> /dev/null &`;
+    #`rm -r /files/$sessionID > /dev/null 2>&1 &`; #}}}
 } elsif ($state == 3) { #{{{
     my $fapis = $q->param('fapis');
     my $sessionID = $q->param('si');

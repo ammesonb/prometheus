@@ -45,7 +45,7 @@ my @userIDs = keys %userData;
 if ($#userIDs < 0) {print $q->redirect('/'); exit;}
 my $userID = $userIDs[0]; #}}}
 
-my $response = COMMON::attempt_login($session, $q->param('a'), $q->param('c'), $userData{$userID}{'domain'});
+my $response = COMMON::attempt_login($session, scalar $q->param('a'), scalar $q->param('c'), $userData{$userID}{'domain'});
 
 # Create session AES key #{{{
 my $time = gettimeofday();
@@ -57,13 +57,13 @@ $session->param('master_key', $key); #}}}
 # Set session parameters #{{{
 $session->param('night_theme', $userData{$userID}{'theme'});
 $session->expire('night_theme', '+30m');
-$session->param('user', $q->param("a"));
+$session->param('user', scalar $q->param("a"));
 $session->expire('user', '+30m');
 $session->param('user_id', $userID);
 $session->expire('user_id', '+30m');
 $session->param('logged_in', 0);
 $session->expire('logged_in', '+30m');
-$session->param('timezone', $q->param('t'));
+$session->param('timezone', scalar $q->param('t'));
 $session->expire('timezone', '+30m');
 $session->param('blocked', 0);
 $session->expire('blocked', '+30m');

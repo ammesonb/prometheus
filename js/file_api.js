@@ -17,6 +17,7 @@ mode = M_GC;
     If download is killed in 'preparing' stage, files aren't removed because encryption still running
     IndexedDB downloads WILL NOT WORK - writes to a field but getFile returns the whole object
     IndexedDB won't work in workers for Firefox - need to check access to window.indexedDB to determine that
+        Fixed in the new version anyways?
 */ /*}}}*/
 
 // If not worker, use asynchronous methods/*{{{*/
@@ -193,7 +194,7 @@ function FileAPI() {/*{{{*/
     
     // Internal status functions/*{{{*/
     updateStatus: function(status) {/*{{{*/
-        if (this.sessionID && this.status !== 'Paused'; && this.status.indexOf('Pausing') === -1) {
+        if (this.sessionID && this.status !== 'Paused' && this.status.indexOf('Pausing') === -1) {
             this.save();
         }
         this.status = status;
