@@ -27,7 +27,7 @@ if [ -d "/files" ]; then
 fi
 
 chown -R root:prometheus /data
-chmod 770 /data
+chmod 750 /data
 chown -R root:prometheus /files
 chmod 770 /files
 chown -R root:prometheus /prom_cli

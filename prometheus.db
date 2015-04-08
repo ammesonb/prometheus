@@ -3,7 +3,6 @@
 --
 
 SET statement_timeout = 0;
-SET lock_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
@@ -21,7 +20,6 @@ ALTER DATABASE prometheus OWNER TO root;
 \connect prometheus
 
 SET statement_timeout = 0;
-SET lock_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
@@ -185,9 +183,7 @@ ALTER TABLE public.sms OWNER TO root;
 --
 
 CREATE VIEW contacts AS
- SELECT sms.name
-   FROM sms
-  ORDER BY sms.name;
+    SELECT sms.name FROM sms ORDER BY sms.name;
 
 
 ALTER TABLE public.contacts OWNER TO root;
@@ -310,14 +306,15 @@ CREATE TABLE movies (
     director character varying,
     description character varying,
     needs_attention boolean DEFAULT false,
-    size integer,
+    size bigint,
     file character varying,
     checksum character varying,
     resolution character varying,
     v_rate character varying,
     a_rate character varying,
     v_codec character varying,
-    a_codec character varying
+    a_codec character varying,
+    sub_file character varying
 );
 
 
@@ -606,14 +603,15 @@ CREATE TABLE tv (
     needs_attention boolean DEFAULT false,
     season integer,
     episode integer,
-    size integer,
+    size bigint,
     file character varying,
     checksum character varying,
     resolution character varying,
     v_rate character varying,
     a_rate character varying,
     v_codec character varying,
-    a_codec character varying
+    a_codec character varying,
+    sub_file character varying
 );
 
 
@@ -720,7 +718,8 @@ CREATE TABLE users (
     is_shared boolean DEFAULT false,
     disabled boolean DEFAULT false,
     theme integer DEFAULT 2,
-    domain integer DEFAULT 2
+    domain integer DEFAULT 2,
+    salt character varying
 );
 
 
@@ -1239,11 +1238,12 @@ ALTER TABLE ONLY users
 
 
 --
--- Name: public; Type: ACL; Schema: -; Owner: postgres
+-- Name: public; Type: ACL; Schema: -; Owner: root
 --
 
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
-REVOKE ALL ON SCHEMA public FROM postgres;
+REVOKE ALL ON SCHEMA public FROM root;
+GRANT ALL ON SCHEMA public TO root;
 GRANT ALL ON SCHEMA public TO postgres;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 

@@ -370,6 +370,7 @@ sub attempt_login { #{{{
     my $session = shift;
     my $username = shift;
     my $pass = shift;
+    my $salt = shift;
     my $domainID = shift;
 
     my @domainCols = ('id', 'regex');
@@ -384,6 +385,8 @@ sub attempt_login { #{{{
     my $usersRef = getTable($session, "users");
     my %usersHash = %$usersRef;
 
+    my $mk = $session->param('master_key');
+    $pass = `echo -n "$pass" | openssl enc -a -A -d -aes-256-cbc -pass pass:$mk | sed 's/\$/$salt/' | sha512sum | awk -F ' ' '{print \$1}' | xargs echo -n`;
     foreach(keys %usersHash) {
         my $userRef = $usersHash{$_};
         my %user = %$userRef;

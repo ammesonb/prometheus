@@ -8,6 +8,10 @@ from HTMLParser import HTMLParser
 from hashlib import sha512
 import pickle
 import re
+from htmlentitydefs import name2codepoint
+def htmlentitydecode(s):
+    return re.sub('&(%s);' % '|'.join(name2codepoint),
+        lambda m: unichr(name2codepoint[m.group(1)]), s)
 
 # Basic functions to verify modes #{{{
 # Works if tag name is the same as mode name
@@ -117,7 +121,10 @@ class IMDBParser(HTMLParser): #{{{
 imageChecksums = {}
 kind = argv[1]
 
-ttids = open('ttids')
+if len(argv) > 2:
+    ttids = open(argv[2])
+else:
+    ttids = open('ttids')
 ttids = ttids.read()
 ttids = ttids.split('\n')
 ttids = filter(lambda e: e != '', ttids)
@@ -155,6 +162,9 @@ for ttid in ttids: #{{{
     html = open('index.html')
     html = html.read()
     html = filter(lambda x: x in printable, html)
+    html = htmlentitydecode(html)
+    html = filter(lambda x: x in printable, html)
+    html = str(html)
     
     imdbParser.media = {'ttid': ttid}
     imdbParser.media['series'] = s
@@ -164,12 +174,20 @@ for ttid in ttids: #{{{
     if kind == 'tv':
         pattern = re.compile("<span class=\"nobr\">Season [0-9]+, Episode [0-9]+")
         match = pattern.search(html)
-        location = [match.start(), match.end()]
-        data = html[location[0]:location[1]].split('>')[1]
-        season = data.split(',')[0].split(' ')[-1]
-        imdbParser.media['season'] = season
-        episode = data.split(',')[1].split(' ')[-1]
-        imdbParser.media['episode'] = episode
+        if not match:
+            s = raw_input('Season: ')
+            s = s.strip()
+            imdbParser.media['season'] = s
+            e = raw_input('Episode: ')
+            e = s.strip()
+            imdbParser.media['episode'] = e
+        else:
+            location = [match.start(), match.end()]
+            data = html[location[0]:location[1]].split('>')[1]
+            season = data.split(',')[0].split(' ')[-1]
+            imdbParser.media['season'] = season
+            episode = data.split(',')[1].split(' ')[-1]
+            imdbParser.media['episode'] = episode
     media.append(imdbParser.media)
     system('rm index.html*')
     count += 1 #}}}

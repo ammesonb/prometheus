@@ -64,7 +64,13 @@ if ($mode == 0) { #{{{
     my $userID = $session->param('user_id');
     my $newPass = $q->param('p');
     if ($userID !~ /^[0-9]+$/) {print 'badid'; exit;}
-    elsif ($newPass !~ /^[0-9a-f]{128}$/) {print 'baddata'; exit;}
+    elsif ($newPass !~ /^[0-9A-Za-z\+\/=]+$/) {print 'baddata'; exit;}
+    my @returnCols = ('id', 'salt');
+    my $saltRef = COMMON::searchTable($session, 'users', \@returnCols, [], [], [], []);
+    my %salt = %$saltRef;
+    my $salt = $salt{$userID}{'salt'};
+    my $mk = $session->param('master_key');
+    $newPass = `echo -n "$newPass" | openssl enc -a -A -d -aes-256-cbc -pass pass:$mk | sed 's/\$/$salt/' | sha512sum | awk -F ' ' '{print \$1}' | xargs echo -n`;
     my @updateCols = ('pw');
     my @updateVals = ("'$newPass'");
     my @searchCols = ('id');
@@ -96,6 +102,16 @@ if ($mode == 0) { #{{{
     if (not $id) {print 'Bad ID';}
     $field =~ s/[0-9]+//;
     my $value = $q->param('value');
+    if (($field cmp 'pw') == 0) {
+        my @returnCols = ('id', 'salt');
+        my $saltRef = COMMON::searchTable($session, 'users', \@returnCols, [], [], [], []);
+        my %salt = %$saltRef;
+        my $salt = $salt{$id}{'salt'};
+        my $mk = $session->param('master_key');
+        $value = `echo -n "$value" | openssl enc -a -A -d -aes-256-cbc -pass pass:$mk | sed 's/\$/$salt/' | sha512sum | awk -F ' ' '{print \$1}' | xargs echo -n`;
+        $value = "'$value'";
+        `echo $value >> /tmp/salt`;
+    }
 
     my $rows = COMMON::updateTable($session, 'users', [$field], [$value], ['id'], ['='], [$id], []);
     print 'success' if ($rows);
@@ -135,9 +151,13 @@ if ($mode == 0) { #{{{
     my $u = $q->param('u');
     if ($u !~ /^[a-zA-Z0-9-_.]+$/) {print 'Bad user'; exit;}
     my $p = $q->param('p');
-    if ($p !~ /^[0-9a-f]{64,}$/) {print 'Bad pass'; exit;}
+    if ($p !~ /^[0-9A-Za-z\+\/=]+$/) {print 'Bad pass'; exit;}
 
-    my $rows = COMMON::insertIntoTable($session, 'users', ['username', 'pw'], ["'$u'", "'$p'"]);
+    my $salt = `psql prometheus www -c 'select md5(random()::text)' | head -3 | tail -1 | sed 's/\\s//g' | xargs echo -n`;
+    my $mk = $session->param('master_key');
+    $p = `echo -n "$p" | openssl enc -a -A -d -aes-256-cbc -pass pass:$mk | sed 's/\$/$salt/' | sha512sum | awk -F ' ' '{print \$1}' | xargs echo -n`;
+
+    my $rows = COMMON::insertIntoTable($session, 'users', ['username', 'pw', 'salt'], ["'$u'", "'$p'", "'$salt'"]);
     if ($rows) {print 'success';}
     if (not $rows) {print 'fail';}
 } #}}}

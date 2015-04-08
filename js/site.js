@@ -230,7 +230,7 @@ function login() { /*{{{*/
     }
     setText(document.getElementById('error'), '\u00a0');
 
-    c = CryptoJS.SHA512(b.value).toString();
+    c = CryptoJS.AES.encrypt(b.value, master_key).toString();
 
     f = element('form');
     f.method = 'POST';
@@ -3352,7 +3352,7 @@ function openAccount(accountPanel) {/*{{{*/
                     updatePassReq.open('POST', 'account.cgi', true);
                     updatePassReq.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
                     updatePassReq.send('mode=1&p=' +
-                        CryptoJS.SHA512(document.getElementById(this.getAttribute('data-pass-id')).value));
+                        CryptoJS.AES.encrypt(document.getElementById(this.getAttribute('data-pass-id')).value, master_key));
                 }; /*}}}*/
                 setText(updateButton, 'Update Password');
 
@@ -3479,7 +3479,7 @@ function openAccount(accountPanel) {/*{{{*/
                     }
 
                     accountPanel = this.parentElement;
-                    createUserReq.send('mode=6&u=' + un + '&p=' + CryptoJS.SHA512(p).toString());
+                    createUserReq.send('mode=6&u=' + un + '&p=' + CryptoJS.AES.encrypt(p, master_key).toString());
                 };/*}}}*/
 
                 // Table headers/*{{{*/
@@ -3721,7 +3721,7 @@ function openAccount(accountPanel) {/*{{{*/
                             }
                         };
 
-                        resetPassReq.send('mode=3&field=pw' + this.getAttribute('data-id') + '&value=\'' + CryptoJS.SHA512(newPass).toString() + '\'');
+                        resetPassReq.send('mode=3&field=pw' + this.getAttribute('data-id') + '&value=' + CryptoJS.AES.encrypt(newPass, master_key).toString());
                     }/*}}}*/
                     rCell.appendChild(reset);/*}}}*/
 
@@ -3964,6 +3964,7 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
     setText(genreP, 'Genres:');
     filterPanel.appendChild(genreP);
     genreKeys = Object.keys(media[kind[0] + 'Genres']);
+    genreKeys.sort(function(a,b) {return media[kind[0] + 'Genres'][a].name.localeCompare(media[kind[0] + 'Genres'][b].name);});
     for (g = 0; g < genreKeys.length; g++) {/*{{{*/
         genre = media[kind[0] + 'Genres'][genreKeys[g]];
         check = element('input');
@@ -4201,6 +4202,8 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     titleLink.className = 'normal_text';
     titleLink.href = 'http://www.imdb.com/title/tt' + item.ttid + '/';
     titleLink.title = '(To IMDb - hold control while clicking to open in new tab)';
+    titleLink.targetNew = 'tab';
+    titleLink.target = '_blank';
     title = element('p');
     title.className = 'normal_section_header';
     title.style.textDecoration = 'underline';
@@ -4292,6 +4295,42 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     descriptionBox.appendChild(showText);
     descriptionBox.appendChild(description);/*}}}*/
 
+    // Technical details/*{{{*/
+    techLink = element('a');
+    techLink.href = '#';
+    techLink.className = 'normal_text';
+    techLink.style.clear = 'left';
+    techLink.style.cssFloat = 'left';
+    techLink.style.marginLeft = '10px';
+    techLink.onclick = function() {
+        techLabels.style.display = 'block';
+        techValues.style.display = 'block';
+        this.style.display = 'none';
+    };
+    setText(techLink, '<br>Show technical details');
+
+    techLabels = element('div');
+    techLabels.style.cssFloat = 'left';
+    techLabels.style.clear = 'left';
+    techLabels.style.textAlign = 'right';
+    techLabels.style.marginLeft = '10px';
+    techLabels.style.display = 'none';
+    tLabels = element('p');
+    tLabels.style.className = 'normal_text';
+    setText(tLabels, 'Resolution:<br>File size:<br>Video codec:<br>Video bitrate:<br>Audio codec:<br>Audio rate:<br>SHA512 checksum:');
+
+    techValues = element('div');
+    techValues.style.cssFloat = 'left';
+    techValues.style.display = 'none';
+    tVals = element('p');
+    tVals.className = 'normal_text';
+    sep = '<br>\u00a0\u00a0';
+    checksum = item['checksum'].substr(0, 64) + sep + item['checksum'].substr(64, 64);
+    setText(tVals, '\u00a0\u00a0' + item['resolution'] + sep + parseSize(item['size'])[0] + sep + item['v_codec'] + sep + item['v_rate'] + sep + item['a_codec'] + sep + item['a_rate'] + sep + checksum);
+
+    techLabels.appendChild(tLabels);
+    techValues.appendChild(tVals);/*}}}*/
+
     // Download/*{{{*/
     downloadButton = element('button');
     setText(downloadButton, 'Download');
@@ -4320,7 +4359,7 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     }/*}}}*//*}}}*/
 
     // Add elements/*{{{*/
-    if (useNightTheme()) {switchToNight(title, titleLink, labels, details, descriptionTitle, descriptionBox, downloadButton, subButton);}
+    if (useNightTheme()) {switchToNight(title, titleLink, labels, details, techLink, tLabels, tVals, descriptionTitle, descriptionBox, downloadButton, subButton);}
 
     mediaGrid.appendChild(back);
     mediaGrid.appendChild(poster);
@@ -4336,6 +4375,9 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     mediaGrid.appendChild(detailValues);
     mediaGrid.appendChild(descriptionTitle);
     mediaGrid.appendChild(descriptionBox);
+    mediaGrid.appendChild(techLink);
+    mediaGrid.appendChild(techLabels);
+    mediaGrid.appendChild(techValues);
     mediaGrid.appendChild(downloadButton);
     if (item.has_subtitle) {mediaGrid.appendChild(subButton);}
     /*}}}*/

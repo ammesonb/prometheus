@@ -37,6 +37,7 @@ genreSQL = "INSERT INTO " + kind + "_genre (" + genreName[kind] + ", genre) VALU
 series = []
 count = 1
 for m in ms: #{{{
+    print m['title']
     if verbosity:
         print "Parsing " + str(count) + " out of " + str(len(ms)) + ", ID " + m['ttid']
     values = {}
@@ -67,7 +68,8 @@ for m in ms: #{{{
             else:
                 if data not in eval(column):
                     eval(column).append(data)
-                values[column] = "(SELECT id FROM " + column + " WHERE name = '" + data + "')"
+                if column != 'series' or data != -1:
+                    values[column] = "(SELECT id FROM " + column + " WHERE name = '" + data + "')"
         else:
             values[column] = data
 
@@ -98,6 +100,7 @@ for g in genres:
     system('psql prometheus -c "' + sql + '"')
 seriesSQL = "INSERT INTO series (name) VALUES ('<SERIES>');"
 for s in series:
+    if s == -1: continue
     sql = seriesSQL.replace('<SERIES>', s)
     sql = sql.replace('"', '\\"')
     system('psql prometheus -c "' + sql + '"') #}}}

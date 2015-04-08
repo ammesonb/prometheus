@@ -27,6 +27,7 @@ if ($state == 0) { #{{{
     my $key = encode_base64(random_bytes(32));
     chomp($key);
     my $file = $q->param('f');
+    $file =~ s/^[0-9 \.\-]*//;
     my $kind = $q->param('k');
     my $v = substr($kind, 0, 1) . substr($file, 0, 1);
     my $m = $v . "_m";
@@ -47,6 +48,8 @@ if ($state == 0) { #{{{
     my $encKey = $session->param('master_key');
     `mkdir /files/$sessionID-pln`;
     `mkdir /files/$sessionID`;
+    # Just to be sure, since can have issues with parallelism
+    if ( not -d "/data/$hn" ) {`/var/www/prometheus/encfs/./fs.py m $v /data/$hn`;}
     `cd /files/$sessionID-pln/; split -b 20480 -a 10 -d "/data/$hn/$file" ""`;
 
     # Dismount container
@@ -122,8 +125,10 @@ if ($state == 0) { #{{{
     if ($#t != -1) {
         $session->param('stubs', $stubRef);
     }
-    `sed -i '/$sessionID/d' "/files/$ENV{REMOTE_ADDR}"`;
-    `find /files/$sessionID/ -type f -print0 | xargs -0 -P 8 -I {} shred -uz -n 3 "{}" 2> /dev/null &`;
+    if (`grep "$sessionID" "/files/$ENV{REMOTE_ADDR}"`) {
+        `sed -i '/$sessionID/d' "/files/$ENV{REMOTE_ADDR}"`;
+        `find /files/$sessionID/ -type f -print0 | xargs -0 -P 8 -I {} shred -uz -n 3 "{}" 2> /dev/null &`;
+    }
     #`rm -r /files/$sessionID > /dev/null 2>&1 &`; #}}}
 } elsif ($state == 3) { #{{{
     my $fapis = $q->param('fapis');

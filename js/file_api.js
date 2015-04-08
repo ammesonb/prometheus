@@ -376,9 +376,9 @@ function FileAPI() {/*{{{*/
     save: function() {/*{{{*/
         console.log(CryptoJS.MD5(this.sessionID).toString() + ' - Attempting to save state');
         fAPIS = this.takeSnapshot();
-        saveReq = createPostReq('/file.cgi', true);
-        saveReq.fAPI = this;
-        saveReq.onreadystatechange = function() {
+        this.saveReq = createPostReq('/file.cgi', true);
+        this.saveReq.fAPI = this;
+        this.saveReq.onreadystatechange = function() {
             if (reqCompleted(this)) {
                 if (this.responseText != 'saved') {
                     console.log(CryptoJS.MD5(this.sessionID).toString() + ' - Failed to save, retrying');
@@ -400,7 +400,7 @@ function FileAPI() {/*{{{*/
                 }
             }
         }
-        saveReq.send('s=3&si=' + this.sessionID + '&fapis=' + fAPIS.toString());
+        this.saveReq.send('s=3&si=' + this.sessionID + '&fapis=' + fAPIS.toString());
     },/*}}}*/
 
     getFSSize: function() {/*{{{*/
@@ -711,10 +711,10 @@ function FileAPI() {/*{{{*/
     },/*}}}*/
 
     dl: function() {/*{{{*/
-        chunkReq = createPostReq('/file.cgi', true);
+        self.chunkReq = createPostReq('/file.cgi', true);
         self.postMessage('dl');
-        chunkReq.send('s=1&si=' + self.sID + '&res=' + self.res);
-        chunkReq.onreadystatechange = function() {
+        self.chunkReq.send('s=1&si=' + self.sID + '&res=' + self.res);
+        self.chunkReq.onreadystatechange = function() {
             if (reqCompleted(this)) {
                 self.postMessage('dlend-' + this.responseText.length);
                 text = chunkReq.responseText.split(':');

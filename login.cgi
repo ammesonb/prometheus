@@ -32,7 +32,7 @@ if (index($q->param('a'), "'", ) != -1) { #{{{
 } #}}}
 
 # Get user data #{{{
-my @returnCols = ('id', 'is_shared', 'is_admin', 'theme', 'domain');
+my @returnCols = ('id', 'is_shared', 'is_admin', 'theme', 'salt', 'domain');
 my @searchCols = ('username');
 my @operators = ('=');
 my @patterns = ("'" . $q->param('a') . "'");
@@ -45,7 +45,7 @@ my @userIDs = keys %userData;
 if ($#userIDs < 0) {print $q->redirect('/'); exit;}
 my $userID = $userIDs[0]; #}}}
 
-my $response = COMMON::attempt_login($session, scalar $q->param('a'), scalar $q->param('c'), $userData{$userID}{'domain'});
+my $response = COMMON::attempt_login($session, scalar $q->param('a'), scalar $q->param('c'), $userData{$userID}{'salt'}, $userData{$userID}{'domain'});
 
 # Create session AES key #{{{
 my $time = gettimeofday();
