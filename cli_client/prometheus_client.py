@@ -3,20 +3,18 @@ from textwrap import wrap
 from prom_ac import *
 from time import sleep
 from getpass import getpass
-from hashlib import sha512
 
 def getAuth(): #{{{
     user = raw_input('Username: ')
     pw = getpass('Password: ')
     pw = pw.strip()
-    pw = sha512(pw).hexdigest()
     return user, pw #}}}
     
 sep = '#__#'
 width = 70
 space = 3
 port = 35792
-destPort = 35793
+destPort = 35794
 outDir = '/home/brett/rsync'
 contents = []
 f = open('rp', 'w')
@@ -41,7 +39,7 @@ bSock.sendto('prom_web_q', ('<broadcast>', destPort))
 rbSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 rbSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 rbSock.setblocking(1)
-rbSock.bind(('localhost', port))
+rbSock.bind(('', port))
 
 results = select.select([rbSock], [], [], 10)
 data = ''
@@ -115,6 +113,9 @@ def single_select(data, pSock): #{{{
     if data == 'nf':
         print 'No match'
         return
+    elif data == 'ns':
+        print 'Nonexistent season'
+        return
     elif data[:6] == 'choice':
         opts = data.replace('choice' + sep, '').split(';')
         opts.sort()
@@ -187,8 +188,7 @@ def parse_cmd(cmd): #{{{
         pSock.send('gets' + sep + cmd[1])
         data = pSock.recv(999)
         data = single_select(data, pSock)
-        if data == 'nf':
-            print 'No match'
+        if data == 'nf' or data == None:
             return
         if data == 'prep':
             print 'Server is preparing files. Please wait.'
@@ -199,6 +199,18 @@ def parse_cmd(cmd): #{{{
         for f in data.split('" "'):
             pSock.send('rm' + sep + f)
             pSock.recv(999) #}}}
+    elif cmd[0] == 'getse':
+        pSock.send('getse' + sep + cmd[1])
+        data = pSock.recv(999)
+        data = single_select(data, pSock)
+        if data == 'nf' or data == None:
+            return
+        if data == 'prep':
+            print 'Server is preparing files. Please wait.'
+        data = pSock.recv(999)
+        data = data.split(';')
+        data = '" "'.join(data)
+        os.system('./rsync.sh {0} {1} "{2}"'.format(ip, outDir, data))
     else:
         print 'Unrecognized command'
         return

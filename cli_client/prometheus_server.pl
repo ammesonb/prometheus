@@ -155,8 +155,9 @@ sub prepare_file { #{{{
     }
     if (defined $result{checksum} and $cs ne $result{checksum}) {
         `../encfs/./fs.py m $v /data/$hn`;
-        `rsync -achvtr "/data/$hn/$result{file}" /prom_cli/`;
+        `rsync --partial -achvtr "/data/$hn/$result{file}" /prom_cli/`;
         `../encfs/./fs.py d $v`;
+        `sync`;
     }
 } #}}}
 
@@ -166,7 +167,8 @@ sub handle_commands { #{{{
     while (1) {
         my $cmd = '';
         $sock->recv($cmd, 999);
-        $cmd = lc $cmd;
+        chomp $cmd;
+        if ($cmd !~ /^rm$sep/) {$cmd = lc $cmd;}
         if ($cmd =~ /^cd/) { #{{{
             $cmd =~ s/^cd$sep//;
             if ($cmd =~ /\.\.\/?/) {
@@ -233,26 +235,25 @@ sub handle_commands { #{{{
             $sock->send($result{file}); #}}}
         } elsif ($cmd =~ /^gets$sep/) { #{{{
             $cmd =~ s/gets$sep//;
-            $cmd = lc $cmd;
             my $stmt = $dbh->prepare("SELECT * FROM series WHERE LOWER(name) LIKE '%$cmd%'");
             $stmt->execute();
             my %retSeries = %{$stmt->fetchall_hashref(['name'])};
             my @retNames = keys %retSeries;
             my $serID = undef;
             if ($#retNames == 0) {
-                $serID = $series{$retNames[0]};
+                $serID = $retSeries{$retNames[0]}{id};
             } else {
                 my $choice = single_select($sock, \@retNames);
                 $serID = $retSeries{$choice}{id};
             }
             if (not defined $serID) {$sock->send('nf'); next;}
 
-            $stmt = $dbh->prepare("SELECT * FROM movies WHERE series=$serID");
+            $stmt = $dbh->prepare("SELECT * FROM movies WHERE series=$serID AND file IS NOT NULL");
             $stmt->execute();
             my %data = %{$stmt->fetchall_hashref(['id'])};
             my @ids = keys %data;
             if ($#ids == -1) {
-                $stmt = $dbh->prepare("SELECT * FROM tv WHERE series=$serID");
+                $stmt = $dbh->prepare("SELECT * FROM tv WHERE series=$serID AND file IS NOT NULL");
                 $stmt->execute();
                 %data = %{$stmt->fetchall_hashref(['id'])};
                 @ids = keys %data;
@@ -271,7 +272,7 @@ sub handle_commands { #{{{
             $cmd =~ s/^getse$sep//;
             my @parts = split(/ /, $cmd);
             my $sN = $parts[$#parts];
-            @parts = map {$_ ne $sN} @parts;
+            pop @parts;
             my $show = lc join(' ', @parts);
 
             my $stmt = $dbh->prepare("SELECT * FROM series WHERE LOWER(name) LIKE '%$show%'");
@@ -280,20 +281,21 @@ sub handle_commands { #{{{
             my @retNames = keys %retSeries;
             my $serID = undef;
             if ($#retNames == 0) {
-                $serID = $series{$retNames[0]};
+                $serID = $retSeries{$retNames[0]}{id};
             } else {
                 my $choice = single_select($sock, \@retNames);
                 $serID = $retSeries{$choice}{id};
             }
             if (not defined $serID) {$sock->send('nf'); next;}
 
-            $stmt = $dbh->prepare("SELECT * FROM tv WHERE id=$serID AND season=$sN");
+            $stmt = $dbh->prepare("SELECT * FROM tv WHERE series=$serID AND season=$sN AND file IS NOT NULL");
             $stmt->execute();
             my %retEps = %{$stmt->fetchall_hashref(['id'])};
             my @retIDs = keys %retEps;
             my $epID = undef;
             my @files;
             if ($#retIDs >= 0) {
+                $sock->send('prep');
                 foreach(@retIDs) {
                     my %data = %{$retEps{$_}};
                     prepare_file(\%data);
@@ -303,14 +305,15 @@ sub handle_commands { #{{{
                 $sock->send('ns');
                 next;
             }
-            $sock->send(';'.join(@files)); #}}}
+            $sock->send(join(';', @files)); #}}}
         } elsif ($cmd =~ /^rm$sep/) { #{{{
             $cmd =~ s/^rm$sep//;
+            chomp $cmd;
             if (not `ps aux | grep "$cmd" | grep -v grep` and -e "/prom_cli/$cmd") {
                 `shred -n 3 -u "/prom_cli/$cmd" &`;
             }
-            $sock->send('done'); #}}}
-        }
+            $sock->send('done');
+        } #}}}
         sleep $sleep_delay;
     }
 } #}}}
