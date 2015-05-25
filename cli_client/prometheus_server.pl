@@ -134,8 +134,10 @@ sub single_select { #{{{
         my $choice = '';
         $sock->recv($choice, 999);
         @results = ($choice);
+    } else {
+        return $results[0];
     }
-    return $results[0];
+    @results = @{search_media($results[0], 0)};
 } #}}}
 
 sub prepare_file { #{{{
@@ -325,31 +327,21 @@ if ($f == 0) {
         chomp $data;
         if ($data =~ /^auth/) { #{{{
             my @data = split(/$sep/, $data);
-            my $stmt = $dbh->prepare("SELECT pw, encode(digest('$data[2]' || (SELECT salt FROM users WHERE username='$data[1]'), 'sha512'), 'hex') FROM users WHERE username='$data[1]'");
+            my $stmt = $dbh->prepare("SELECT EXISTS(SELECT 1 FROM users WHERE pw=encode(digest('$data[2]' || (SELECT salt FROM users WHERE username='$data[1]'), 'sha512'), 'hex') AND username='$data[1]')");
             $stmt->execute();
             my $data_ref = $stmt->fetchrow_arrayref();
-            my $sum = @{$data_ref}[0];
-            my $digest = @{$data_ref}[1];
-            if ($sum eq $digest) {
-                $client->send(1);
-            } else {
-                $client->send(0);
-            }
-            while ($sum ne $digest) { #{{{
+            my $exists = @{$data_ref}[0];
+            $client->send($exists);
+            while (not $exists) { #{{{
                 $data = '';
                 $client->recv($data, 999);
                 chomp $data;
                 @data = split(/$sep/, $data);
-                my $stmt = $dbh->prepare("SELECT pw, encode(digest('$data[2]' || (SELECT salt FROM users WHERE username='$data[1]'), 'sha512'), 'hex') FROM users WHERE username='$data[1]'");
+                my $stmt = $dbh->prepare("SELECT EXISTS(SELECT 1 FROM users WHERE pw=encode(digest('$data[2]' || (SELECT salt FROM users WHERE username='$data[1]'), 'sha512'), 'hex') AND username='$data[1]')");
                 $stmt->execute();
                 $data_ref = $stmt->fetchrow_arrayref();
-                $sum = @{$data_ref}[0];
-                $digest = @{$data_ref}[1];
-                if ($sum eq $digest) {
-                    $client->send(1);
-                } else {
-                    $client->send(0);
-                }
+                $exists = @{$data_ref}[0];
+                $client->send($exists);
                 sleep $sleep_delay;
             } #}}}
             my $f = fork;

@@ -180,8 +180,6 @@ def parse_cmd(cmd): #{{{
         data = single_select(data, pSock)
         if not data:
             return
-        print data
-        print outDir
         os.system('./rsync.sh {0} {1} "{2}"'.format(ip, outDir, data))
         pSock.send('rm' + sep + data);
         pSock.recv(999) #}}}
