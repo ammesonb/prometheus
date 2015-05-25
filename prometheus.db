@@ -39,6 +39,20 @@ CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
 COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 
 
+--
+-- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: 
+--
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
+
+
 SET search_path = public, pg_catalog;
 
 --
@@ -263,8 +277,8 @@ ALTER SEQUENCE genres_id_seq OWNED BY genres.id;
 
 CREATE TABLE movies_genre (
     id integer NOT NULL,
-    movie integer,
-    genre integer
+    movie integer NOT NULL,
+    genre integer NOT NULL
 );
 
 
@@ -623,8 +637,8 @@ ALTER TABLE public.tv OWNER TO root;
 
 CREATE TABLE tv_genre (
     id integer NOT NULL,
-    episode integer,
-    genre integer
+    episode integer NOT NULL,
+    genre integer NOT NULL
 );
 
 

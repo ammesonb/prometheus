@@ -59,7 +59,7 @@ do
 
     if [ "$checksum" = "$c2" ];
       then
-        #psql prometheus -c "UPDATE $kind SET file='$fn',size=$size,checksum='$checksum',resolution='$res',v_codec='$vcodec',a_codec='$acodec',v_rate='$vrate',a_rate='$arate' WHERE ttid='$ttid'"
+        psql prometheus -c "UPDATE $kind SET file='$fn',size=$size,checksum='$checksum',resolution='$res',v_codec='$vcodec',a_codec='$acodec',v_rate='$vrate',a_rate='$arate' WHERE ttid='$ttid'"
         rm "$mfile"
     else
         echo "Failed to store $fn"

@@ -37,15 +37,23 @@ bSock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 bSock.setblocking(0)
 bSock.bind(('<broadcast>', port))
 bSock.sendto('prom_web_q', ('<broadcast>', destPort))
-results = select.select([bSock], [], [], 20)
+
+rbSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+rbSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+rbSock.setblocking(1)
+rbSock.bind(('localhost', port))
+
+results = select.select([rbSock], [], [], 10)
 data = ''
 if len(results[0]):
     data = results[0][0].recv(999)
     if 'prom_web_r' not in data:
         print 'Invalid response - no prometheus instance found'
+        os.remove('rp')
         exit(1)
 else:
     print 'Socket timeout - no prometheus instance found'
+    os.remove('rp')
     exit(1)
 
 ip = data.replace('prom_web_r#', '')
@@ -54,6 +62,7 @@ ip = ip.strip() #}}}
 # Authenticate #{{{
 user, pw = getAuth()
 pSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+pSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 pSock.connect((ip, destPort))
 authStr = 'auth' + sep + user + sep + pw
 pSock.send(authStr)
@@ -171,7 +180,9 @@ def parse_cmd(cmd): #{{{
         data = single_select(data, pSock)
         if not data:
             return
-        os.system('./rsync.sh ' + ip + ' ' + outDir + ' "' + data + '"')
+        print data
+        print outDir
+        os.system('./rsync.sh {0} {1} "{2}"'.format(ip, outDir, data))
         pSock.send('rm' + sep + data);
         pSock.recv(999) #}}}
     elif cmd[0] == 'gets': #{{{
@@ -186,7 +197,7 @@ def parse_cmd(cmd): #{{{
         data = pSock.recv(999)
         data = data.split(';')
         data = '" "'.join(data)
-        os.system('./rsync.sh ' + ip + ' ' + outDir + ' "' + data + '"')
+        os.system('./rsync.sh {0} {1} "{2}"'.format(ip, outDir, data))
         for f in data.split('" "'):
             pSock.send('rm' + sep + f)
             pSock.recv(999) #}}}

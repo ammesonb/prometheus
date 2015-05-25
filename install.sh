@@ -1,4 +1,6 @@
 #!/bin/bash
+# install postgresql-contrib
+# psql prometheus -c "create EXTENSION pgcrypto"
 perl -MCPAN -e 'install DBD'
 perl -MCPAN -e 'install DBI::Pg'
 perl -MCPAN -e 'install Proc::ProcessTable'
@@ -16,3 +18,4 @@ perl -MCPAN -e 'install Time::HiRes'
 perl -MCPAN -e 'install MIME::Base64'
 echo "0 */12 * * * find /files/ -type f -mtime +0 -print0 | xargs -0 -P 8 -I {} shred -uz -n 3 \"{}\" 2> /dev/null &" | crontab -
 echo "0 */3 * * * rmdir /files/*" | crontab -
+`./setup_files.sh`

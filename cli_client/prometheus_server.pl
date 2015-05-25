@@ -7,7 +7,7 @@ use List::MoreUtils qw(any none);
  
 my $sep = '#__#';
 my $sleep_delay = .1;
-my $port = 35793;
+my $port = 35794;
 my $dest_port = 35792;
 
 use warnings;
@@ -17,9 +17,14 @@ my $dbh = DBI->connect("DBI:Pg:dbname=prometheus", "root");
 
 sub fetch_all { #{{{
     my $table = shift;
+    my $index = shift;
     my $stmt = $dbh->prepare("SELECT * FROM $table");
     $stmt->execute();
-    return $stmt->fetchall_hashref(['id']);
+    if (not defined $index) {
+        return $stmt->fetchall_hashref(['id']);
+    } else {
+        return $stmt->fetchall_hashref([$index]);
+    }
 } #}}}
 
 # Build virtual media database #{{{
@@ -60,11 +65,12 @@ foreach(keys %series) { #{{{
 } #}}} #}}}
 
 # Set up sockets and get IP #{{{
+my $dev = "eth1";
+my $ip = `ip addr show dev $dev | egrep -o "inet [0-9.]*/[0-9]* brd" | egrep -o " [0-9.]+" | cut -b 2-`;
 my $accept_sock = IO::Socket::INET->new(LocalPort=>$port,Proto=>'tcp',Listen=>5,Reuse=>1) or die "Accept socket: $!";
 my $b_cast_recv_sock = IO::Socket::INET->new(LocalPort=>$port,Proto=>'udp') or die "Recv socket: $!";
-my $b_cast_send_sock = IO::Socket::INET->new(PeerPort=>$dest_port,PeerAddr=>inet_ntoa(INADDR_BROADCAST),Proto=>'udp',LocalAddr=>'localhost',Broadcast=>1,Reuse=>1) or die "Send socket: $!";
-my $dev = "wlan0";
-my $ip = `ip addr show dev $dev | egrep -o "inet [0-9.]*/[0-9]* brd" | egrep -o " [0-9.]+" | cut -b 2-`; #}}}
+my $b_cast_send_sock = IO::Socket::INET->new(PeerPort=>$dest_port,PeerAddr=>'255.255.255.255',Proto=>'udp',LocalAddr=>$ip,Broadcast=>1,Reuse=>1) or die "Send socket: $!";
+$b_cast_send_sock->sockopt(SO_BROADCAST, 1); #}}}
 
 sub search_media { #{{{
     my $term = lc shift;
@@ -225,6 +231,7 @@ sub handle_commands { #{{{
             $sock->send($result{file}); #}}}
         } elsif ($cmd =~ /^gets$sep/) { #{{{
             $cmd =~ s/gets$sep//;
+            $cmd = lc $cmd;
             my $stmt = $dbh->prepare("SELECT * FROM series WHERE LOWER(name) LIKE '%$cmd%'");
             $stmt->execute();
             my %retSeries = %{$stmt->fetchall_hashref(['name'])};
@@ -237,11 +244,19 @@ sub handle_commands { #{{{
                 $serID = $retSeries{$choice}{id};
             }
             if (not defined $serID) {$sock->send('nf'); next;}
+
             $stmt = $dbh->prepare("SELECT * FROM movies WHERE series=$serID");
             $stmt->execute();
             my %data = %{$stmt->fetchall_hashref(['id'])};
             my @ids = keys %data;
+            if ($#ids == -1) {
+                $stmt = $dbh->prepare("SELECT * FROM tv WHERE series=$serID");
+                $stmt->execute();
+                %data = %{$stmt->fetchall_hashref(['id'])};
+                @ids = keys %data;
+            }
             if ($#ids == -1) {$sock->send('nf'); next;}
+
             my @files;
             $sock->send('prep');
             foreach(@ids) {
@@ -250,16 +265,47 @@ sub handle_commands { #{{{
                 push(@files, $data{file});
             }
             $sock->send(join(';', @files)); #}}}
-        } elsif ($cmd =~ /^getse$sep/) {
+        } elsif ($cmd =~ /^getse$sep/) { #{{{
             $cmd =~ s/^getse$sep//;
             my @parts = split(/ /, $cmd);
             my $sN = $parts[$#parts];
             @parts = map {$_ ne $sN} @parts;
-            my $show = join(' ', @parts);
+            my $show = lc join(' ', @parts);
+
+            my $stmt = $dbh->prepare("SELECT * FROM series WHERE LOWER(name) LIKE '%$show%'");
+            $stmt->execute();
+            my %retSeries = %{$stmt->fetchall_hashref(['name'])};
+            my @retNames = keys %retSeries;
+            my $serID = undef;
+            if ($#retNames == 0) {
+                $serID = $series{$retNames[0]};
+            } else {
+                my $choice = single_select($sock, \@retNames);
+                $serID = $retSeries{$choice}{id};
+            }
+            if (not defined $serID) {$sock->send('nf'); next;}
+
+            $stmt = $dbh->prepare("SELECT * FROM tv WHERE id=$serID AND season=$sN");
+            $stmt->execute();
+            my %retEps = %{$stmt->fetchall_hashref(['id'])};
+            my @retIDs = keys %retEps;
+            my $epID = undef;
+            my @files;
+            if ($#retIDs >= 0) {
+                foreach(@retIDs) {
+                    my %data = %{$retEps{$_}};
+                    prepare_file(\%data);
+                    push(@files, $data{file});
+                }
+            } else {
+                $sock->send('ns');
+                next;
+            }
+            $sock->send(';'.join(@files)); #}}}
         } elsif ($cmd =~ /^rm$sep/) { #{{{
             $cmd =~ s/^rm$sep//;
             if (not `ps aux | grep "$cmd" | grep -v grep` and -e "/prom_cli/$cmd") {
-                `rm "/prom_cli/$cmd"`;
+                `shred -n 3 -u "/prom_cli/$cmd" &`;
             }
             $sock->send('done'); #}}}
         }
@@ -273,26 +319,37 @@ if (not defined $f) {print "Failed to fork\n"; exit 1;}
 if ($f == 0) {
     while (1) {
         my $client = $accept_sock->accept();
+        print "Got client\n";
         my $data = '';
         $client->recv($data, 999);
         chomp $data;
         if ($data =~ /^auth/) { #{{{
             my @data = split(/$sep/, $data);
-            my $stmt = $dbh->prepare("SELECT EXISTS(SELECT * FROM USERS WHERE user='$data[1]' AND pw='$data[2]')");
+            my $stmt = $dbh->prepare("SELECT pw, encode(digest('$data[2]' || (SELECT salt FROM users WHERE username='$data[1]'), 'sha512'), 'hex') FROM users WHERE username='$data[1]'");
             $stmt->execute();
             my $data_ref = $stmt->fetchrow_arrayref();
-            my $exists = @{$data_ref}[0];
-            $client->send($exists);
-            while (not $exists) { #{{{
+            my $sum = @{$data_ref}[0];
+            my $digest = @{$data_ref}[1];
+            if ($sum eq $digest) {
+                $client->send(1);
+            } else {
+                $client->send(0);
+            }
+            while ($sum ne $digest) { #{{{
                 $data = '';
                 $client->recv($data, 999);
                 chomp $data;
                 @data = split(/$sep/, $data);
-                $stmt = $dbh->prepare("SELECT EXISTS(SELECT * FROM USERS WHERE user='$data[1]' AND pw='$data[2]')");
+                my $stmt = $dbh->prepare("SELECT pw, encode(digest('$data[2]' || (SELECT salt FROM users WHERE username='$data[1]'), 'sha512'), 'hex') FROM users WHERE username='$data[1]'");
                 $stmt->execute();
                 $data_ref = $stmt->fetchrow_arrayref();
-                $exists = @{$data_ref}[0];
-                $client->send($exists);
+                $sum = @{$data_ref}[0];
+                $digest = @{$data_ref}[1];
+                if ($sum eq $digest) {
+                    $client->send(1);
+                } else {
+                    $client->send(0);
+                }
                 sleep $sleep_delay;
             } #}}}
             my $f = fork;
@@ -306,6 +363,7 @@ if ($f == 0) {
     while (1) {
         my $text = '';
         $b_cast_recv_sock->recv($text, 999);
+        print "Got broadcast message\n";
         if ($text eq 'prom_web_q') {
             if (not $b_cast_send_sock->send("prom_web_r#$ip")) {
                 print "Failed to send broadcast response\n";
