@@ -24,6 +24,22 @@
             android:name=".NotesActivity"
             android:label="@string/title_activity_notes" >
         </activity>
+        <activity
+            android:name=".ReminderActivity"
+            android:label="@string/title_activity_reminder" >
+        </activity>
+        <activity
+            android:name=".AccountActivity"
+            android:label="@string/title_activity_account" >
+        </activity>
+        <activity
+            android:name=".MovieActivity"
+            android:label="@string/title_activity_movie" >
+        </activity>
+        <activity
+            android:name=".TVActivity"
+            android:label="@string/title_activity_tv" >
+        </activity>
     </application>
 
 </manifest>

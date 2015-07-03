@@ -7,4 +7,8 @@
 
     <string name="hello_world">Hello world!</string>
     <string name="title_activity_notes">NotesActivity</string>
+    <string name="title_activity_reminder">ReminderActivity</string>
+    <string name="title_activity_account">AccountActivity</string>
+    <string name="title_activity_movie">MovieActivity</string>
+    <string name="title_activity_tv">TVActivity</string>
 </resources>
