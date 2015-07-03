@@ -25,6 +25,7 @@ import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.crypto.BadPaddingException;
@@ -43,6 +44,7 @@ import javax.net.ssl.HttpsURLConnection;
 public class SessionManager {
     private String sessionID;
     private String aesKey;
+    private boolean authenticated = false;
 
     SessionManager(Context ctx) {
         ConnectivityManager connmgr = (ConnectivityManager)ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -86,6 +88,7 @@ public class SessionManager {
             try {
                 String response = fetchURL(new URL("https://prometheus.bammeson.com/login.cgi"), auth);
                 // TODO response should have a redirect if it is authorized, so proceed
+                authenticated = true;
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
@@ -153,5 +156,24 @@ public class SessionManager {
 
             return "";
         }
+    }
+
+    public boolean isAuthenticated() {
+        return authenticated;
+    }
+
+    public ArrayList<Note> getNotes() {
+        ArrayList<Note> notes = new ArrayList<Note>();
+        String data;
+        try {
+            data = fetchURL(new URL("https://prometheus.bammeson.com/notes.cgi"),
+                    new ArrayList<String>(Arrays.asList("mode", "0")));
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return null;
+        }
+        // TODO convert fetchURL string to something compatible with JsonReader (InputStream)
+        // then load it into the list view
+        return notes;
     }
 }
