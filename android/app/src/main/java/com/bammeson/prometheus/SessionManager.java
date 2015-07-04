@@ -173,7 +173,11 @@ public class SessionManager {
             return null;
         }
         // TODO convert fetchURL string to something compatible with JsonReader (InputStream)
-        // then load it into the list view
         return notes;
+    }
+
+    public ArrayList<String> getApps() {
+        // TODO fetch list of allowed apps - parse from landing?
+        return null;
     }
 }

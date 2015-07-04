@@ -40,6 +40,10 @@
             android:name=".TVActivity"
             android:label="@string/title_activity_tv" >
         </activity>
+        <activity
+            android:name=".NoteEditActivity"
+            android:label="@string/title_activity_note_edit" >
+        </activity>
     </application>
 
 </manifest>

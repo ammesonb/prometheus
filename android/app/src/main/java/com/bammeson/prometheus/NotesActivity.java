@@ -26,7 +26,9 @@ public class NotesActivity extends Activity {
 
         ArrayList<Note> notes = session.getNotes();
         ListView noteList = (ListView)findViewById(R.id.notesList);
+        // TODO set adapter and load it using returned data
         //noteList.setAdapter();
+        // TODO add onclick handler to go to note selection screen
     }
 
     @Override

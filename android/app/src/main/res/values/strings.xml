@@ -11,4 +11,5 @@
     <string name="title_activity_account">AccountActivity</string>
     <string name="title_activity_movie">MovieActivity</string>
     <string name="title_activity_tv">TVActivity</string>
+    <string name="title_activity_note_edit">NoteEditActivity</string>
 </resources>
