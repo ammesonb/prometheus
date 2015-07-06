@@ -17,6 +17,7 @@ import org.apache.http.message.BasicNameValuePair;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
@@ -41,7 +42,7 @@ import javax.net.ssl.HttpsURLConnection;
  * network requests and data forwarding between the server
  * and the Android application
  */
-public class SessionManager {
+public class SessionManager implements Serializable {
     private String sessionID;
     private String aesKey;
     private boolean authenticated = false;

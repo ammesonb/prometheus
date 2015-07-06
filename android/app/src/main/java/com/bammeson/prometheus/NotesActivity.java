@@ -17,16 +17,18 @@ import java.util.Collections;
 
 public class NotesActivity extends Activity {
     ArrayList<Note> notes;
+    SessionManager session;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notes);
 
-        SessionManager session = new SessionManager(getApplicationContext());
+        Intent i = new Intent();
+        session = (SessionManager) i.getSerializableExtra("session");
         if (!session.isAuthenticated()) {
             Log.e("NotesActivity", "Not logged in");
-            // TODO should go back a screen
+            finish();
             return;
         }
 
@@ -45,6 +47,7 @@ public class NotesActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
                 Intent i = new Intent(getApplicationContext(), NoteEditActivity.class);
+                i.putExtra("session", session);
                 i.putExtra("id", notes.get(pos).getId());
                 i.putExtra("title", notes.get(pos).getTitle());
                 i.putExtra("text", notes.get(pos).getText());

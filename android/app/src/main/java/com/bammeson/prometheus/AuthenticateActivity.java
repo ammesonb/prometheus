@@ -37,7 +37,7 @@ public class AuthenticateActivity extends Activity {
 
                 if (session.authenticate(un, pass.getText().toString())) {
                     Intent i = new Intent(getApplicationContext(), AppSelectActivity.class);
-                    i.putExtra("sessionID", session.getID());
+                    i.putExtra("session", session);
                     startActivity(i);
                 } else {
                     // TODO Print failure message
