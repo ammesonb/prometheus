@@ -19,6 +19,7 @@ public class NotesActivity extends Activity {
     ArrayList<Note> notes;
     SessionManager session;
 
+    // TODO add creation capability - settings, or title bar?
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

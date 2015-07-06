@@ -110,7 +110,7 @@ public class SessionManager implements Serializable {
         return false;
     }
 
-    private String fetchURL(URL url, ArrayList<String> postData) {
+    protected String fetchURL(URL url, ArrayList<String> postData) {
         if (postData.size() == 0) {
             HttpsURLConnection conn;
             int read;
