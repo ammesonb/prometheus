@@ -20,15 +20,15 @@ public class AuthenticateActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_authenticate);
 
-        ImageView logo = (ImageView)findViewById(R.id.prometheusLogo);
+        ImageView logo = (ImageView) findViewById(R.id.prometheusLogo);
         logo.setImageResource(R.drawable.prometheus);
 
-        Button loginButton = (Button)findViewById(R.id.loginButton);
+        Button loginButton = (Button) findViewById(R.id.loginButton);
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                EditText user = (EditText)findViewById(R.id.userInput);
-                EditText pass = (EditText)findViewById(R.id.passInput);
+                EditText user = (EditText) findViewById(R.id.userInput);
+                EditText pass = (EditText) findViewById(R.id.passInput);
                 String un = user.getText().toString();
                 if (!un.matches("[a-zA-Z0-9_-]+")) {
                     // TODO Print error

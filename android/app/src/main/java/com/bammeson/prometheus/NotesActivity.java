@@ -39,7 +39,7 @@ public class NotesActivity extends Activity {
         for (Note n : notes) {
             noteTitles.add(n.getTitle());
         }
-        ListView noteList = (ListView)findViewById(R.id.notesList);
+        ListView noteList = (ListView) findViewById(R.id.notesList);
         ArrayAdapter<String> adp = new ArrayAdapter<String>(this,
                 android.R.layout.simple_list_item_1, noteTitles);
         noteList.setAdapter(adp);

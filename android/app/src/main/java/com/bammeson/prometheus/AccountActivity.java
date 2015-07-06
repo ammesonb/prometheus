@@ -1,17 +1,23 @@
 package com.bammeson.prometheus;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
 
 public class AccountActivity extends Activity {
+    SessionManager session;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_account);
+
+        Intent i = new Intent();
+        session = (SessionManager) i.getSerializableExtra("session");
+
     }
 
     @Override

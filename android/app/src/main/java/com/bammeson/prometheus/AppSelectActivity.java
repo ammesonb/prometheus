@@ -16,7 +16,7 @@ public class AppSelectActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_app_select);
 
-        ImageView prometheusLogo = (ImageView)findViewById(R.id.prometheusLogo);
+        ImageView prometheusLogo = (ImageView) findViewById(R.id.prometheusLogo);
         prometheusLogo.setImageResource(R.drawable.prometheus);
 
         SessionManager session = new SessionManager(getApplicationContext());

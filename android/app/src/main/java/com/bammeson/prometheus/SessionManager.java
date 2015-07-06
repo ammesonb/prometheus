@@ -48,7 +48,7 @@ public class SessionManager implements Serializable {
     private boolean authenticated = false;
 
     SessionManager(Context ctx) {
-        ConnectivityManager connmgr = (ConnectivityManager)ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager connmgr = (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connmgr.getActiveNetworkInfo();
         if (networkInfo == null || !networkInfo.isConnected()) {
             Log.e("SessionManager", "No internet connection detected");
@@ -116,7 +116,7 @@ public class SessionManager implements Serializable {
             int read;
             byte[] data;
             try {
-                conn = (HttpsURLConnection)url.openConnection();
+                conn = (HttpsURLConnection) url.openConnection();
                 InputStream in = new BufferedInputStream(conn.getInputStream());
                 data = new byte[in.available()];
                 read = in.read(data);
