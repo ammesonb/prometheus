@@ -118,6 +118,10 @@ class IMDBParser(HTMLParser): #{{{
         elif basicTagCheck(self.mode, 'desc', self.media):
             self.media['description'] = data.strip() #}}} #}}}
 
+if len(argv) <= 1:
+    print "Usage: capture_imdb.py kind [ttid file]"
+    exit()
+
 imageChecksums = {}
 kind = argv[1]
 
