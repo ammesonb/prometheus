@@ -1,8 +1,39 @@
 #!/bin/bash
 # install postgresql-contrib
 # psql prometheus -c "create EXTENSION pgcrypto"
-perl -MCPAN -e 'install DBD'
-perl -MCPAN -e 'install DBI::Pg'
+apt-get install rsync xinetd
+echo "[prom_files]
+    path = /prom_cli
+    comment = "Prometheus"
+    read only = true
+    use chroot = true
+    list = false
+    log file = /var/log/rsyncd.log
+    transfer logging = true
+    strict modes = true
+    auth users = prom_cli
+    secrets file = /etc/rsyncd.secrets" >> /etc/rsyncd.conf
+
+echo "service rsync
+  {
+    disable         = no
+    port            = 873
+    flags           = REUSE
+    socket_type     = stream
+    wait            = no
+    user            = root
+    server          = /usr/bin/rsync
+    server_args     = --daemon
+    log_on_failure  += USERID
+  }" > /etc/xinetd.d/rsync
+if [ ! grep "rsync" /etc/services ];
+  then
+    echo "rsync 873/tcp" >> /etc/services
+fi
+service xinetd restart
+
+perl -MCPAN -e 'install DBI'
+perl -MCPAN -e 'install DBD::Pg'
 perl -MCPAN -e 'install Proc::ProcessTable'
 perl -MCPAN -e 'install File::Slurp'
 perl -MCPAN -e 'install File::Temp'

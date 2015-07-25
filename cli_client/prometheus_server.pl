@@ -145,7 +145,9 @@ sub prepare_file { #{{{
     my %result = %$result;
     my $kind = 'm';
     if (any {$_ eq 'episode'} keys(%result)) {$kind = 't';}
-    my $v = $kind . substr($result{title}, 0, 1);
+    my $file = $result{file};
+    $file =~ s/^[0-9\.\- ]*//;
+    my $v = $kind . substr($file, 0, 1);
     my $m = $v . '_m';
     my $hn = `echo -n "$m" | sha256sum | awk -F ' ' '{printf \$1}'`;
     my $cs = '-1';
@@ -158,6 +160,7 @@ sub prepare_file { #{{{
         `rsync --partial -achvtr "/data/$hn/$result{file}" /prom_cli/`;
         `../encfs/./fs.py d $v`;
         `sync`;
+        `chmod 755 "/prom_cli/$result{file}"`;
     }
 } #}}}
 
@@ -309,7 +312,7 @@ sub handle_commands { #{{{
         } elsif ($cmd =~ /^rm$sep/) { #{{{
             $cmd =~ s/^rm$sep//;
             chomp $cmd;
-            if (not `ps aux | grep "$cmd" | grep -v grep` and -e "/prom_cli/$cmd") {
+            if (not `ps aux | grep "/prom_cli/$cmd" | grep -v grep` and -e "/prom_cli/$cmd") {
                 `shred -n 3 -u "/prom_cli/$cmd" &`;
             }
             $sock->send('done');

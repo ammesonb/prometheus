@@ -199,7 +199,7 @@ def parse_cmd(cmd): #{{{
         for f in data.split('" "'):
             pSock.send('rm' + sep + f)
             pSock.recv(999) #}}}
-    elif cmd[0] == 'getse':
+    elif cmd[0] == 'getse': #{{{
         pSock.send('getse' + sep + cmd[1])
         data = pSock.recv(999)
         data = single_select(data, pSock)
@@ -210,7 +210,7 @@ def parse_cmd(cmd): #{{{
         data = pSock.recv(999)
         data = data.split(';')
         data = '" "'.join(data)
-        os.system('./rsync.sh {0} {1} "{2}"'.format(ip, outDir, data))
+        os.system('./rsync.sh {0} {1} "{2}"'.format(ip, outDir, data)) #}}}
     else:
         print 'Unrecognized command'
         return
