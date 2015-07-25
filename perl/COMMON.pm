@@ -9,6 +9,9 @@ use DBI;
 use DBD::Pg;
 use File::Slurp qw(read_file);
 use List::MoreUtils qw(first_index);
+use Time::HiRes qw(gettimeofday);
+use Crypt::OpenSSL::Random qw(random_seed random_bytes);
+use MIME::Base64;
 use strict;
 
 my $indent = '    ';
@@ -22,6 +25,13 @@ sub init { #{{{
     my $userID = $session->param('user_id');
     my $domain = $session->param('domain');
     my $aesKey = $session->param('master_key');
+    if ($aesKey =~ /[\s]*/) {
+        my $time = gettimeofday();
+        while (not random_seed($time)) {$time = gettimeofday();}
+        $aesKey = encode_base64(random_bytes(32));
+        chomp($aesKey);
+        $session->param('master_key', $aesKey);
+    }
     #CryptoJS.AES.encrypt(str, key, {mode: CryptoJS.mode.CBC}).toString()
     # equals (with quotes)
     # echo "str" | base64 --decode | openssl enc -aes-256-cbc -d -k "key"
@@ -414,7 +424,6 @@ sub checkPrintable { #{{{
 1;
 
 __END__
-
 =head1 NAME #{{{
 
 =cut
@@ -596,3 +605,4 @@ Takes a string and returns true if it is between hex 20 and 7E, AKA a printable 
 Brett Ammeson C<ammesonb@gmail.com>
 
 =cut #}}}
+
