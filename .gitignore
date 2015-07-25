@@ -1,6 +1,5 @@
-thumbs/
+thumbs/*.jpg
 encfs/
-imdb/
 .v[ip]
 android/.gradle/**
 android/build/intermediates/**
