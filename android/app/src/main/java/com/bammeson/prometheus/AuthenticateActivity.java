@@ -13,12 +13,14 @@ import android.widget.ImageView;
 
 public class AuthenticateActivity extends Activity {
 
-    SessionManager session = SessionManager.getInstance(getApplicationContext());
+    SessionManager session;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_authenticate);
+
+        session = SessionManager.getInstance(getApplicationContext());
 
         ImageView logo = (ImageView) findViewById(R.id.prometheusLogo);
         logo.setImageResource(R.drawable.prometheus);
