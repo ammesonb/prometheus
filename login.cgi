@@ -48,11 +48,13 @@ my $userID = $userIDs[0]; #}}}
 my $response = COMMON::attempt_login($session, scalar $q->param('a'), scalar $q->param('c'), $userData{$userID}{'salt'}, $userData{$userID}{'domain'});
 
 # Create session AES key #{{{
-my $time = gettimeofday();
-while (not random_seed($time)) {$time = gettimeofday();}
-my $key = encode_base64(random_bytes(32));
-chomp($key);
-$session->param('master_key', $key); #}}}
+if ($session->param('master_key') =~ /[\s]*/) {
+    my $time = gettimeofday();
+    while (not random_seed($time)) {$time = gettimeofday();}
+    my $key = encode_base64(random_bytes(32));
+    chomp($key);
+    $session->param('master_key', $key);
+} #}}}
 
 # Set session parameters #{{{
 $session->param('night_theme', $userData{$userID}{'theme'});
