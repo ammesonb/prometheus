@@ -13,7 +13,7 @@ import android.widget.ImageView;
 
 public class AuthenticateActivity extends Activity {
 
-    SessionManager session = new SessionManager(getApplicationContext());
+    SessionManager session = SessionManager.getInstance(getApplicationContext());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,7 +37,6 @@ public class AuthenticateActivity extends Activity {
 
                 if (session.authenticate(un, pass.getText().toString())) {
                     Intent i = new Intent(getApplicationContext(), AppSelectActivity.class);
-                    i.putExtra("session", session);
                     startActivity(i);
                 } else {
                     // TODO Print failure message

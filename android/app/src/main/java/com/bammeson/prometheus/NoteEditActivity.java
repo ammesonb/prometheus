@@ -23,9 +23,8 @@ public class NoteEditActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note_edit);
-        Intent i = new Intent();
-        id = i.getStringExtra("id");
-        session = (SessionManager) i.getSerializableExtra("session");
+
+        session = SessionManager.getInstance(getApplicationContext());
         if (!session.isAuthenticated()) {
             // TODO display some error
             Intent in = new Intent(getApplicationContext(), AuthenticateActivity.class);
@@ -43,7 +42,7 @@ public class NoteEditActivity extends Activity {
                 // TODO validate text input - what character set should it be limited to? ASCII?
                 EditText title = (EditText) findViewById(R.id.noteTitle);
                 EditText text = (EditText) findViewById(R.id.noteContent);
-                ArrayList<String> params = new ArrayList<String>();
+                ArrayList<String> params = new ArrayList<>();
                 Collections.addAll(params, "mode", "1", "note_id", id,
                         "note_title", title.getText().toString(), "note_text", text.getText().toString());
                 try {

@@ -19,7 +19,7 @@ public class AppSelectActivity extends Activity {
         ImageView prometheusLogo = (ImageView) findViewById(R.id.prometheusLogo);
         prometheusLogo.setImageResource(R.drawable.prometheus);
 
-        SessionManager session = new SessionManager(getApplicationContext());
+        SessionManager session = SessionManager.getInstance(getApplicationContext());
 
         ArrayList<String> apps = session.getApps();
         // TODO use returned strings to pick which apps to allow use of

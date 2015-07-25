@@ -7,7 +7,6 @@ import android.util.Log;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
@@ -17,7 +16,6 @@ import org.apache.http.message.BasicNameValuePair;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
@@ -42,12 +40,14 @@ import javax.net.ssl.HttpsURLConnection;
  * network requests and data forwarding between the server
  * and the Android application
  */
-public class SessionManager implements Serializable {
+public class SessionManager {
+    private static SessionManager instance;
+
     private String sessionID;
     private String aesKey;
     private boolean authenticated = false;
 
-    SessionManager(Context ctx) {
+    private SessionManager(Context ctx) {
         ConnectivityManager connmgr = (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connmgr.getActiveNetworkInfo();
         if (networkInfo == null || !networkInfo.isConnected()) {
@@ -67,6 +67,11 @@ public class SessionManager implements Serializable {
         }
     }
 
+    public static SessionManager getInstance(Context ctx) {
+        if (instance == null) instance = new SessionManager(ctx);
+        return instance;
+    }
+
     protected String getID() {
         return sessionID;
     }
@@ -78,7 +83,7 @@ public class SessionManager implements Serializable {
             cipher.init(Cipher.ENCRYPT_MODE, skeySpec);
             byte[] encPass = cipher.doFinal(pass.getBytes());
             // This needs to be encoded into hex or base64 or something
-            ArrayList<String> auth = new ArrayList<String>();
+            ArrayList<String> auth = new ArrayList<>();
             auth.add("a");
             auth.add(user);
             auth.add("c");
@@ -94,17 +99,7 @@ public class SessionManager implements Serializable {
                 e.printStackTrace();
             }
 
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
+        } catch (UnsupportedEncodingException | NoSuchAlgorithmException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException | NoSuchPaddingException e) {
             e.printStackTrace();
         }
         return false;
@@ -135,7 +130,7 @@ public class SessionManager implements Serializable {
         } else {
             HttpClient client = new DefaultHttpClient();
             HttpPost post = new HttpPost(url.toString());
-            List<NameValuePair> values = new ArrayList<NameValuePair>(postData.size() / 2);
+            List<NameValuePair> values = new ArrayList<>(postData.size() / 2);
             for (int i = 0; i < postData.size(); i += 2) {
                 values.add(new BasicNameValuePair(postData.get(i), postData.get(i + 1)));
             }
@@ -147,10 +142,6 @@ public class SessionManager implements Serializable {
                     return "";
                 }
                 return response.toString();
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            } catch (ClientProtocolException e) {
-                e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -164,11 +155,11 @@ public class SessionManager implements Serializable {
     }
 
     public ArrayList<Note> getNotes() {
-        ArrayList<Note> notes = new ArrayList<Note>();
+        ArrayList<Note> notes = new ArrayList<>();
         String data;
         try {
             data = fetchURL(new URL("https://prometheus.bammeson.com/notes.cgi"),
-                    new ArrayList<String>(Arrays.asList("mode", "0")));
+                    new ArrayList<>(Arrays.asList("mode", "0")));
         } catch (MalformedURLException e) {
             e.printStackTrace();
             return null;

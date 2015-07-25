@@ -25,8 +25,8 @@ public class NotesActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notes);
 
-        Intent i = new Intent();
-        session = (SessionManager) i.getSerializableExtra("session");
+        session = SessionManager.getInstance(getApplicationContext());
+
         if (!session.isAuthenticated()) {
             Log.e("NotesActivity", "Not logged in");
             finish();
@@ -35,12 +35,12 @@ public class NotesActivity extends Activity {
 
         notes = session.getNotes();
         Collections.sort(notes);
-        ArrayList<String> noteTitles = new ArrayList<String>();
+        ArrayList<String> noteTitles = new ArrayList<>();
         for (Note n : notes) {
             noteTitles.add(n.getTitle());
         }
         ListView noteList = (ListView) findViewById(R.id.notesList);
-        ArrayAdapter<String> adp = new ArrayAdapter<String>(this,
+        ArrayAdapter<String> adp = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1, noteTitles);
         noteList.setAdapter(adp);
 
@@ -48,7 +48,6 @@ public class NotesActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
                 Intent i = new Intent(getApplicationContext(), NoteEditActivity.class);
-                i.putExtra("session", session);
                 i.putExtra("id", notes.get(pos).getId());
                 i.putExtra("title", notes.get(pos).getTitle());
                 i.putExtra("text", notes.get(pos).getText());
