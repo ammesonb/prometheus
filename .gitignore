@@ -2,3 +2,5 @@ thumbs/
 encfs/
 imdb/
 .v[ip]
+android/.gradle/
+android/build/intermediate/
