@@ -6,7 +6,7 @@ use IO::Socket::INET;
 use List::MoreUtils qw(any none);
  
 my $sep = '#__#';
-my $sleep_delay = 1;
+my $sleep_delay = .3;
 my $port = 35794;
 my $dest_port = 35792;
 
