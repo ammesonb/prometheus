@@ -209,8 +209,12 @@ def parse_cmd(cmd): #{{{
             print 'Server is preparing files. Please wait.'
         data = pSock.recv(999)
         data = data.split(';')
+        datafiles = data
         data = '" "'.join(data)
-        os.system('./rsync.sh {0} {1} "{2}"'.format(ip, outDir, data)) #}}}
+        os.system('./rsync.sh {0} {1} "{2}"'.format(ip, outDir, data))
+        for f in data.split('" "'):
+            pSock.send('rm' + sep + f)
+            pSock.recv(999) #}}}
     else:
         print 'Unrecognized command'
         return
