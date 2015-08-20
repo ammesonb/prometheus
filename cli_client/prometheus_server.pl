@@ -4,9 +4,10 @@ use DBI;
 use DBD::Pg;
 use IO::Socket::INET;
 use List::MoreUtils qw(any none);
+use Time::HiRes qw(gettimeofday usleep);
  
 my $sep = '#__#';
-my $sleep_delay = .3;
+my $sleep_delay = 300000;
 my $port = 35794;
 my $dest_port = 35792;
 
@@ -167,9 +168,18 @@ sub prepare_file { #{{{
 sub handle_commands { #{{{
     my $sock = shift;
     my $folder = '';
+    my $seq_failed = 0;
     while (1) {
         my $cmd = '';
         $sock->recv($cmd, 999);
+        if (length($cmd) == 0) {$seq_failed++;}
+        else {$seq_failed = 0;}
+        if ($seq_failed >= 5) {
+            print "Client appears to be offline, disconnecting\n";
+            $sock->close();
+            $sock->shutdown(2);
+            exit 0;
+        }
         chomp $cmd;
         if ($cmd !~ /^rm$sep/) {$cmd = lc $cmd;}
         if ($cmd =~ /^cd/) { #{{{
@@ -317,7 +327,7 @@ sub handle_commands { #{{{
             }
             $sock->send('done');
         } #}}}
-        sleep $sleep_delay;
+        usleep $sleep_delay;
     }
 } #}}}
 
@@ -348,13 +358,13 @@ if ($f == 0) {
                 $data_ref = $stmt->fetchrow_arrayref();
                 $exists = @{$data_ref}[0];
                 $client->send($exists);
-                sleep $sleep_delay;
+                usleep $sleep_delay;
             } #}}}
             my $f = fork;
             if (not defined $f) {print "Failed to fork\n"; exit;}
             if ($f == 0) {handle_commands($client);}
         } #}}}
-        sleep $sleep_delay;
+        usleep $sleep_delay;
     } #}}}
 # Handle broadcast send/recv #{{{
 } else {
@@ -367,6 +377,6 @@ if ($f == 0) {
                 print "Failed to send broadcast response\n";
             }
         }
-        sleep $sleep_delay;
+        usleep $sleep_delay;
     }
 } #}}}
