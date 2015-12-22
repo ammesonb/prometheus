@@ -15,19 +15,24 @@ do
     checksum=`sha512sum "$mfile" | awk -F ' ' '{print \$1}'`
     echo "Getting file info"
     size=`stat -c %s "$mfile"`
-    res=`avconv -debug pict -i "$mfile" /dev/null 2>&1 | egrep -o [1-9][0-9]\+x[1-9][0-9]+ | head -1`
-    vcodec=`ffprobe -pretty "$mfile" 2>&1 | egrep -o "Video: [^ ]+ " | head -1 | egrep -o " .* " | egrep -o "[^ ]+"`
-    vrate=`ffprobe -pretty "$mfile" 2>&1 | egrep -o "Video: .*, [0-9]+ kb/s" | head -1 | egrep -o "[0-9]+ kb/s" | egrep -o "[0-9]+"`
+    IFS='' details=`mplayer -vo null -ao null -identify -frames 0 "$mfile"`
+    height=`echo "$details" | egrep VIDEO_HEIGHT.* | egrep -o "[0-9]+"`
+    width=`echo "$details" | egrep VIDEO_WIDTH.* | egrep -o "[0-9]+"`
+    fps=`echo "$details" | egrep VIDEO_FPS.* | egrep -o "[0-9]+"`
+    res=${height}x$width
+    vcodec=`echo "$details" | egrep VIDEO_FORMAT=.* | egrep -o "=.+" | egrep -o "[^=].+"`
+    vrate=`expr $(echo "$details" | egrep VIDEO_BITRATE=.* | egrep -o "[0-9]+") / 1000`
     if [[ $vrate -eq "" ]]
       then
         vrate="Unknown"
     fi
-    acodec=`ffprobe -pretty "$mfile" 2>&1 | egrep -o "Audio: [^ ]+ " | head -1 | egrep -o " .* " | egrep -o "[^ ]+" | sed 's/ *, *//g'`
-    arate=`ffprobe -pretty "$mfile" 2>&1 | egrep -o "Audio: .*, [0-9]+ kb/s" | head -1 | egrep -o "[0-9]+ kb/s" | egrep -o "[0-9]+"`
+    acodec=`echo "$details" | egrep AUDIO_CODEC=.* | egrep -o =.* | egrep -o "[^=]+" | head -1`
+    arate=`expr $(echo "$details" | egrep AUDIO_BITRATE=.* | egrep -o "[0-9]+" | head -1) / 1000`
     if [[ $arate -eq "" ]]
       then
         arate="Unknown"
     fi
+    nch=`echo "$details" | egrep NCH=.* | egrep -o "[0-9]+" | head -1`
     filename=`basename "$mfile"`
     f2=`echo "$filename" | sed 's/^[0-9 \.\-]\+//'`
     v=${kind:0:1}${f2:0:1}
@@ -59,8 +64,8 @@ do
 
     if [ "$checksum" = "$c2" ];
       then
-        psql prometheus -c "UPDATE $kind SET file='$fn',size=$size,checksum='$checksum',resolution='$res',v_codec='$vcodec',a_codec='$acodec',v_rate='$vrate',a_rate='$arate' WHERE ttid='$ttid'"
-        rm "$mfile"
+        psql prometheus -c "UPDATE $kind SET file='$fn',size=$size,checksum='$checksum',resolution='$res',v_codec='$vcodec',a_codec='$acodec',v_rate='$vrate',a_rate='$arate',fps='$fps',channels='$nch' WHERE ttid='$ttid'"
+        shred -u "$mfile"
     else
         echo "Failed to store $fn"
     fi
