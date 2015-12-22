@@ -1,7 +1,7 @@
 #!/bin/bash
 # install postgresql-contrib
 # psql prometheus -c "create EXTENSION pgcrypto"
-apt-get install rsync xinetd
+apt-get install rsync xinetd mplayer
 echo "[prom_files]
     path = /prom_cli
     comment = "Prometheus"
