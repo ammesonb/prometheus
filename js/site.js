@@ -4306,6 +4306,7 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
         techLabels.style.display = 'block';
         techValues.style.display = 'block';
         this.style.display = 'none';
+        tVals.style.marginTop = Math.abs(tVals.offsetTop - tLabels.offsetTop) + "px";
     };
     setText(techLink, '<br>Show technical details');
 
@@ -4317,16 +4318,17 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     techLabels.style.display = 'none';
     tLabels = element('p');
     tLabels.style.className = 'normal_text';
-    setText(tLabels, 'Resolution:<br>File size:<br>Video codec:<br>Video bitrate:<br>Audio codec:<br>Audio rate:<br>SHA512 checksum:');
+    setText(tLabels, 'Resolution:<br>File size:<br>Video codec:<br>Video FPS:<br>Video bitrate:<br>Audio codec:<br>Channels:<br>Audio rate:<br>SHA512 checksum:');
 
     techValues = element('div');
     techValues.style.cssFloat = 'left';
     techValues.style.display = 'none';
     tVals = element('p');
     tVals.className = 'normal_text';
+    tVals.style.marginTop = "0px";
     sep = '<br>\u00a0\u00a0';
     checksum = item['checksum'].substr(0, 64) + sep + item['checksum'].substr(64, 64);
-    setText(tVals, '\u00a0\u00a0' + item['resolution'] + sep + parseSize(item['size'])[0] + sep + item['v_codec'] + sep + item['v_rate'] + sep + item['a_codec'] + sep + item['a_rate'] + sep + checksum);
+    setText(tVals, '\u00a0\u00a0' + [item['resolution'], parseSize(item['size'])[0], item['v_codec'], item['fps'], parseSize(item['v_rate'])[0] + "/s", item['a_codec'], item['channels'], parseSize(item['a_rate'])[0] + "/s", checksum].join(sep));
 
     techLabels.appendChild(tLabels);
     techValues.appendChild(tVals);/*}}}*/
