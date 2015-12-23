@@ -138,6 +138,7 @@ function hex2a(hexx) {/*{{{*/
 
 function parseSize(bytes) {/*{{{*/
     if (bytes === '--') {return ['--', 'B'];}
+    else if (bytes === 'Unknown') {return ['Unknown', 'B'];}
     units = ['B', 'KB', 'MB', 'GB'];
     base = 1;
     for (u = 0; u < units.length; u++) {/*{{{*/
@@ -4327,8 +4328,12 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     tVals.className = 'normal_text';
     tVals.style.marginTop = "0px";
     sep = '<br>\u00a0\u00a0';
+    vrate = parseSize(item['v_rate'])[0];
+    if (vrate !== 'Unknown') vrate += '/s';
+    arate = parseSize(item['a_rate'])[0];
+    if (arate !== 'Unknown') arate += '/s';
     checksum = item['checksum'].substr(0, 64) + sep + item['checksum'].substr(64, 64);
-    setText(tVals, '\u00a0\u00a0' + [item['resolution'], parseSize(item['size'])[0], item['v_codec'], item['fps'], parseSize(item['v_rate'])[0] + "/s", item['a_codec'], item['channels'], parseSize(item['a_rate'])[0] + "/s", checksum].join(sep));
+    setText(tVals, '\u00a0\u00a0' + [item['resolution'], parseSize(item['size'])[0], item['v_codec'], item['fps'], vrate, item['a_codec'], item['channels'], arate, checksum].join(sep));
 
     techLabels.appendChild(tLabels);
     techValues.appendChild(tVals);/*}}}*/
