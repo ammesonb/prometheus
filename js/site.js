@@ -4061,7 +4061,7 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
     titlePanel.style.width = mediaPanel.offsetWidth - titlePanel.offsetLeft - 20 + 'px';
     mediaGrid.style.left = filterPanel.offsetLeft + filterPanel.offsetWidth + 10 + 'px';
     mediaGrid.style.top = titlePanel.offsetTop + titlePanel.offsetHeight + 'px';
-    mediaGrid.style.width = mediaPanel.offsetWidth - titlePanel.offsetLeft - 10 + 'px';
+    mediaGrid.style.width = mediaPanel.offsetWidth - titlePanel.offsetLeft + 30 + 'px';
     mediaGrid.style.height = filterPanel.offsetHeight - titlePanel.offsetTop - titlePanel.offsetHeight + 5 + 'px';/*}}}*/
 
     setTimeout(function() {populateMediaGrid(mediaGrid, media[kind], kind);}, 100);
@@ -4191,7 +4191,7 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     poster = element('img');
     poster.style.cssFloat = 'right';
     poster.style.marginTop = '10px';
-    poster.style.marginRight = '10px';
+    poster.style.marginRight = '20px';
     poster.src = 'thumbs/' + item.ttid + '.jpg';
     poster.title = item.title;
     poster.alt = item.title;
@@ -4282,7 +4282,7 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     descriptionBox.style.marginLeft = '10px';
     descriptionBox.style.paddingLeft = '10px';
     descriptionBox.style.paddingRight = '10px';
-    descriptionBox.style.width = mediaGrid.offsetWidth - 200 - 50 + 'px';
+    descriptionBox.style.width = mediaGrid.offsetWidth - 200 - 80 + 'px';
     showText = element('p');
     setText(showText, 'Click to show description');
     showText.onclick = function() {
@@ -4307,7 +4307,7 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
         techLabels.style.display = 'block';
         techValues.style.display = 'block';
         this.style.display = 'none';
-        tVals.style.marginTop = Math.abs(tVals.offsetTop - tLabels.offsetTop) + "px";
+        tVals.style.marginTop = (tLabels.offsetTop - tVals.offsetTop) + "px";
     };
     setText(techLink, '<br>Show technical details');
 
