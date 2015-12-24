@@ -4023,12 +4023,17 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
     titleFilter.onclick = function() {if (this.value == 'Search titles....') {this.value = '';}};
     titleFilter.onblur = function() {if (this.value == '') {this.value = 'Search titles....';}};
     titleFilter.setAttribute('data-kind', kind);
-    titleFilter.onchange = function() {/*{{{*/
+    titleFilter.onkeydown = function() {/*{{{*/
+        if (this.getAttribute('data-lastvalue') === this.value) return;
         filters = JSON.parse(this.parentElement.parentElement.getAttribute('data-filters'));
         found = 0;
         if (filters.filter(function(e) {return e[0] == 'title'})) {found = 1;}
         if ((this.value == '' || this.value == 'Search titles....') && !found) {return};
+        this.setAttribute('data-lastvalue', this.value);
         if (this.value != 'Search titles....') {
+            filters = JSON.parse(mediaPanel.getAttribute('data-filters'));
+            filters = filters.filter(function(f) {return f[0] != filter;});
+            mediaPanel.setAttribute('data-filters', JSON.stringify(filters));
             addFilter('title', this.value, this.parentElement.parentElement, this.getAttribute('data-kind'));
         } else {
             removeFilter('title', this.parentElement.parentElement, this.getAttribute('data-kind'));
