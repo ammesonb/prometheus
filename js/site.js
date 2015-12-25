@@ -26,14 +26,14 @@ var userServices = [];
 var users = [];/*}}}*/
 
 media = {/*{{{*/
-    "movies": [],
-    "mSeries": [],
-    "mGenres": [],
-    "movieGenres": [],
-    "tv": [],
-    "tSeries": [],
-    "tGenres": [],
-    "tvGenres": []
+    'movies': [],
+    'mSeries': [],
+    'mGenres': [],
+    'movieGenres': [],
+    'tv': [],
+    'tSeries': [],
+    'tGenres': [],
+    'tvGenres': []
 };/*}}}*/
 
 var requestingFS = 0;
@@ -172,18 +172,18 @@ function parseTime(tmpT) {/*{{{*/
 }/*}}}*/
 
 function update() {/*{{{*/
-    var docHeadObj = document.getElementsByTagName("head")[0];
-    var newScript = element("script");
-    newScript.type = "text/javascript";
+    var docHeadObj = document.getElementsByTagName('head')[0];
+    var newScript = element('script');
+    newScript.type = 'text/javascript';
     newScript.src = 'js/site.js';
     docHeadObj.appendChild(newScript);
 
     document.getElementsByTagName('link')[0].remove();
 
-    var newStyle = element("link");
-    newStyle.rel = "stylesheet";
-    newStyle.type = "text/css";
-    newStyle.href = "res/style.css";
+    var newStyle = element('link');
+    newStyle.rel = 'stylesheet';
+    newStyle.type = 'text/css';
+    newStyle.href = 'res/style.css';
     docHeadObj.appendChild(newStyle);
     
     currentTabs = document.getElementsByClassName('tab');
@@ -267,7 +267,7 @@ function switchToNight() { /*{{{*/
 } /*}}}*/
 
 function trim(s){ /*{{{*/
-  return ( s || '' ).replace( /^\s+|\s+$/g, '' ); 
+  return (s || '').replace(/^\s+|\s+$/g, ''); 
 }/*}}}*/
 
 function stringFill(x, n) { /*{{{*/
@@ -1436,7 +1436,7 @@ function openTask(task, taskView, redirectView) { /*{{{*/
         deleteTaskLink.setAttribute('data-task', JSON.stringify(task));
         deleteTaskLink.onclick = function() { /*{{{*/
             t = JSON.parse(this.getAttribute('data-task'));
-            conf = confirm('Are you sure you want to delete task "' + t.name + '"?');
+            conf = confirm('Are you sure you want to delete task \'' + t.name + '\'?');
             if (conf) {deleteTask(this.getAttribute('data-task'), taskView, false);}
         }; /*}}}*/
         deleteTaskImg = element('img');
@@ -1966,7 +1966,7 @@ function openProject(taskView, project) { /*{{{*/
             delLink.setAttribute('data-task', JSON.stringify(task));
             delLink.onclick = function() {
                 t = JSON.parse(this.getAttribute('data-task'));
-                conf = confirm('Are you sure you want to delete task "' + t.name + '"?');
+                conf = confirm('Are you sure you want to delete task \'' + t.name + '\'?');
                 if (conf) {deleteTask(this.getAttribute('data-task'), taskView, false);}
             };
             delImg = element('img');
@@ -2251,7 +2251,7 @@ function addTask(task, parent, showTime, fromOverview) { /*{{{*/
     delTaskLink.setAttribute('data-from-overview', fromOverview);
     delTaskLink.onclick = function() { /*{{{*/
         t = JSON.parse(this.getAttribute('data-task'));
-        conf = confirm('Are you sure you want to delete task "' + t.name + '"?');
+        conf = confirm('Are you sure you want to delete task \'' + t.name + '\'?');
         if (!conf) {return;}
         deleteTask(this.getAttribute('data-task'), parent.parentElement, this.getAttribute('data-from-overview'));
     }; /*}}}*/
@@ -2871,7 +2871,7 @@ function openReminders() {/*{{{*/
             if (type == 'e') {/*{{{*/
                 if (input.name == 'recipient') {/*{{{*/
                     recipient = input.value;
-                    if (recipient == '' ) {
+                    if (recipient == '') {
                         setText(errorP, 'You must specify at least one recipient');
                         return;
                     } else {
@@ -2889,7 +2889,7 @@ function openReminders() {/*{{{*/
                 }/*}}}*/ /*}}}*/
             } else if (type == 's' && input.name == 'recipient') {/*{{{*/
                 recipient = input.value;
-                if (recipient == '' ) {
+                if (recipient == '') {
                     setText(errorP, 'You must specify at least one recipient');
                     return;
                 } else {
@@ -2970,7 +2970,7 @@ function openReminders() {/*{{{*/
             }
         };/*}}}*/
 
-        template = "mode=1&id=%s&type=%s&recipient=%s&message=%s&first=%s&repeat=%s&duration=%s";
+        template = 'mode=1&id=%s&type=%s&recipient=%s&message=%s&first=%s&repeat=%s&duration=%s';
         parameters = sprintf(template, this.parentElement.getAttribute('data-id'), type, recipient, message, first, repeat, duration);
 
         if (type == 'e') {
@@ -3826,23 +3826,24 @@ function addFilter(filter, value, mediaPanel, kind) {/*{{{*/
     filters = filters.filter(function(f) {return f[0] != filter;});
     filters.push([filter, value]);
     mediaPanel.setAttribute('data-filters', JSON.stringify(filters));
-    items = filterMedia(kind, filters);
+    filterMedia(kind, filters);
     mediaGrid = mediaPanel.getElementsByClassName('media_grid')[0];
-    populateMediaGrid(mediaGrid, items, kind);
+    updateMediaGrid(mediaGrid);
 }/*}}}*/
 
 function removeFilter(filter, mediaPanel, kind) {/*{{{*/
     filters = JSON.parse(mediaPanel.getAttribute('data-filters'));
     filters = filters.filter(function(f) {return f[0] != filter;});
     mediaPanel.setAttribute('data-filters', JSON.stringify(filters));
-    items = filterMedia(kind, filters);
+    filterMedia(kind, filters);
     mediaGrid = mediaPanel.getElementsByClassName('media_grid')[0];
-    populateMediaGrid(mediaGrid, items, kind);
+    updateMediaGrid(mediaGrid);
 }/*}}}*/
 
 function filterMedia(kind, filters) {/*{{{*/
     items = media[kind];
-    return items.filter(function(m) {
+    for (i = 0; i < items.length; i++) {
+        m = items[i];
         keep = true;
         for (f = 0; f < filters.length; f++) {
             filter = filters[f];
@@ -3862,8 +3863,8 @@ function filterMedia(kind, filters) {/*{{{*/
                 if (!keep) {break;}
             }
         }
-        return keep;
-    });
+        document.getElementById('media_item' + i).setAttribute('data-keep', keep);
+    }
 }/*}}}*/
 
 function openMediaPanel(mediaPanel, kind) {/*{{{*/
@@ -4084,6 +4085,13 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
     // - 40 is for pages
     mediaGrid.style.height = filterPanel.offsetHeight - titlePanel.offsetTop - titlePanel.offsetHeight - 40 + 5 + 'px';/*}}}*/
 
+    pageContainer = element('div');
+    pageContainer.id = 'media_pages';
+    pageContainer.style.width = mediaGrid.offsetWidth + 'px';
+    pageContainer.style.left = mediaGrid.offsetLeft + 'px';
+    pageContainer.style.top = mediaGrid.offsetTop + mediaGrid.offsetHeight + 5 + 'px';
+    mediaGrid.parentElement.appendChild(pageContainer);
+
     setTimeout(function() {populateMediaGrid(mediaGrid, media[kind], kind);}, 100);
 }/*}}}*/
 
@@ -4096,6 +4104,7 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
         container = element('span');
         container.id = 'media_item' + m;
         container.className = 'media_item';
+        container.setAttribute('data-keep', true);
 
         // Media poster/*{{{*/
         poster = element('img');
@@ -4193,6 +4202,8 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
     }/*}}}*/
 
     // Set up pagination
+    mediaGrid.setAttribute('data-page', 1);
+    mediaGrid.setAttribute('data-count', items.length);
     visibleHeight = mediaGrid.offsetHeight;
     gridWidth = 0;
     gridHeight = 0;
@@ -4222,8 +4233,107 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
         e.style.display = 'none';
         if (m % (gridWidth * gridHeight) == 0) pages++;
     }
+    mediaGrid.setAttribute('data-gridsize', gridWidth * gridHeight);
+    mediaGrid.setAttribute('data-pages', pages);
 
+    pageContainer = document.getElementById('media_pages');
+    prevButton = element('img');
+    prevButton.className = 'prev_page';
+    prevButton.style.width = pageContainer.offsetHeight * 1.25 + 'px';
+    prevButton.style.height = pageContainer.offsetHeight * 1.25 + 'px';
+    pageContainer.appendChild(prevButton);
+    pageCount = 6;
+    if (pages < 5) pageCount = pages;
+    for (i = 1; i < pageCount; i++) {
+        pageLink = element('a');
+        setText(pageLink, i);
+        pageLink.className = 'normal_text media_page';
+        if (useNightTheme()) switchToNight(pageLink);
+        // Set first page as selected
+        if (i === 1) pageLink.className += ' page_selected';
+        pageContainer.appendChild(pageLink);
+        pageContainer.appendChild(document.createTextNode('\u00a0\u00a0\u00a0'));
+    }
+
+    if (pages < 6) {
+        dots = element('span');
+        dots.className = 'normal';
+        dots.style.fontSize = '1.25em';
+        setText(dots, '...\u00a0\u00a0\u00a0');
+        pageContainer.appendChild(dots);
+        lastPage = element('a');
+        setText(lastPage, pages);
+        lastPage.className = 'normal_text media_page';
+        pageContainer.appendChild(lastPage);
+    }
+
+    nextButton = element('img');
+    nextButton.className = 'next_page';
+    nextButton.style.width = pageContainer.offsetHeight * 1.25 + 'px';
+    nextButton.style.height = pageContainer.offsetHeight * 1.25 + 'px';
+
+    if (useNightTheme()) switchToNight(nextButton, prevButton, dots, lastPage);
+    pageContainer.appendChild(nextButton);
 }/*}}}*/
+
+// Updates page text in footer
+function updatePages(mediaGrid) { /*{{{*/
+    pages = mediaGrid.getAttribute('data-pages');
+    page = mediaGrid.getAttribute('data-page');
+    
+    newPages = [];
+    // If on first two pages
+    if (page < 3) {
+        // And there are 5 pages, just add 1-5
+        if (pages >= 5)
+            newPages = [1, 2, 3, 4, 5, pages];
+        // Otherwise 1 to N
+        else {
+            for (i = 1; i <= pages; i++) newPages.push(i);
+            newPages.push(pages);
+        }
+    // For everything else
+    } else {
+        // If not near end, just add two before/after
+        if (pages - page > 2)
+            newPages = [page - 2, page - 1, page, page + 1, page + 2, pages];
+        // Otherwise add 5 at end
+        else {
+            for (i = pages - 4; i <= pages; i++) newPages.push(i);
+            newPages.push(pages);
+        }
+    }
+
+    pageLinks = document.getElementById('media_pages').getElementsByTagName('a');
+    for (i = 0; i < pageLinks.length; i++) {
+        setText(pageLinks[i], newPages[i]);
+    }
+} /*}}}*/
+
+// Updates media items to match current filter
+function updateMediaGrid(mediaGrid) { /*{{{*/
+    gridSize = mediaGrid.getAttribute('data-gridsize');
+    pages = mediaGrid.getAttribute('data-pages');
+    itemCount = mediaGrid.getAttribute('data-count');
+
+    matches = 0;
+    for (i = 0; i < itemCount; i++) {
+        e = document.getElementById('media_item' + i);
+        if (!e.getAttribute('data-keep')) continue;
+        matches++;
+        if (matches > gridSize) e.style.display = 'none';
+        else e.style.display = 'inline';
+    }
+
+    mediaGrid.setAttribute('data-pages', Math.ceil(matches / gridSize));
+    mediaGrid.setAttribute('data-page', 1);
+    updatePages(mediaGrid);
+} /*}}}*/
+
+function updatePage(mediaGrid) {
+    // TODO this
+    updatePages(mediaGrid);
+}
 
 function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     deleteAllChildren(mediaGrid, true);
@@ -4315,9 +4425,9 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
         genreNames.push(media[kind[0] + 'Genres'][genres[g]].name);
     }
     genreNames.sort();
-    str = '\u00a0\u00a0' + genreNames.join(', ') + "<br>\u00a0\u00a0" + item.released + "<br>\u00a0\u00a0" + item.duration + " minutes";
+    str = '\u00a0\u00a0' + genreNames.join(', ') + '<br>\u00a0\u00a0' + item.released + '<br>\u00a0\u00a0' + item.duration + ' minutes';
     if (item['director']) {
-        str += "<br>\u00a0\u00a0" + item.director;
+        str += '<br>\u00a0\u00a0' + item.director;
     }
     setText(details, str);
     detailValues.appendChild(details);/*}}}*/
@@ -4362,7 +4472,7 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
         techLabels.style.display = 'block';
         techValues.style.display = 'block';
         this.style.display = 'none';
-        tVals.style.marginTop = (tLabels.offsetTop - tVals.offsetTop) + "px";
+        tVals.style.marginTop = (tLabels.offsetTop - tVals.offsetTop) + 'px';
     };
     setText(techLink, '<br>Show technical details');
 
@@ -4381,7 +4491,7 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     techValues.style.display = 'none';
     tVals = element('p');
     tVals.className = 'normal_text';
-    tVals.style.marginTop = "0px";
+    tVals.style.marginTop = '0px';
     sep = '<br>\u00a0\u00a0';
     vrate = parseSize(item['v_rate'])[0];
     if (vrate !== 'Unknown') vrate += '/s';
@@ -4445,6 +4555,7 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     /*}}}*/
 }/*}}}*/
 
+/* File download stuff */ /*{{{*/
 function addFAPIEventListeners(f) {/*{{{*/
     f.addEventListener('onstatusupdate', function(e) {/*{{{*/
         fAPI = this.target;
@@ -4460,7 +4571,7 @@ function addFAPIEventListeners(f) {/*{{{*/
         if (fAPI.status === 'Decrypting') {fAPI.decryptStatus(fAPI, 0);}
         console.log(CryptoJS.MD5(fAPI.sessionID).toString() + ' - Status: ' + e.target.status);
     });/*}}}*/
-    f.addEventListener("onprogressupdate", function(e) {/*{{{*/
+    f.addEventListener('onprogressupdate', function(e) {/*{{{*/
         fAPI = this.target;
         bar = document.getElementById(fAPI.ttid + '_progress');
         w = parseInt(bar.getAttribute('data-width'), 10);
@@ -4472,9 +4583,9 @@ function addFAPIEventListeners(f) {/*{{{*/
         updateInfo(document.getElementById(fAPI.ttid + '_info'), fAPI);
         if (fAPI.status !== 'Decrypting') {console.log(CryptoJS.MD5(fAPI.sessionID).toString() + ' - Progress: ' + fAPI.progress * 100 + '%, ' + parseSize(fAPI.chunkSpeed)[0]);}
     });/*}}}*/
-    f.addEventListener("oncomplete", function(e) {/*{{{*/
+    f.addEventListener('oncomplete', function(e) {/*{{{*/
         fAPI = this.target;
-        cl = "normal_text";
+        cl = 'normal_text';
         if (useNightTheme()) {cl += ' night';}
         setText(document.getElementById(fAPI.ttid + '_status'), '');
         dl = element('a');
@@ -4908,7 +5019,7 @@ function drawSquare(ctx, length, fill, stroke) {/*{{{*/
     ctx.lineTo(width / 2, width / 2);
     ctx.strokeStyle = stroke;
     ctx.stroke();
-}/*}}}*/
+}/*}}}*/ /*}}}*/
 
 function openVideos() {/*{{{*/
     videoPanel = element('div');
