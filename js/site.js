@@ -1856,6 +1856,7 @@ function openProject(taskView, project) { /*{{{*/
     } /*}}}*/
 
     addHTMLTasks(taskView, urgentHeader, urgentHR, urgentTasks, normalTasks, otherHeader, otherHR, otherTasks);
+    checkTaskHeights(taskView);
 
     return;
 
@@ -2265,6 +2266,19 @@ function addTask(task, parent, showTime, fromOverview) { /*{{{*/
     if (useNightTheme()) {switchToNight(taskElem, taskLink, taskProj, delTaskP, delTaskLink);}
 
     parent.appendChild(taskElem);
+} /*}}}*/
+
+function checkTaskHeights(taskView) { /*{{{*/
+    tasks = taskView.querySelectorAll('p.normal_text');
+    for (i = 0; i < tasks.length; i++) {
+        taskElem = tasks[i];
+        console.log(taskElem);
+        for (c = 0; c < taskElem.children.length; c++) {
+            if (taskElem.children[c].offsetHeight > 20) {
+                taskElem.parentElement.insertBefore(element('br'), taskElem.nextElementSibling);
+            }
+        }
+    }
 } /*}}}*/
 
 function addOptionTree(projects, level, select, projectID) { /*{{{*/
