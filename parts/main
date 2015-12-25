@@ -12,7 +12,7 @@
     main = document.getElementById('main');
     main.style.width = window.innerWidth - 300 + 'px';
     main.style.marginLeft = -.5 * (window.innerWidth - 300) + 'px';
-    main.style.height = window.innerHeight - 150 + 'px';
+    main.style.height = window.innerHeight - 120 + 'px';
     main.style.marginTop = -.5 * (window.innerHeight - 150) + 'px';
     tabs = document.getElementById('tabs');
     tabs.style.width = window.innerWidth - 300 + 'px';

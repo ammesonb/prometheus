@@ -4067,7 +4067,8 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
     mediaGrid.style.left = filterPanel.offsetLeft + filterPanel.offsetWidth + 10 + 'px';
     mediaGrid.style.top = titlePanel.offsetTop + titlePanel.offsetHeight + 'px';
     mediaGrid.style.width = mediaPanel.offsetWidth - titlePanel.offsetLeft + 30 + 'px';
-    mediaGrid.style.height = filterPanel.offsetHeight - titlePanel.offsetTop - titlePanel.offsetHeight + 5 + 'px';/*}}}*/
+    // - 40 is for pages
+    mediaGrid.style.height = filterPanel.offsetHeight - titlePanel.offsetTop - titlePanel.offsetHeight - 40 + 5 + 'px';/*}}}*/
 
     setTimeout(function() {populateMediaGrid(mediaGrid, media[kind], kind);}, 100);
 }/*}}}*/
@@ -4079,6 +4080,7 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
     for (m = 0; m < items.length; m++) {/*{{{*/
         item = items[m];
         container = element('span');
+        container.id = 'media_item' + m;
         container.className = 'media_item';
 
         // Media poster/*{{{*/
@@ -4158,6 +4160,7 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
 
         // Fix row heights to ensure proper alignments/*{{{*/
         largestHeight = 0;
+        // For each new row
         if (container.offsetTop != lastTop && count) {
             for (c = mediaGrid.childElementCount - count; c < mediaGrid.childElementCount; c++) {
                 mediaHeight = mediaGrid.children[c].offsetHeight;
@@ -4168,11 +4171,44 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
             }
             count = 1;
         } else {
+            // Otherwise move to next item in row
             count++;
         }
 
         lastTop = container.offsetTop;/*}}}*/
     }/*}}}*/
+
+    // Set up pagination
+    visibleHeight = mediaGrid.offsetHeight;
+    gridWidth = 0;
+    gridHeight = 0;
+    // Get width of grid
+    for (m = 0; m < items.length; m++) {
+        e = document.getElementById('media_item' + m);
+        // If item is in row 2
+        if (e.offsetTop > 100) {
+            gridWidth = m;
+            break;
+        }
+    }
+
+    // Find grid height
+    for (m = gridWidth; m < items.length; m += gridWidth) {
+        e = document.getElementById('media_item' + m);
+        if (e.offsetTop > (visibleHeight * 3)) {
+            gridHeight = m / gridWidth;
+            break;
+        }
+    }
+
+    // Hide extra media items, also count pages
+    pages = 1;
+    for (m = gridWidth * gridHeight; m < items.length; m++) {
+        e = document.getElementById('media_item' + m);
+        e.style.display = 'none';
+        if (m % (gridWidth * gridHeight) == 0) pages++;
+    }
+
 }/*}}}*/
 
 function openMediaDetails(mediaGrid, kind, item) {/*{{{*/

@@ -3,6 +3,7 @@
 <head>
     <script type="text/javascript" src="js/file_api.js"></script>
     <script type="text/javascript" src="js/sha512.js"></script>
+    <script type="text/javascript" src="js/pbkdf2.js"></script>
     <script type="text/javascript" src="js/aes.js"></script>
     <script type="text/javascript" src="js/css_browser_selector.js"></script>
     <script type="text/javascript" src="js/jstz.js"></script>
