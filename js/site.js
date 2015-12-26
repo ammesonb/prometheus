@@ -3863,6 +3863,8 @@ function filterMedia(kind, filters) {/*{{{*/
                 if (!keep) {break;}
             }
         }
+
+        keep = (keep === 0 || !keep) ? false : true;
         document.getElementById('media_item' + i).setAttribute('data-keep', keep);
     }
 }/*}}}*/
@@ -4038,7 +4040,7 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
     titleFilter.onclick = function() {if (this.value == 'Search titles....') {this.value = '';}};
     titleFilter.onblur = function() {if (this.value == '') {this.value = 'Search titles....';}};
     titleFilter.setAttribute('data-kind', kind);
-    titleFilter.onkeydown = function() {/*{{{*/
+    titleFilter.onkeyup = function() {/*{{{*/
         if (this.getAttribute('data-lastvalue') === this.value) return;
         filters = JSON.parse(this.parentElement.parentElement.getAttribute('data-filters'));
         found = 0;
@@ -4238,6 +4240,7 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
 
     pageContainer = document.getElementById('media_pages');
     prevButton = element('img');
+    prevButton.id = 'prev_media_page';
     prevButton.className = 'prev_page';
     prevButton.style.width = pageContainer.offsetHeight * 1.25 + 'px';
     prevButton.style.height = pageContainer.offsetHeight * 1.25 + 'px';
@@ -4252,10 +4255,12 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
         // Set first page as selected
         if (i === 1) pageLink.className += ' page_selected';
         pageContainer.appendChild(pageLink);
-        pageContainer.appendChild(document.createTextNode('\u00a0\u00a0\u00a0'));
+        spacer = element('span');
+        setText(spacer, '\u00a0\u00a0\u00a0');
+        pageContainer.appendChild(spacer);
     }
 
-    if (pages < 6) {
+    if (pages > 5) {
         dots = element('span');
         dots.className = 'normal';
         dots.style.fontSize = '1.25em';
@@ -4268,6 +4273,7 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
     }
 
     nextButton = element('img');
+    nextButton.id = 'next_media_page';
     nextButton.className = 'next_page';
     nextButton.style.width = pageContainer.offsetHeight * 1.25 + 'px';
     nextButton.style.height = pageContainer.offsetHeight * 1.25 + 'px';
@@ -4280,32 +4286,45 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
 function updatePages(mediaGrid) { /*{{{*/
     pages = mediaGrid.getAttribute('data-pages');
     page = mediaGrid.getAttribute('data-page');
+
+    document.getElementById('prev_media_page').style.visibility = 'hidden';
+    if (pages > 1) 
+        document.getElementById('next_media_page').style.visibility = 'visible';
     
     newPages = [];
     // If on first two pages
     if (page < 3) {
         // And there are 5 pages, just add 1-5
         if (pages >= 5)
-            newPages = [1, 2, 3, 4, 5, pages];
+            newPages = [1, 2, 3, 4, 5];
         // Otherwise 1 to N
-        else {
+        else
             for (i = 1; i <= pages; i++) newPages.push(i);
-            newPages.push(pages);
-        }
     // For everything else
     } else {
         // If not near end, just add two before/after
         if (pages - page > 2)
-            newPages = [page - 2, page - 1, page, page + 1, page + 2, pages];
+            newPages = [page - 2, page - 1, page, page + 1, page + 2];
         // Otherwise add 5 at end
-        else {
+        else
             for (i = pages - 4; i <= pages; i++) newPages.push(i);
-            newPages.push(pages);
-        }
     }
 
     pageLinks = document.getElementById('media_pages').getElementsByTagName('a');
+    // Pad to length
+    if (newPages.length < pageLinks.length)
+        for (i = newPages.length; i < pageLinks.length - 1; i++) newPages.push('');
+    newPages.push(pages);
+
     for (i = 0; i < pageLinks.length; i++) {
+        if (newPages[i] === '') {
+            pageLinks[i].style.display = 'none';
+            pageLinks[i].nextElementSibling.style.display = 'none';
+            continue;
+        } else {
+            pageLinks[i].style.display = 'inline';
+            pageLinks[i].nextElementSibling.style.display = 'inline';
+        }
         setText(pageLinks[i], newPages[i]);
     }
 } /*}}}*/
@@ -4319,7 +4338,10 @@ function updateMediaGrid(mediaGrid) { /*{{{*/
     matches = 0;
     for (i = 0; i < itemCount; i++) {
         e = document.getElementById('media_item' + i);
-        if (!e.getAttribute('data-keep')) continue;
+        if (e.getAttribute('data-keep') === "false") {
+            e.style.display = 'none';
+            continue;
+        }
         matches++;
         if (matches > gridSize) e.style.display = 'none';
         else e.style.display = 'inline';
