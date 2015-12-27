@@ -4261,7 +4261,26 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
     prevButton.id = 'prev_media_page';
     prevButton.className = 'prev_page';
     pageContainer.appendChild(prevButton);
-    pageCount = 6;
+
+    // If at least 5 pages, add a link to 1
+    if (pages > 5) { /*{{{*/
+        firstPage = element('a');
+        setText(firstPage, 1);
+        firstPage.onclick = function() {
+            updatePage(this.parentElement.previousElementSibling, pages);
+        };
+        firstPage.className = 'normal_text media_page';
+        pageContainer.appendChild(firstPage);
+        dots = element('span');
+        dots.className = 'normal';
+        dots.style.fontSize = '1.25em';
+        setText(dots, '\u00a0\u00a0\u00a0...\u00a0\u00a0\u00a0');
+        pageContainer.appendChild(dots);
+        if (useNightTheme()) switchToNight(firstPage, dots);
+    } /*}}}*/
+
+    // Add all pages
+    pageCount = 6; /*{{{*/
     if (pages < 5) pageCount = pages;
     for (i = 1; i < pageCount; i++) {
         pageLink = element('a');
@@ -4279,10 +4298,10 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
         spacer = element('span');
         setText(spacer, '\u00a0\u00a0\u00a0');
         pageContainer.appendChild(spacer);
-    }
+    } /*}}}*/
 
     // If more than 5 pages, add last page
-    if (pages > 5) {
+    if (pages > 5) { /*{{{*/
         dots = element('span');
         dots.className = 'normal';
         dots.style.fontSize = '1.25em';
@@ -4295,7 +4314,7 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
         };
         lastPage.className = 'normal_text media_page';
         pageContainer.appendChild(lastPage);
-    }
+    } /*}}}*/
 
     nextButton = element('img');
     nextButton.id = 'next_media_page';
@@ -4370,6 +4389,8 @@ function updatePages(mediaGrid) { /*{{{*/
     }
 
     pageLinks = document.getElementById('media_pages').getElementsByTagName('a');
+    // Remove hard link to first page
+    if (pages > 5) pageLinks = Array.prototype.slice.call(pageLinks, 1);
     // Pad to length
     if (newPages.length < pageLinks.length)
         for (i = newPages.length; i < pageLinks.length - 1; i++) newPages.push('');
@@ -4398,7 +4419,7 @@ function updatePages(mediaGrid) { /*{{{*/
     } /*}}}*/
 } /*}}}*/
 
-function updatePage(mediaGrid, page) {
+function updatePage(mediaGrid, page) { /*{{{*/
     mediaGrid.setAttribute('data-page', page);
     updatePages(mediaGrid);
     pages = mediaGrid.getAttribute('data-pages');
@@ -4418,7 +4439,7 @@ function updatePage(mediaGrid, page) {
         }
     }
     // Need to account for varying row heights
-}
+} /*}}}*/
 
 function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     hideAllChildren(mediaGrid, true);
