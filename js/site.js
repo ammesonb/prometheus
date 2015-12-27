@@ -4360,7 +4360,7 @@ function updatePages(mediaGrid) { /*{{{*/
 
     prevButton = document.getElementById('prev_media_page');
     nextButton = document.getElementById('next_media_page');
-    if (pages > 1) 
+    if (page > 1) 
         prevButton.style.visibility = 'visible';
     else
         prevButton.style.visibility = 'hidden';
