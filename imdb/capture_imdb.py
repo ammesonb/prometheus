@@ -32,8 +32,14 @@ class IMDBParser(HTMLParser): #{{{
             self.mode = 'time'
         elif tag == 'a' and attrs[0][0] == 'href' and 'tt_stry_gnr' in attrs[0][1]:
             self.mode = 'genre'
-        elif tag == 'p' and len(attrs) and attrs[0][0] == 'itemprop' and attrs[0][1] == 'description':
-            self.mode = 'desc'
+        elif tag == 'div':
+            if len(attrs):
+                for attr in attrs:
+                    if attr[1] == 'summary_text': break
+                    if attr[0] == 'itemprop' and attr[1] == 'description':
+                        self.mode = 'desc'
+                    elif attr[0] == 'class' and attr[1] == 'poster':
+                        self.mode = 'poster'
         elif  tag == 'a' and attrs[0][0] == 'href' and 'tt_ov_dr' in attrs[0][1]:
             self.mode = 'director'
         elif tag == 'meta' and attrs[0][0] == 'itemprop' and attrs[0][1] == 'datePublished' and not self.media.has_key('released'):
@@ -42,18 +48,27 @@ class IMDBParser(HTMLParser): #{{{
             self.mode = 'released_pre'
         elif self.mode == 'released_pre' and tag == 'span' and attrs[0][0] == 'class' and attrs[0][1] == 'nobr':
             self.mode = 'released'
-        elif tag == 'img' and len(attrs) > 5 and attrs[5][0] == 'itemprop' and attrs[5][1] == 'image':
-            img = attrs[4][1]
+        elif tag == 'img' and self.mode == 'poster':
+            img = ''
+            found = False
+            for attr in attrs:
+                if attr[0] == 'src':
+                    img = attr[1]
+                if attr[0] == 'itemprop' and attr[1] == 'image':
+                    found = True
+            if not found: return
+            self.mode = ''
+
             cont = 1
             try:
-                url, ext = img.rsplit('SX', 1)
-                url += 'SX1619_SY937'
+                url, ext = img.rsplit('V1_', 1)
+                url += 'V1_SX1619_SY937'
             except ValueError:
                 try:
                     url, ext = img.rsplit('SY', 1)
-                    url += 'SX1619_SY937'
+                    url += 'V1_SX1619_SY937'
                 except:
-                    url, ext = attrs[4][1].rsplit('.', 1)
+                    url, ext = img.rsplit('.', 1)
                     ext = '.' + ext
 
             ext = ext.split('.')[-1]
@@ -72,7 +87,7 @@ class IMDBParser(HTMLParser): #{{{
             self.mode = ''
         elif basicTagEnd(tag, 'time', self.mode):
             self.mode = ''
-        elif tag == 'p' and self.mode == 'desc':
+        elif self.mode == 'desc':
             self.mode = ''
         elif tag == 'span' and self.mode == 'released':
             self.mode = ''
@@ -115,8 +130,9 @@ class IMDBParser(HTMLParser): #{{{
                 self.media['genre'] = [data.strip()]
         elif basicTagCheck(self.mode, 'director', self.media):
             self.media['director'] = data.strip()
-        elif basicTagCheck(self.mode, 'desc', self.media):
-            self.media['description'] = data.strip() #}}} #}}}
+        elif basicTagCheck(self.mode, 'desc', self.media) and len(data.strip()):
+            self.media['description'] = data.strip()
+            self.mode = '' #}}} #}}}
 
 if len(argv) <= 1:
     print "Usage: capture_imdb.py kind [ttid file]"
