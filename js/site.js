@@ -3195,7 +3195,6 @@ function openReminder(reminder, reminderEditor) {/*{{{*/
 }/*}}}*/
 
 /*}}}*/
-
 /* Account Management */ /*{{{*/
 function viewAccount() { /*{{{*/
     id = 'my_account_' + new Date().getTime();
@@ -4272,9 +4271,9 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
         // Set first page as selected
         if (i === 1) pageLink.className += ' page_selected';
         (function(_pageLink, _i) {
-            _pageLink.addEventListener('click', function() {
+            _pageLink.onclick = function() {
                 updatePage(this.parentElement.previousElementSibling, _i);
-            });
+            };
         })(pageLink, i);
         pageContainer.appendChild(pageLink);
         spacer = element('span');
@@ -4311,14 +4310,45 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
     pageContainer.appendChild(nextButton); /*}}}*/
 }/*}}}*/
 
+// Updates media items to match current filter
+function updateMediaGrid(mediaGrid) { /*{{{*/
+    gridSize = mediaGrid.getAttribute('data-gridsize');
+    pages = mediaGrid.getAttribute('data-pages');
+    itemCount = mediaGrid.getAttribute('data-count');
+
+    matches = 0;
+    for (i = 0; i < itemCount; i++) {
+        e = document.getElementById('media_item' + i);
+        if (e.getAttribute('data-keep') === "false") {
+            e.style.display = 'none';
+            continue;
+        }
+        matches++;
+        if (matches > gridSize) e.style.display = 'none';
+        else e.style.display = 'inline';
+    }
+
+    mediaGrid.setAttribute('data-pages', Math.ceil(matches / gridSize));
+    mediaGrid.setAttribute('data-page', 1);
+    updatePages(mediaGrid);
+    updatePage(mediaGrid, 1);
+} /*}}}*/
+
 // Updates page text in footer
 function updatePages(mediaGrid) { /*{{{*/
-    pages = mediaGrid.getAttribute('data-pages');
-    page = mediaGrid.getAttribute('data-page');
+    pages = parseInt(mediaGrid.getAttribute('data-pages'));
+    page = parseInt(mediaGrid.getAttribute('data-page'));
 
-    document.getElementById('prev_media_page').style.visibility = 'hidden';
+    prevButton = document.getElementById('prev_media_page');
+    nextButton = document.getElementById('next_media_page');
     if (pages > 1) 
-        document.getElementById('next_media_page').style.visibility = 'visible';
+        prevButton.style.visibility = 'visible';
+    else
+        prevButton.style.visibility = 'hidden';
+    if (page === pages)
+        nextButton.style.visibility = 'hidden';
+    else
+        nextButton.style.visibility = 'visible';
     
     newPages = [];
     // If on first two pages
@@ -4345,7 +4375,11 @@ function updatePages(mediaGrid) { /*{{{*/
         for (i = newPages.length; i < pageLinks.length - 1; i++) newPages.push('');
     newPages.push(pages);
 
-    for (i = 0; i < pageLinks.length; i++) {
+    e = document.getElementsByClassName('page_selected')[0];
+    e.className = e.className.replace(/ ?page_selected/, '');
+    // Hide links if appropriate and update text
+    for (i = 0; i < pageLinks.length; i++) { /*{{{*/
+        setText(pageLinks[i], newPages[i]);
         if (newPages[i] === '') {
             pageLinks[i].style.display = 'none';
             pageLinks[i].nextElementSibling.style.display = 'none';
@@ -4353,57 +4387,22 @@ function updatePages(mediaGrid) { /*{{{*/
         } else {
             pageLinks[i].style.display = 'inline';
             pageLinks[i].nextElementSibling.style.display = 'inline';
+            if (pageLinks[i].innerText.toString() === page.toString() && i !== pageLinks.length - 1)
+                pageLinks[i].className += ' page_selected';
+            (function(_pageLink, _i) {
+                _pageLink.onclick = function() {
+                    updatePage(this.parentElement.previousElementSibling, _i);
+                };
+            })(pageLinks[i], parseInt(pageLinks[i].innerText));
         }
-        setText(pageLinks[i], newPages[i]);
-    }
-} /*}}}*/
-
-// Updates media items to match current filter
-function updateMediaGrid(mediaGrid) { /*{{{*/
-    gridSize = mediaGrid.getAttribute('data-gridsize');
-    pages = mediaGrid.getAttribute('data-pages');
-    itemCount = mediaGrid.getAttribute('data-count');
-
-    matches = 0;
-    for (i = 0; i < itemCount; i++) {
-        e = document.getElementById('media_item' + i);
-        if (e.getAttribute('data-keep') === "false") {
-            e.style.display = 'none';
-            continue;
-        }
-        matches++;
-        if (matches > gridSize) e.style.display = 'none';
-        else e.style.display = 'inline';
-    }
-
-    mediaGrid.setAttribute('data-pages', Math.ceil(matches / gridSize));
-    mediaGrid.setAttribute('data-page', 1);
-    updatePages(mediaGrid);
-    updatePage(mediaGrid, 1);
+    } /*}}}*/
 } /*}}}*/
 
 function updatePage(mediaGrid, page) {
+    mediaGrid.setAttribute('data-page', page);
     updatePages(mediaGrid);
     pages = mediaGrid.getAttribute('data-pages');
     gridSize = mediaGrid.getAttribute('data-gridsize');
-    pageLinks = mediaGrid.nextElementSibling.children;
-
-    // Change bolded page number
-    e = document.getElementsByClassName('page_selected')[0];
-    e.className = e.className.replace(/ ?page_selected/, '');
-    for (i = 0; i < pageLinks.length; i++) {
-        if (pageLinks[i].innerText.toString() === page.toString()) pageLinks[i].className += ' page_selected';
-    }
-    
-    // Hide/show previous and next arrows
-    if (page === 1)
-        pageLinks[0].style.visibility = 'hidden';
-    else
-        pageLinks[0].style.visibility = 'visible';
-    if (page === pages)
-        pageLinks[pageLinks.length - 1].style.visibility = 'hidden';
-    else
-        pageLinks[pageLinks.length - 1].style.visibility = 'visible';
 
     matches = 0;
     for (i = 0; i < media[mediaGrid.getAttribute('data-kind')].length; i++) {
