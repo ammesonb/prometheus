@@ -4267,7 +4267,6 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
     prevButton.onclick = function() {
         updatePage(this.parentElement.previousElementSibling, 'p');
     };
-    pageContainer.appendChild(prevButton);
 
     // If at least 5 pages, add a link to 1
     if (pages > 5) { /*{{{*/
@@ -4336,6 +4335,7 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
     nextButton.style.height = prevButton.style.height; /*}}}*/
 
     if (useNightTheme()) switchToNight(nextButton, prevButton, dots, lastPage);
+    pageContainer.appendChild(prevButton);
     pageContainer.appendChild(nextButton); /*}}}*/
 }/*}}}*/
 
