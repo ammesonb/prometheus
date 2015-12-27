@@ -3195,6 +3195,7 @@ function openReminder(reminder, reminderEditor) {/*{{{*/
 }/*}}}*/
 
 /*}}}*/
+
 /* Account Management */ /*{{{*/
 function viewAccount() { /*{{{*/
     id = 'my_account_' + new Date().getTime();
@@ -4114,6 +4115,7 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
     setTimeout(function() {populateMediaGrid(mediaGrid, media[kind], kind);}, 100);
 }/*}}}*/
 
+// Responsible for initial creation of everything in the media grid
 function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
     deleteAllChildren(mediaGrid, true);
     count = 0;
@@ -4252,6 +4254,8 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
         e.style.display = 'none';
         if (m % (gridWidth * gridHeight) == 0) pages++;
     }
+    mediaGrid.setAttribute('data-gridwidth', gridWidth);
+    mediaGrid.setAttribute('data-gridheight', gridHeight);
     mediaGrid.setAttribute('data-gridsize', gridWidth * gridHeight);
     mediaGrid.setAttribute('data-pages', pages);
 
@@ -4425,6 +4429,7 @@ function updatePages(mediaGrid) { /*{{{*/
     } /*}}}*/
 } /*}}}*/
 
+// Switches mediaGrid to reflect new page
 function updatePage(mediaGrid, page) { /*{{{*/
     if (page === 'p') page = parseInt(mediaGrid.getAttribute('data-page')) - 1;
     if (page === 'n') page = parseInt(mediaGrid.getAttribute('data-page')) + 1;
@@ -4434,19 +4439,30 @@ function updatePage(mediaGrid, page) { /*{{{*/
     gridSize = mediaGrid.getAttribute('data-gridsize');
 
     matches = 0;
+    elems = [];
     for (i = 0; i < media[mediaGrid.getAttribute('data-kind')].length; i++) {
         e = document.getElementById('media_item' + i);
         if (e.getAttribute('data-keep') === "true") {
             // Show media in page range
-            if (gridSize * (page - 1) <= matches && matches < gridSize * page)
+            if (gridSize * (page - 1) <= matches && matches < gridSize * page) {
                 e.style.display = 'inline';
+                elems.push(e);
             // Hide others
-            else
+            } else
                 e.style.display = 'none';
             matches++;
         }
     }
-    // Need to account for varying row heights
+
+    // Fix row heights to ensure proper alignments /*{{{*/
+    largestHeight = 0;
+    // For each new row
+    for (i = 0; i < gridSize; i++) {
+        mediaHeight = elems[i].offsetHeight;
+        if (mediaHeight > largestHeight) largestHeight = mediaHeight;
+    }
+    for (i = 0; i < gridSize; i++)
+        elems[i].style.height = largestHeight + 'px' /*}}}*/
 } /*}}}*/
 
 function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
