@@ -10,7 +10,7 @@ use MIME::Base64;
 use COMMON;
 use strict;
 
-my $EXPIRATION = "+1m";
+my $EXPIRATION = "+30m";
 
 my %titles = ( #{{{
     0 => "Prometheus",
