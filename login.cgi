@@ -10,6 +10,8 @@ use MIME::Base64;
 use COMMON;
 use strict;
 
+my $EXPIRATION = "+1m";
+
 my %titles = ( #{{{
     0 => "Prometheus",
     1 => "Login",
@@ -23,9 +25,9 @@ my $session = CGI::Session->new($q);
 
 if (index($q->param('a'), "'", ) != -1) { #{{{
     $session->param('attempt_login', 1);
-    $session->expire('attempt_login', '+30m');
+    $session->expire('attempt_login', $EXPIRATION);
     $session->param('logged_in', 0);
-    $session->expire('logged_in', '+30m');
+    $session->expire('logged_in', $EXPIRATION);
     my $html = COMMON::init($session, 1);
     print $html;
     exit;
@@ -38,7 +40,7 @@ my @operators = ('=');
 my @patterns = ("'" . $q->param('a') . "'");
 my @logic = ();
 $session->param('attempt_login', 1);
-$session->expire('attempt_login', '+30m');
+$session->expire('attempt_login', $EXPIRATION);
 my $userRef = COMMON::searchTable($session, 'users', \@returnCols, \@searchCols, \@operators,\@patterns, \@logic);
 my %userData = %$userRef;
 my @userIDs = keys %userData;
@@ -58,28 +60,28 @@ if ($session->param('master_key') =~ /[\s]*/) {
 
 # Set session parameters #{{{
 $session->param('night_theme', $userData{$userID}{'theme'});
-$session->expire('night_theme', '+30m');
+$session->expire('night_theme', $EXPIRATION);
 $session->param('user', scalar $q->param("a"));
-$session->expire('user', '+30m');
+$session->expire('user', $EXPIRATION);
 $session->param('user_id', $userID);
-$session->expire('user_id', '+30m');
+$session->expire('user_id', $EXPIRATION);
 $session->param('logged_in', 0);
-$session->expire('logged_in', '+30m');
+$session->expire('logged_in', $EXPIRATION);
 $session->param('timezone', scalar $q->param('t'));
-$session->expire('timezone', '+30m');
 $session->param('blocked', 0);
-$session->expire('blocked', '+30m');
+$session->expire('blocked', $EXPIRATION);
 $session->param('is_admin', $userData{$userID}{'is_admin'});
-$session->expire('is_admin', '+30m');
+$session->expire('is_admin', $EXPIRATION);
 $session->param('is_shared', $userData{$userID}{'is_shared'});
-$session->expire('is_shared', '+30m');
+$session->expire('is_shared', $EXPIRATION);
 $session->param('domain', $userData{$userID}{'domain'});
-$session->expire('domain', '+30m');
+$session->expire('domain', $EXPIRATION);
 $session->param('logged_in', 1) if ($response == 0);
 print $q->redirect('/') if ($response == 0);
 $session->param('blocked', 1) if ($response == 3);
 $session->param('disabled', 1) if ($response == 4);
-$session->expire('disabled', '+30m') if ($response == 4); #}}}
+$session->param('disabled', 0) if ($response != 4);
+$session->expire('disabled', $EXPIRATION); #}}}
 
 my $html = COMMON::init($session, $titles{$response});
 print $html;

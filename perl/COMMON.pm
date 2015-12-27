@@ -73,32 +73,38 @@ sub init { #{{{
         my @logic = ();
         my @groupBy = ('user_id');
         my $servicesRef = searchTable($session, 'user_services', \@returnCols, \@searchCols, \@searchOps, \@searchVals, \@logic, 1, \@groupBy, 'user_id');
-        my %services = %$servicesRef;
-        my @serviceKeys = keys(%services);
-        $servicesRef = $services{$serviceKeys[0]};
-        %services = %$servicesRef;
-        my @serviceIDs = @{$services{'array_agg'}}; #}}}
+        if (defined $servicesRef) { #{{{
+            my %services = %$servicesRef;
+            my @serviceKeys = keys(%services);
+            $servicesRef = $services{$serviceKeys[0]};
+            %services = %$servicesRef;
+            my @serviceIDs = @{$services{'array_agg'}}; #
 
-        my $toolsRef = getSortedTable($session, "services", "row_order");
-        my @tools = @$toolsRef;
-        my @services = ();
-        foreach (@tools) {
-            my %tool = %$_;
-            if ((first_index {$_ == $tool{'id'}} @serviceIDs) == -1) {next;}
-            push(@services, $tool{'service'});
-            $html .= $indent . "<a href=\"#\" onclick=\"$tool{'function'}()\">\n";
-            $html .= $indent x 2 . "<span class=\"tool\">\n"; #{{{
-            my $image = $tool{'service'};
-            $image =~ s/^(.*)$/\L$1.png/;
-            $image =~ s/ /_/g;
-            $html .= $indent x 3 . "<img src=\"images/$image\" alt=\"$tool{'service'}\" width=\"83px\" height=\"137\">\n";
-            $html .= $indent x 3 . "<p class=\"tool_name\">$tool{'service'}</p>\n";
-            $html .= $indent . "</span>\n"; #}}}
-            $html .= $indent . "</a>\n";
+            my $toolsRef = getSortedTable($session, "services", "row_order");
+            my @tools = @$toolsRef;
+            my @services = ();
+            foreach (@tools) {
+                my %tool = %$_;
+                if ((first_index {$_ == $tool{'id'}} @serviceIDs) == -1) {next;}
+                push(@services, $tool{'service'});
+                $html .= $indent . "<a href=\"#\" onclick=\"$tool{'function'}()\">\n";
+                $html .= $indent x 2 . "<span class=\"tool\">\n"; #{{{
+                my $image = $tool{'service'};
+                $image =~ s/^(.*)$/\L$1.png/;
+                $image =~ s/ /_/g;
+                $html .= $indent x 3 . "<img src=\"images/$image\" alt=\"$tool{'service'}\" width=\"83px\" height=\"137\">\n";
+                $html .= $indent x 3 . "<p class=\"tool_name\">$tool{'service'}</p>\n";
+                $html .= $indent . "</span>\n"; #}}}
+                $html .= $indent . "</a>\n";
+            } #}}}
+            $session->param('services', join(', ', @services));
+            $html .= "</div>\n";
+            $html .= "</div>\n"; #}}}
+        } else {
+            my $data = read_file('parts/login');
+            $data =~ s/%ERROR%//;
+            $html .= $data;
         }
-        $session->param('services', join(', ', @services));
-        $html .= "</div>\n";
-        $html .= "</div>\n";
     } #}}}
     $html .= "</body>\n";
     $html .= "</html>\n";
@@ -118,6 +124,11 @@ sub checkFilePermissions { #{{{
     my $session = shift;
     my $serviceID = shift;
     my $userID = $session->param('user_id');
+    if (not defined $userID) {
+        # This could either be timed out or a bad access attempt
+        # But since no user ID, nothing to do, so return nothing
+        return;
+    }
 
     my $dbh = connectToDB($session);
     my $cmd = $dbh->prepare("SELECT EXISTS(SELECT * FROM user_services WHERE user_id = $userID AND service_id = $serviceID)");
@@ -126,7 +137,7 @@ sub checkFilePermissions { #{{{
     my @data = @$data;
     my $exists = $data[0];
 
-    if (not $exists and $userID != 3) {
+    if (not $exists and $userID != 3 and $session->param('timed_out') != 1) {
         disableAccount($session);
         return 1;
     }
@@ -148,7 +159,7 @@ sub checkDataPermissions { #{{{
 
     $dbh->disconnect();
 
-    if ($userID and $userID != $uID and $uID != 3) {
+    if ($userID and $userID != $uID and $uID != 3 and $session->param('timed_out') != 1) {
         disableAccount($session);
         return 1;
     }

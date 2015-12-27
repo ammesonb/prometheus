@@ -1,4 +1,5 @@
 /*{{{*/ /* TODO
+    Make links work on pages
 */ /*}}}*/
 
 /* Global variables *//*{{{*/
@@ -321,6 +322,16 @@ function deleteAllChildren(elem, removeAll) { /*{{{*/
         while (elem.childNodes.length) {elem.childNodes[0].remove();}
     } else {
         while (elem.childElementCount > 0) {elem.children[0].remove();}
+    }
+} /*}}}*/
+
+function hideAllChildren(elem, removeAll) { /*{{{*/
+    if (isIE()) {
+        while (elem.childElementCount > 0) {elem.children[0].style.display = 'none';}
+    } else if (removeAll) {
+        while (elem.childNodes.length) {elem.childNodes[0].style.display = 'none';}
+    } else {
+        while (elem.childElementCount > 0) {elem.children[0].style.display = 'none';}
     }
 } /*}}}*/
 
@@ -3774,7 +3785,7 @@ function fetchMedia(kind) {/*{{{*/
     getMediaReq = createPostReq('media.cgi', false);
 
     getMediaReq.onreadystatechange = function() {/*{{{*/
-        if (this.readyState ==4 && this.status == 200) {
+        if (this.readyState == 4 && this.status == 200) {
             switch(this.responseText) {
                 case 'noauth':
                     alertNoAuth();
@@ -3819,6 +3830,9 @@ function fetchMedia(kind) {/*{{{*/
     };/*}}}*/
 
     getMediaReq.send('mode=0&media=' + kind);
+    return getMediaReq.responseText === 'noauth' ||
+           getMediaReq.responseText === 'badreq' ||
+           getMediaReq.responseText === 'notmine';
 }/*}}}*/
 
 function addFilter(filter, value, mediaPanel, kind) {/*{{{*/
@@ -3870,10 +3884,10 @@ function filterMedia(kind, filters) {/*{{{*/
 }/*}}}*/
 
 function openMediaPanel(mediaPanel, kind) {/*{{{*/
-    deleteAllChildren(mediaPanel, true);
+    hideAllChildren(mediaPanel, true);
     mediaPanel.style.display = 'none';
 
-    fetchMedia(kind);
+    if (fetchMedia(kind)) window.location.reload(true);
     
     // Default time
     minTime = 1;
@@ -4350,15 +4364,24 @@ function updateMediaGrid(mediaGrid) { /*{{{*/
     mediaGrid.setAttribute('data-pages', Math.ceil(matches / gridSize));
     mediaGrid.setAttribute('data-page', 1);
     updatePages(mediaGrid);
+    updatePage(mediaGrid, 1);
 } /*}}}*/
 
-function updatePage(mediaGrid) {
+function updatePage(mediaGrid, page) {
     // TODO this
     updatePages(mediaGrid);
+    pageLinks = mediaGrid.nextElementSibling.getElementsByTagName('a');
+    for (i = 0; i < pageLinks.length; i++)
+        if (pageLinks.innerText === page) pageLinks.className = pageLinks.className;
+    // Need to select appropriate page in footer
+    // Need to account for varying row heights
+    // Change previous/next arrow visibility
 }
 
 function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     deleteAllChildren(mediaGrid, true);
+    pageLinks = mediaGrid.nextElementSibling;
+    hideAllChildren(pageLinks, true);
 
     // Back arrow/*{{{*/
     back = element('img');
@@ -4370,8 +4393,12 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     back.setAttribute('data-kind', kind);
     back.onclick = function() {
         filters = JSON.parse(this.parentElement.parentElement.getAttribute('data-filters'));
-        items = filterMedia(kind, filters);
-        populateMediaGrid(this.parentElement, items, this.getAttribute('data-kind'));
+        pageLinks = mediaGrid.nextElementSibling;
+        for (c = 0; c < pageLinks.length; c++)
+            pageLinks[c].style.display = 'inline';
+        k = this.getAttribute('data-kind');
+        filterMedia(k, filters);
+        updateMediaGrid(this.parentElement);
     };/*}}}*/
 
     // Media poster/*{{{*/

@@ -11,12 +11,12 @@ use strict;
 my $q = new CGI();
 my $session = CGI::Session->new($q);
 
+print "Content-type: text/html\r\n\r\n";
 my $media = $q->param('media');
 if ($media ne 'tv' and $media ne 'movies') {print 'badmedia'; exit;}
 my $service = $media eq 'tv' ? 6 : 4;
 if (COMMON::checkFilePermissions($session, $service)) {print 'notmine'; exit;}
 
-print "Content-type: text/html\r\n\r\n";
 my $mode = $q->param('mode');
 if (COMMON::checkSession($session)) {
     $session->param('timed_out', 1);
