@@ -4385,32 +4385,49 @@ function updatePages(mediaGrid) { /*{{{*/
     else
         nextButton.style.visibility = 'visible';
     
-    newPages = [];
-    // If on first two pages
-    if (page < 3) {
-        // And there are 5 pages, just add 1-5
-        if (pages >= 5)
-            newPages = [1, 2, 3, 4, 5];
-        // Otherwise 1 to N
-        else
-            for (i = 1; i <= pages; i++) newPages.push(i);
-    // For everything else
-    } else {
-        // If not near end, just add two before/after
-        if (pages - page > 2)
-            newPages = [page - 2, page - 1, page, page + 1, page + 2];
-        // Otherwise add 5 at end
-        else
-            for (i = pages - 4; i <= pages; i++) newPages.push(i);
-    }
+    // Get 5 nearest pages to current
+    pageRange = [];
+    for (i = 1; i <= pages; i++) pageRange.push(i);
+    // Keep bottom at 0 or higher
+    bottom = (page - 3) < 0 ? 0 : page - 3;
+    // If cannot extend two elements past current
+    bottom = ((bottom + 5) > pageRange.length ?
+        // If cannot extend one element past current
+        ((bottom + 4) > pageRange.length ?
+            // Move bottom element down the relative amount
+            bottom - 2 : bottom - 1) :
+        // Otherwise leave as is
+        bottom);
+    // Keep bottom at 0 or higher
+    if (bottom < 0) bottom = 0;
+    newPages = pageRange.slice(bottom, page);
+    newPages.push.apply(newPages, pageRange.slice(page, page + (5 - newPages.length)));
 
-    pageLinks = document.getElementById('media_pages').getElementsByTagName('a');
-    // Remove hard link to first page
-    if (pages > 5) pageLinks = Array.prototype.slice.call(pageLinks, 1);
+    pageContainer = document.getElementById('media_pages')
+    pageLinks = pageContainer.getElementsByTagName('a');
+
     // Pad to length
     if (newPages.length < pageLinks.length)
         for (i = newPages.length; i < pageLinks.length - 1; i++) newPages.push('');
-    newPages.push(pages);
+
+    if (pages <= 5) {
+        pageLinks[0].style.display = 'none';
+        pageLinks[pageLinks.length - 1].style.display = 'none';
+        pageContainer.children[1].style.display = 'none';
+        pageContainer.children[pageContainer.children.length - 4].style.display = 'none';
+    } else {
+        pageLinks[0].style.display = 'inline';
+        pageLinks[pageLinks.length - 1].style.display = 'inline';
+        pageContainer.children[1].style.display = 'inline';
+        pageContainer.children[pageContainer.children.length - 4].style.display = 'inline';
+    }
+
+    // Remove hard link to first page
+    pageLinks = Array.prototype.slice.call(pageLinks, 1);
+    pageLinks = Array.prototype.slice.call(pageLinks, 0, pageLinks.length - 1);
+    if (pageLinks.length > 5)
+        newPages.push(pages);
+
 
     e = document.getElementsByClassName('page_selected')[0];
     e.className = e.className.replace(/ ?page_selected/, '');
@@ -4424,7 +4441,7 @@ function updatePages(mediaGrid) { /*{{{*/
         } else {
             pageLinks[i].style.display = 'inline';
             pageLinks[i].nextElementSibling.style.display = 'inline';
-            if (pageLinks[i].innerText.toString() === page.toString() && i !== pageLinks.length - 1)
+            if (pageLinks[i].innerText.toString() === page.toString())
                 pageLinks[i].className += ' page_selected';
             (function(_pageLink, _i) {
                 _pageLink.onclick = function() {
@@ -4462,8 +4479,7 @@ function updatePage(mediaGrid, page) { /*{{{*/
     fixHeights(mediaGrid, elems);
 } /*}}}*/
 
-function fixHeights(mediaGrid, elems) {
-    // Fix row heights to ensure proper alignments /*{{{*/
+function fixHeights(mediaGrid, elems) { /*{{{*/
     if (elems.length > 0) {
         gridSize = parseInt(mediaGrid.getAttribute('data-gridsize'));
         gridWidth = parseInt(mediaGrid.getAttribute('data-gridwidth'));
@@ -4471,7 +4487,6 @@ function fixHeights(mediaGrid, elems) {
         // For each new row
         len = gridSize;
         if (len < elems.length) len = elems.length;
-        console.log(elems);
         for (i = 0; i < len; i++) {
             if (i >= elems.length) break;
             if ((i % gridWidth) === 0 && i > 0) {
@@ -4485,8 +4500,8 @@ function fixHeights(mediaGrid, elems) {
             for (j = 0; j < e.children.length; j++) h += e.children[j].offsetHeight;
             if (h > largestHeight) largestHeight = h;
         }
-    } /*}}}*/
-}
+    }
+} /*}}}*/
 
 function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     hideAllChildren(mediaGrid, true);
