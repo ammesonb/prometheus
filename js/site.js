@@ -327,11 +327,14 @@ function deleteAllChildren(elem, removeAll) { /*{{{*/
 
 function hideAllChildren(elem, removeAll) { /*{{{*/
     if (isIE()) {
-        while (elem.childElementCount > 0) {elem.children[0].style.display = 'none';}
+        for (i = 0; i < elem.childElementCount; i++)
+            elem.children[i].style.display = 'none';
     } else if (removeAll) {
-        while (elem.childNodes.length) {elem.childNodes[0].style.display = 'none';}
+        for (i = 0; i < elem.childNodes.length; i++)
+            elem.childNodes[i].style.display = 'none';
     } else {
-        while (elem.childElementCount > 0) {elem.children[0].style.display = 'none';}
+        for (i = 0; i < elem.childElementCount; i++)
+            elem.children[i].style.display = 'none';
     }
 } /*}}}*/
 
@@ -4085,6 +4088,7 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
 
     mediaGrid = element('div');
     mediaGrid.className = 'media_grid';
+    mediaGrid.setAttribute('data-kind', kind);
 
     if (useNightTheme()) {switchToNight(filterPanel, titleFilter, mediaGrid);}
     mediaPanel.appendChild(filterPanel);
@@ -4154,7 +4158,7 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
             series.onclick = function() {
                 titleFilter = this.parentElement.parentElement.parentElement.getElementsByClassName('media_title_filter')[0].getElementsByTagName('input')[0];
                 titleFilter.value = this.innerText;
-                titleFilter.onchange();
+                titleFilter.onkeyup();
             };
         }/*}}}*/
 
@@ -4217,13 +4221,13 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
         lastTop = container.offsetTop;/*}}}*/
     }/*}}}*/
 
-    // Set up pagination
+    // Set up pagination /*{{{*/
     mediaGrid.setAttribute('data-page', 1);
     mediaGrid.setAttribute('data-count', items.length);
     visibleHeight = mediaGrid.offsetHeight;
     gridWidth = 0;
     gridHeight = 0;
-    // Get width of grid
+    // Get width of grid /*{{{*/
     for (m = 0; m < items.length; m++) {
         e = document.getElementById('media_item' + m);
         // If item is in row 2
@@ -4231,16 +4235,16 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
             gridWidth = m;
             break;
         }
-    }
+    } /*}}}*/
 
-    // Find grid height
+    // Find grid height /*{{{*/
     for (m = gridWidth; m < items.length; m += gridWidth) {
         e = document.getElementById('media_item' + m);
         if (e.offsetTop > (visibleHeight * 3)) {
             gridHeight = m / gridWidth;
             break;
         }
-    }
+    } /*}}}*/
 
     // Hide extra media items, also count pages
     pages = 1;
@@ -4252,12 +4256,11 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
     mediaGrid.setAttribute('data-gridsize', gridWidth * gridHeight);
     mediaGrid.setAttribute('data-pages', pages);
 
+    // Create page links /*{{{*/
     pageContainer = document.getElementById('media_pages');
     prevButton = element('img');
     prevButton.id = 'prev_media_page';
     prevButton.className = 'prev_page';
-    prevButton.style.width = pageContainer.offsetHeight * 1.25 + 'px';
-    prevButton.style.height = pageContainer.offsetHeight * 1.25 + 'px';
     pageContainer.appendChild(prevButton);
     pageCount = 6;
     if (pages < 5) pageCount = pages;
@@ -4268,12 +4271,18 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
         if (useNightTheme()) switchToNight(pageLink);
         // Set first page as selected
         if (i === 1) pageLink.className += ' page_selected';
+        (function(_pageLink, _i) {
+            _pageLink.addEventListener('click', function() {
+                updatePage(this.parentElement.previousElementSibling, _i);
+            });
+        })(pageLink, i);
         pageContainer.appendChild(pageLink);
         spacer = element('span');
         setText(spacer, '\u00a0\u00a0\u00a0');
         pageContainer.appendChild(spacer);
     }
 
+    // If more than 5 pages, add last page
     if (pages > 5) {
         dots = element('span');
         dots.className = 'normal';
@@ -4282,6 +4291,9 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
         pageContainer.appendChild(dots);
         lastPage = element('a');
         setText(lastPage, pages);
+        lastPage.onclick = function() {
+            updatePage(this.parentElement.previousElementSibling, pages);
+        };
         lastPage.className = 'normal_text media_page';
         pageContainer.appendChild(lastPage);
     }
@@ -4289,11 +4301,14 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
     nextButton = element('img');
     nextButton.id = 'next_media_page';
     nextButton.className = 'next_page';
-    nextButton.style.width = pageContainer.offsetHeight * 1.25 + 'px';
-    nextButton.style.height = pageContainer.offsetHeight * 1.25 + 'px';
+
+    prevButton.style.width = pageContainer.offsetHeight * 1.25 + 'px';
+    prevButton.style.height = pageContainer.offsetHeight * 1.25 + 'px';
+    nextButton.style.width = prevButton.style.width;
+    nextButton.style.height = prevButton.style.height; /*}}}*/
 
     if (useNightTheme()) switchToNight(nextButton, prevButton, dots, lastPage);
-    pageContainer.appendChild(nextButton);
+    pageContainer.appendChild(nextButton); /*}}}*/
 }/*}}}*/
 
 // Updates page text in footer
@@ -4368,18 +4383,46 @@ function updateMediaGrid(mediaGrid) { /*{{{*/
 } /*}}}*/
 
 function updatePage(mediaGrid, page) {
-    // TODO this
     updatePages(mediaGrid);
-    pageLinks = mediaGrid.nextElementSibling.getElementsByTagName('a');
-    for (i = 0; i < pageLinks.length; i++)
-        if (pageLinks.innerText === page) pageLinks.className = pageLinks.className;
-    // Need to select appropriate page in footer
+    pages = mediaGrid.getAttribute('data-pages');
+    gridSize = mediaGrid.getAttribute('data-gridsize');
+    pageLinks = mediaGrid.nextElementSibling.children;
+
+    // Change bolded page number
+    e = document.getElementsByClassName('page_selected')[0];
+    e.className = e.className.replace(/ ?page_selected/, '');
+    for (i = 0; i < pageLinks.length; i++) {
+        if (pageLinks[i].innerText.toString() === page.toString()) pageLinks[i].className += ' page_selected';
+    }
+    
+    // Hide/show previous and next arrows
+    if (page === 1)
+        pageLinks[0].style.visibility = 'hidden';
+    else
+        pageLinks[0].style.visibility = 'visible';
+    if (page === pages)
+        pageLinks[pageLinks.length - 1].style.visibility = 'hidden';
+    else
+        pageLinks[pageLinks.length - 1].style.visibility = 'visible';
+
+    matches = 0;
+    for (i = 0; i < media[mediaGrid.getAttribute('data-kind')].length; i++) {
+        e = document.getElementById('media_item' + i);
+        if (e.getAttribute('data-keep') === "true") {
+            // Show media in page range
+            if (gridSize * (page - 1) <= matches && matches < gridSize * page)
+                e.style.display = 'inline';
+            // Hide others
+            else
+                e.style.display = 'none';
+            matches++;
+        }
+    }
     // Need to account for varying row heights
-    // Change previous/next arrow visibility
 }
 
 function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
-    deleteAllChildren(mediaGrid, true);
+    hideAllChildren(mediaGrid, true);
     pageLinks = mediaGrid.nextElementSibling;
     hideAllChildren(pageLinks, true);
 
@@ -4392,13 +4435,21 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     back.alt = 'Back';
     back.setAttribute('data-kind', kind);
     back.onclick = function() {
-        filters = JSON.parse(this.parentElement.parentElement.getAttribute('data-filters'));
+        mediaGrid = this.parentElement.parentElement;
+        filters = JSON.parse(mediaGrid.parentElement.getAttribute('data-filters'));
         pageLinks = mediaGrid.nextElementSibling;
         for (c = 0; c < pageLinks.length; c++)
             pageLinks[c].style.display = 'inline';
+        det = document.getElementById('media_details');
+        if (isIE())
+            det.removeNode(true);
+        else
+            det.remove();
         k = this.getAttribute('data-kind');
+        page = mediaGrid.getAttribute('data-page');
         filterMedia(k, filters);
-        updateMediaGrid(this.parentElement);
+        updateMediaGrid(mediaGrid);
+        updatePage(mediaGrid, page);
     };/*}}}*/
 
     // Media poster/*{{{*/
@@ -4582,25 +4633,28 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     // Add elements/*{{{*/
     if (useNightTheme()) {switchToNight(title, titleLink, labels, details, techLink, tLabels, tVals, descriptionTitle, descriptionBox, downloadButton, subButton);}
 
-    mediaGrid.appendChild(back);
-    mediaGrid.appendChild(poster);
-    mediaGrid.appendChild(titleLink);
-    mediaGrid.appendChild(element('br'));
+    mediaDetails = element('span');
+    mediaDetails.id = 'media_details';
+    mediaDetails.appendChild(back);
+    mediaDetails.appendChild(poster);
+    mediaDetails.appendChild(titleLink);
+    mediaDetails.appendChild(element('br'));
     if (item.series) {
-        mediaGrid.appendChild(series);
+        mediaDetails.appendChild(series);
         series.style.top = '-10px';
         series.style.left = title.offsetLeft + 'px';
-        mediaGrid.appendChild(element('br'));
+        mediaDetails.appendChild(element('br'));
     }
-    mediaGrid.appendChild(detailLabels);
-    mediaGrid.appendChild(detailValues);
-    mediaGrid.appendChild(descriptionTitle);
-    mediaGrid.appendChild(descriptionBox);
-    mediaGrid.appendChild(techLink);
-    mediaGrid.appendChild(techLabels);
-    mediaGrid.appendChild(techValues);
-    mediaGrid.appendChild(downloadButton);
-    if (item.has_subtitle) {mediaGrid.appendChild(subButton);}
+    mediaDetails.appendChild(detailLabels);
+    mediaDetails.appendChild(detailValues);
+    mediaDetails.appendChild(descriptionTitle);
+    mediaDetails.appendChild(descriptionBox);
+    mediaDetails.appendChild(techLink);
+    mediaDetails.appendChild(techLabels);
+    mediaDetails.appendChild(techValues);
+    mediaDetails.appendChild(downloadButton);
+    if (item.has_subtitle) {mediaDetails.appendChild(subButton);}
+    mediaGrid.appendChild(mediaDetails);
     /*}}}*/
 }/*}}}*/
 
