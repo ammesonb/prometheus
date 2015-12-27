@@ -4260,6 +4260,9 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
     prevButton = element('img');
     prevButton.id = 'prev_media_page';
     prevButton.className = 'prev_page';
+    prevButton.onclick = function() {
+        updatePage(this.parentElement.previousElementSibling, 'p');
+    };
     pageContainer.appendChild(prevButton);
 
     // If at least 5 pages, add a link to 1
@@ -4319,6 +4322,9 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
     nextButton = element('img');
     nextButton.id = 'next_media_page';
     nextButton.className = 'next_page';
+    nextButton.onclick = function() {
+        updatePage(this.parentElement.previousElementSibling, 'n');
+    };
 
     prevButton.style.width = pageContainer.offsetHeight * 1.25 + 'px';
     prevButton.style.height = pageContainer.offsetHeight * 1.25 + 'px';
@@ -4420,6 +4426,8 @@ function updatePages(mediaGrid) { /*{{{*/
 } /*}}}*/
 
 function updatePage(mediaGrid, page) { /*{{{*/
+    if (page === 'p') page = parseInt(mediaGrid.getAttribute('data-page')) - 1;
+    if (page === 'n') page = parseInt(mediaGrid.getAttribute('data-page')) + 1;
     mediaGrid.setAttribute('data-page', page);
     updatePages(mediaGrid);
     pages = mediaGrid.getAttribute('data-pages');
