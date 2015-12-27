@@ -4206,13 +4206,18 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
         largestHeight = 0;
         // For each new row
         if (container.offsetTop != lastTop && count) {
-            for (c = mediaGrid.childElementCount - count; c < mediaGrid.childElementCount; c++) {
-                mediaHeight = mediaGrid.children[c].offsetHeight;
-                if (mediaHeight > largestHeight) {largestHeight = mediaHeight;}
+            for (c = mediaGrid.childElementCount - count - 1; c < mediaGrid.childElementCount - 1; c++) {
+                e = mediaGrid.children[c];
+                // Default starting padding
+                h = 20;
+                for (c2 = 0; c2 < e.children.length; c2++) h += e.children[c2].offsetHeight;
+                if (h > largestHeight) {largestHeight = h;}
             }
-            for (c = mediaGrid.childElementCount - count - 1; c < mediaGrid.childElementCount; c++) {
-                mediaGrid.children[c].style.height = largestHeight + 'px';
-            }
+            (function(_mediaGrid, _count, _largestHeight) {
+                for (c = mediaGrid.childElementCount - count - 1; c < mediaGrid.childElementCount - 1; c++) {
+                    mediaGrid.children[c].style.height = largestHeight + 'px';
+                }
+            })(mediaGrid, count, largestHeight);
             count = 1;
         } else {
             // Otherwise move to next item in row
@@ -4273,13 +4278,13 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
         firstPage = element('a');
         setText(firstPage, 1);
         firstPage.onclick = function() {
-            updatePage(this.parentElement.previousElementSibling, pages);
+            updatePage(this.parentElement.previousElementSibling, 1);
         };
         firstPage.className = 'normal_text media_page';
         pageContainer.appendChild(firstPage);
         dots = element('span');
         dots.className = 'normal';
-        dots.style.fontSize = '1.25em';
+        dots.style.fontSize = '1.2em';
         setText(dots, '\u00a0\u00a0\u00a0...\u00a0\u00a0\u00a0');
         pageContainer.appendChild(dots);
         if (useNightTheme()) switchToNight(firstPage, dots);
@@ -4310,7 +4315,7 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
     if (pages > 5) { /*{{{*/
         dots = element('span');
         dots.className = 'normal';
-        dots.style.fontSize = '1.25em';
+        dots.style.fontSize = '1.2em';
         setText(dots, '...\u00a0\u00a0\u00a0');
         pageContainer.appendChild(dots);
         lastPage = element('a');
@@ -4329,8 +4334,8 @@ function populateMediaGrid(mediaGrid, items, kind) {/*{{{*/
         updatePage(this.parentElement.previousElementSibling, 'n');
     };
 
-    prevButton.style.width = pageContainer.offsetHeight * 1.25 + 'px';
-    prevButton.style.height = pageContainer.offsetHeight * 1.25 + 'px';
+    prevButton.style.width = pageContainer.offsetHeight * 1.15 + 'px';
+    prevButton.style.height = pageContainer.offsetHeight * 1.15 + 'px';
     nextButton.style.width = prevButton.style.width;
     nextButton.style.height = prevButton.style.height; /*}}}*/
 
@@ -4366,6 +4371,7 @@ function updateMediaGrid(mediaGrid) { /*{{{*/
 // Updates page text in footer
 function updatePages(mediaGrid) { /*{{{*/
     pages = parseInt(mediaGrid.getAttribute('data-pages'));
+    if (pages === 0) return;
     page = parseInt(mediaGrid.getAttribute('data-page'));
 
     prevButton = document.getElementById('prev_media_page');
@@ -4453,22 +4459,38 @@ function updatePage(mediaGrid, page) { /*{{{*/
             matches++;
         }
     }
-
-    // Fix row heights to ensure proper alignments /*{{{*/
-    largestHeight = 0;
-    // For each new row
-    for (i = 0; i < gridSize; i++) {
-        mediaHeight = elems[i].offsetHeight;
-        if (mediaHeight > largestHeight) largestHeight = mediaHeight;
-    }
-    for (i = 0; i < gridSize; i++)
-        elems[i].style.height = largestHeight + 'px' /*}}}*/
+    fixHeights(mediaGrid, elems);
 } /*}}}*/
+
+function fixHeights(mediaGrid, elems) {
+    // Fix row heights to ensure proper alignments /*{{{*/
+    if (elems.length > 0) {
+        gridSize = parseInt(mediaGrid.getAttribute('data-gridsize'));
+        gridWidth = parseInt(mediaGrid.getAttribute('data-gridwidth'));
+        largestHeight = 0;
+        // For each new row
+        len = gridSize;
+        if (len < elems.length) len = elems.length;
+        console.log(elems);
+        for (i = 0; i < len; i++) {
+            if (i >= elems.length) break;
+            if ((i % gridWidth) === 0 && i > 0) {
+                for (j = i - gridWidth; j <= i; j++)
+                    elems[j].style.height = largestHeight + 'px'
+                largestHeight = 0;
+            }
+            e = elems[i];
+            // Default starting padding
+            h = 20;
+            for (j = 0; j < e.children.length; j++) h += e.children[j].offsetHeight;
+            if (h > largestHeight) largestHeight = h;
+        }
+    } /*}}}*/
+}
 
 function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     hideAllChildren(mediaGrid, true);
-    pageLinks = mediaGrid.nextElementSibling;
-    hideAllChildren(pageLinks, true);
+    mediaGrid.nextElementSibling.style.display = 'none';
 
     // Back arrow/*{{{*/
     back = element('img');
@@ -4481,19 +4503,17 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
     back.onclick = function() {
         mediaGrid = this.parentElement.parentElement;
         filters = JSON.parse(mediaGrid.parentElement.getAttribute('data-filters'));
-        pageLinks = mediaGrid.nextElementSibling;
-        for (c = 0; c < pageLinks.length; c++)
-            pageLinks[c].style.display = 'inline';
+        mediaGrid.nextElementSibling.style.display = 'inline';
         det = document.getElementById('media_details');
         if (isIE())
             det.removeNode(true);
         else
             det.remove();
         k = this.getAttribute('data-kind');
-        page = mediaGrid.getAttribute('data-page');
+        oldpage = parseInt(mediaGrid.getAttribute('data-page'));
         filterMedia(k, filters);
         updateMediaGrid(mediaGrid);
-        updatePage(mediaGrid, page);
+        updatePage(mediaGrid, oldpage);
     };/*}}}*/
 
     // Media poster/*{{{*/

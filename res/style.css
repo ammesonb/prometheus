@@ -232,6 +232,7 @@ div.media_grid {/*{{{*/
     position: absolute;
     overflow: auto;
     border: 1px solid black;
+    padding-top: 10px;
 }/*}}}*/
 
 div.media_grid.night {/*{{{*/
@@ -264,7 +265,6 @@ span.media_item {/*{{{*/
     text-align: center;
     width: 150px;
     margin-right: 5px;
-    margin-top: 10px;
     margin-bottom: 10px;
 }/*}}}*/
 
@@ -566,6 +566,7 @@ a.normal_text { /*{{{*/
 
 a.page_selected { /*{{{*/
     font-weight: bold;
+    text-decoration: underline;
 } /*}}}*/
 
 a.normal_text:hover { /*{{{*/
@@ -611,6 +612,7 @@ img.prev_page { /*{{{*/
     content:url(https://prometheus.bammeson.com/images/prev.png);
     float: left;
     visibility: hidden;
+    margin-top: -2px;
 } /*}}}*/
 
 img.prev_page.night { /*{{{*/
@@ -624,6 +626,7 @@ img.prev_page:hover { /*{{{*/
 img.next_page { /*{{{*/
     content:url(https://prometheus.bammeson.com/images/next.png);
     float: right;
+    margin-top: -2px;
 } /*}}}*/
 
 img.next_page.night { /*{{{*/
