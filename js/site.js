@@ -4059,6 +4059,10 @@ function openMediaPanel(mediaPanel, kind) {/*{{{*/
     titleFilter.setAttribute('data-kind', kind);
     titleFilter.onkeyup = function() {/*{{{*/
         if (this.getAttribute('data-lastvalue') === this.value) return;
+        back_arrow = document.getElementById('media_details_back');
+        if (back_arrow) {
+            back_arrow.onclick();
+        }
         filters = JSON.parse(this.parentElement.parentElement.getAttribute('data-filters'));
         found = 0;
         if (filters.filter(function(e) {return e[0] == 'title'})) {found = 1;}
@@ -4509,6 +4513,7 @@ function openMediaDetails(mediaGrid, kind, item) {/*{{{*/
 
     // Back arrow/*{{{*/
     back = element('img');
+    back.id = 'media_details_back';
     back.style.width = '50px';
     back.style.height = '35px';
     back.src = 'images/back.png';
