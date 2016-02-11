@@ -15,6 +15,7 @@ do
     checksum=`sha512sum "$mfile" | awk -F ' ' '{print \$1}'`
     echo "Getting file info"
     size=`stat -c %s "$mfile"`
+    IFS='' details=`mplayer -vo null -ao null -identify -frames 0 "$mfile"`
     height=`echo "$details" | egrep VIDEO_HEIGHT.* | egrep -o "[0-9]+"`
     width=`echo "$details" | egrep VIDEO_WIDTH.* | egrep -o "[0-9]+"`
     fps=`echo "$details" | egrep VIDEO_FPS.* | egrep -o "[0-9.]+"`
