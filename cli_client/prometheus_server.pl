@@ -240,6 +240,7 @@ sub handle_commands { #{{{
             $sock->send($text); #}}}
         } elsif ($cmd =~ /^get$sep/) { #{{{
             $cmd =~ s/^get$sep//;
+            $cmd =~ s/'/''/g;
             my @results = @{search_media($cmd, 0)};
             my $result = single_select($sock, \@results);
             if (not defined $result) {next;}

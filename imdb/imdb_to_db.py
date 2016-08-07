@@ -1,9 +1,17 @@
 #!/usr/bin/python
 
 from pickle import loads
-from sys import argv
+import sys
+from sys import argv, exit
 from os import system
 from string import lowercase, uppercase, digits
+
+import psycopg2
+import psycopg2.extras
+
+dbConn = psycopg2.connect("dbname='prometheus' user='root' host='localhost'")
+dbConn.autocommit = True
+dbCursor = dbConn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
 kind = argv[1]
 f = open(kind)
@@ -31,13 +39,9 @@ dateFormat.extend(uppercase)
 dateFormat.extend(digits)
 dateFormat.extend(' _-') #}}}
 
-mainSQL = "INSERT INTO " + kind + " (" + ', '.join(columns[kind]) + ") VALUES"
-genres = []
-genreSQL = "INSERT INTO " + kind + "_genre (" + genreName[kind] + ", genre) VALUES "
-series = []
 count = 1
-for m in ms: #{{{
-    print m['title']
+for m in ms:
+    #print m['title']
     if verbosity:
         print "Parsing " + str(count) + " out of " + str(len(ms)) + ", ID " + m['ttid']
     values = {}
@@ -50,66 +54,78 @@ for m in ms: #{{{
         if verbosity > 1:
             print column + ': ' + data
         if types[column] == 's':
-            data = "'" + data.replace("'", "''") + "'"
             if column == 'released':
                 data = list(data)
                 data = "'" + ''.join(filter(lambda e: e in dateFormat, data)) + "'"
         elif types[column] == 'i':
-            data = int(data)
+            try:
+                data = int(data)
+            except:
+                print column
+                print data
+                exit(1)
             if column == 'year':
                 if data < 20:
                     data += 2000
                 elif data < 100:
                     data += 1900
 
-        if column in references[kind]:
-            if data == '':
-                values[column] = 'NULL'
-            else:
-                if data not in eval(column):
-                    eval(column).append(data)
-                if column != 'series' or data != -1:
-                    values[column] = "(SELECT id FROM " + column + " WHERE name = '" + data + "')"
+        #if column in references[kind]:
+            #if data == '':
+                #values[column] = 'NULL'
+            #else:
+                #if data not in eval(column):
+                    #eval(column).append(data)
+                #if column != 'series' or data != -1:
+                    #values[column] = "(SELECT id FROM " + column + " WHERE name = '" + data + "')"
         else:
             values[column] = data
 
     for genre in m['genre']:
+        dbCursor.execute("SELECT EXISTS(SELECT name FROM genres WHERE name = %s)", [genre])
+        if dbCursor.fetchone()[0]: continue
+        dbCursor.execute("INSERT INTO genres (name) VALUES (%s)", [genre])
         genreSQL += "((SELECT id FROM " + kind + " WHERE ttid = '" + m['ttid'] + "'), (SELECT id FROM genres WHERE name = '" + genre + "')),"
-        if genre not in genres:
-            genres.append(genre)
+        genres.append(genre)
 
-    mainSQL += '('
-    for col in columns[kind]:
-        if not values.has_key(col):
-            mainSQL += 'null,'
-            continue
-        mainSQL += str(values[col]) + ','
-    mainSQL = mainSQL[:-1]
-    mainSQL += ')'
-    if ms[-1] != m:
-        mainSQL += ','
-    count += 1 #}}}
+    if m['series'] != -1:
+        dbCursor.execute("SELECT id FROM series WHERE name = %s", [m['series']])
+        res = dbCursor.fetchone()
+        if not res:
+            dbCursor.execute("INSERT INTO SERIES (name) VALUES (%s)", [m['series']])
+            dbCursor.execute("SELECT id FROM series WHERE name = %s", [m['series']])
+            res = dbCursor.fetchone()
+        seriesID = res[0]
+        m['series'] = seriesID
+    else:
+        m['series'] = None
 
-# Executed in transaction, so all or none #{{{
-# To avoid that, since series and genres could already exist,
-# add them individually
-createGenreSQL = "INSERT INTO genres (name) VALUES ('<GENRE>');"
-for g in genres:
-    sql = createGenreSQL.replace('<GENRE>', g)
-    sql = sql.replace('"', '\\"')
-    system('psql prometheus -c "' + sql + '"')
-seriesSQL = "INSERT INTO series (name) VALUES ('<SERIES>');"
-for s in series:
-    if s == -1: continue
-    sql = seriesSQL.replace('<SERIES>', s)
-    sql = sql.replace('"', '\\"')
-    system('psql prometheus -c "' + sql + '"') #}}}
+    values = []
+    errors = False
+    for c in columns[kind]:
+        try:
+            values.append(m[c])
+        except KeyError:
+            errors = True
+            print m['title'] + ' has no key "' + c + '"'
+            if m['title'] == 'The Imitation Game':
+                print 'override'
+                values.append('2014-12-25')
+                errors = False
+    if errors:
+        print 'Skipping'
+        continue
 
-genreSQL = genreSQL[:-1]
-genreSQL += ';'
-genreSQL = genreSQL.replace('"', '\\"')
-mainSQL += ';'
-mainSQL = mainSQL.replace('"', '\\"')
+    try:
+        for col in columns[kind]:
+            dbCursor.execute("SELECT EXISTS(SELECT ttid FROM {0} WHERE ttid=%s)".format(kind), [m['ttid']])
+            if dbCursor.fetchone()[0]: continue
+            dbCursor.execute("INSERT INTO {0} ({1}) VALUES (%s".format(kind, ','.join(columns[kind])) + ", %s" * (len(columns[kind]) - 1) + ")", values)
 
-system('psql prometheus -c "' + mainSQL + '"')
-system('psql prometheus -c "' + genreSQL + '"')
+        for genre in m['genre']:
+            dbCursor.execute('SELECT EXISTS(SELECT id FROM {0}_genre WHERE {1}=(SELECT id FROM {0} WHERE ttid=%s) AND genre=(SELECT id FROM genres WHERE name=%s))'.format(kind, genreName[kind]), [m['ttid'], genre])
+    except:
+        print sys.exc_info()
+        print columns[kind]
+        print values
+        sys.exit(1)

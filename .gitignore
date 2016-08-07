@@ -3,3 +3,7 @@ encfs/
 .v[ip]
 android/.gradle/**
 android/build/intermediates/**
+imdb/ttid*
+imdb/images
+imdb/movies
+imdb/tv*
