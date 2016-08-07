@@ -35,29 +35,36 @@ do
     nch=`echo "$details" | egrep NCH=.* | egrep -o "[0-9]+" | head -1`
     filename=`basename "$mfile"`
     f2=`echo "$filename" | sed 's/^[0-9 \.\-]\+//'`
-    v=${kind:0:1}${f2:0:1}
+    v=`echo -n "$filename" | sha512sum | cut -c1-3`
+    echo "Using vault $v"
+    read
     n=`echo -n $v | sha256sum | awk -F ' ' '{printf $1}'` #}}}
 
     echo "Storing"
-    cSize=`expr $size / 1024`
-    exists=`/var/www/prometheus/encfs/./fs.py f $v`
-    if [ $exists = 0 ]; then #{{{
+    cSize=`expr $size / 1024 + 512 \* 1024`
+    exists=`/var/www/prometheus/encfs/./fs.py x $v`
+    if [[ $exists = "False" ]]; then #{{{
         # Since creating, add 2 GB safety margin
+        echo "Creating new vault"
         newSize=`expr $cSize + $padding`K
         /var/www/prometheus/encfs/./fs.py c $v $newSize /mnt #}}}
     else #{{{
-        avail=`/var/www/prometheus/encfs/./fs.py s $v /mnt`
-        if [ "$avail" -lt "$cSize" ]; then
+        avail=`/var/www/prometheus/encfs/./fs.py s $v /mnt | cut -d, -f2 | cut -d] -f1 | cut -c2- | cut -d\' -f2`
+        echo "Found $avail space"
+        if [ $avail -lt $cSize ]; then
+            echo "Increasing by `expr $cSize - $avail + $padding`K"
             /var/www/prometheus/encfs/./fs.py r $v `expr $cSize - $avail + $padding`K /mnt
         fi
     fi #}}}
 
     /var/www/prometheus/encfs/./fs.py m $v /data/$n
 
+    echo "Copying data"
     rsync --partial -ahvtr "$mfile" /data/$n/
     fn=`basename "$mfile"`
     chown root:prometheus "/data/$n/$fn"
     chmod 750 "/data/$n/$fn"
+    echo "Verifying checksum"
     c2=`sha512sum "/data/$n/$fn" | awk -F ' ' '{print \$1}'`
     /var/www/prometheus/encfs/./fs.py d $v
     fn=`echo "$fn" | sed "s/'/''/g"`
