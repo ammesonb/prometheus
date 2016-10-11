@@ -35,8 +35,8 @@ class IMDBParser(HTMLParser): #{{{
         elif tag == 'div':
             if len(attrs):
                 for attr in attrs:
-                    if attr[1] == 'summary_text': break
-                    if attr[0] == 'itemprop' and attr[1] == 'description':
+                    if attr[0] == 'class' and attr[1] == 'summary_text': #break
+                    #if attr[0] == 'itemprop' and attr[1] == 'description':
                         self.mode = 'desc'
                     elif attr[0] == 'class' and attr[1] == 'poster':
                         self.mode = 'poster'
@@ -73,13 +73,14 @@ class IMDBParser(HTMLParser): #{{{
 
             ext = ext.split('.')[-1]
             imagePath = 'images/' + kind + '/' + self.media['ttid'] + '.' + ext
-            system('curl ' + url + '.' + ext + ' -o ' + imagePath + ' > /dev/null 2>&1')
-            checksum = sha512(open(imagePath, 'rb').read()).digest()
-            if imageChecksums.has_key(checksum):
-                system('rm ' + imagePath)
-                system('ln -s ' + imageChecksums[checksum] + ' ' + imagePath)
-            else:
-                imageChecksums[checksum] = self.media['ttid'] + '.' + ext
+            if not exists(imagePath):
+                system('curl ' + url + '.' + ext + ' -o ' + imagePath + ' > /dev/null 2>&1')
+                checksum = sha512(open(imagePath, 'rb').read()).digest()
+                if imageChecksums.has_key(checksum):
+                    system('rm ' + imagePath)
+                    system('ln -s ' + imageChecksums[checksum] + ' ' + imagePath)
+                else:
+                    imageChecksums[checksum] = self.media['ttid'] + '.' + ext
             #}}}
 
     def handle_endtag(self, tag): #{{{
@@ -185,7 +186,7 @@ for ttid in ttids: #{{{
     html = htmlentitydecode(html)
     html = filter(lambda x: x in printable, html)
     html = str(html)
-    
+
     imdbParser.media = {'ttid': ttid}
     imdbParser.media['series'] = s
     imdbParser.kind = kind[0]

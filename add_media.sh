@@ -7,6 +7,7 @@ while read i;
 do
     ttid=`echo $i | awk -F '-' '{st=index($0,"-"); print $1}'` #{{{
     mfile=`echo $i | awk -F '-' '{st=index($0,"-"); print substr($0, st+1)}'`
+
     if [ ! -f "$mfile" ]; then
         echo "File $mfile doesn't exist"
         continue
@@ -34,10 +35,8 @@ do
     fi
     nch=`echo "$details" | egrep NCH=.* | egrep -o "[0-9]+" | head -1`
     filename=`basename "$mfile"`
-    f2=`echo "$filename" | sed 's/^[0-9 \.\-]\+//'`
     v=`echo -n "$filename" | sha512sum | cut -c1-3`
     echo "Using vault $v"
-    read
     n=`echo -n $v | sha256sum | awk -F ' ' '{printf $1}'` #}}}
 
     echo "Storing"

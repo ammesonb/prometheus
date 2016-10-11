@@ -69,15 +69,6 @@ for m in ms:
                     data += 2000
                 elif data < 100:
                     data += 1900
-
-        #if column in references[kind]:
-            #if data == '':
-                #values[column] = 'NULL'
-            #else:
-                #if data not in eval(column):
-                    #eval(column).append(data)
-                #if column != 'series' or data != -1:
-                    #values[column] = "(SELECT id FROM " + column + " WHERE name = '" + data + "')"
         else:
             values[column] = data
 
